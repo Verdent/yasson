@@ -12,6 +12,12 @@
 
 package org.eclipse.yasson;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Set;
+import java.util.TreeSet;
+
+import jakarta.json.bind.annotation.JsonbProperty;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.eclipse.yasson.Jsonbs.*;
@@ -32,17 +38,21 @@ public class SimpleTest {
 
     @Test
     public void testSimpleDeserializer() {
-        final StringWrapper stringWrapper = defaultJsonb.fromJson("{\"value\":\"abc\"}", StringWrapper.class);
-        assertEquals("abc", stringWrapper.getValue());
+        Set<Integer> collection = defaultJsonb.fromJson("[1, 2, 3]", TreeSet.class);
+        System.out.println();
+//        final StringWrapper stringWrapper = defaultJsonb.fromJson("{\"value\":\"abc\", \"test\": [1, 2, 3]}", StringWrapper.class);
+//        assertEquals("abc", stringWrapper.value);
     }
-    
-    
-    public static class StringWrapper {
-        public String value;
 
-        public String getValue() {
-            return value;
-        }
+    public static class StringWrapper {
+
+        private String value;
+
+        public Collection<String> test;
+
+//        public String getValue() {
+//            return value;
+//        }
 
         public void setValue(String value) {
             this.value = value;
