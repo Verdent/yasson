@@ -47,4 +47,22 @@ public class ObjectGraphTest extends CustomerTest {
         assertCustomerValues(customer.getFriends().get("firstFriend"), "Jasons first friend");
         assertCustomerValues(customer.getFriends().get("secondFriend"), "Jasons second friend");
     }
+
+    @Test
+    public void testSimpleObject() {
+        Person person = new Person();
+        person.name = "David";
+        person.surname = "Kral";
+        String json = bindingJsonb.toJson(person);
+        Person deser = bindingJsonb.fromJson(json, Person.class);
+        System.out.println();
+    }
+
+    public static class Person {
+
+        public String name;
+
+        public String surname;
+
+    }
 }
