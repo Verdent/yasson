@@ -65,6 +65,7 @@ public class CollectionsTest {
 
         assertEquals("{\"1\":1,\"2\":2,\"3\":3}", nullableJsonb.toJson(stringIntegerMap));
         assertEquals(stringIntegerMap, nullableJsonb.fromJson("{\"1\":1,\"2\":2,\"3\":3}", new LinkedHashMap<String, Integer>(){}.getClass().getGenericSuperclass()));
+        System.out.println();
     }
 
     @Test

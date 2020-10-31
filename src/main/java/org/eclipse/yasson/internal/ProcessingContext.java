@@ -29,6 +29,8 @@ public abstract class ProcessingContext {
      */
     private final Set<Object> currentlyProcessedObjects = new HashSet<>();
 
+    private Object instance;
+
     /**
      * Parent instance for marshaller and unmarshaller.
      *
@@ -36,6 +38,14 @@ public abstract class ProcessingContext {
      */
     public ProcessingContext(JsonbContext jsonbContext) {
         this.jsonbContext = jsonbContext;
+    }
+
+    public Object getInstance() {
+        return instance;
+    }
+
+    public void setInstance(Object instance) {
+        this.instance = instance;
     }
 
     /**
