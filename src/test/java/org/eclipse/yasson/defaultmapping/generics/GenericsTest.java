@@ -12,10 +12,23 @@
 
 package org.eclipse.yasson.defaultmapping.generics;
 
-import org.junit.jupiter.api.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.eclipse.yasson.Jsonbs.*;
+import java.lang.reflect.Type;
+import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.TimeZone;
 
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.JsonbBuilder;
+import jakarta.json.bind.JsonbConfig;
 import org.eclipse.yasson.TestTypeToken;
 import org.eclipse.yasson.adapters.model.GenericBox;
 import org.eclipse.yasson.defaultmapping.generics.model.AnotherGenericTestClass;
@@ -36,23 +49,12 @@ import org.eclipse.yasson.defaultmapping.generics.model.WildCardClass;
 import org.eclipse.yasson.defaultmapping.generics.model.WildcardMultipleBoundsClass;
 import org.eclipse.yasson.serializers.model.Box;
 import org.eclipse.yasson.serializers.model.Crate;
+import org.junit.jupiter.api.Test;
 
-import jakarta.json.bind.Jsonb;
-import jakarta.json.bind.JsonbBuilder;
-import jakarta.json.bind.JsonbConfig;
-import java.lang.reflect.Type;
-import java.math.BigDecimal;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.TimeZone;
+import static org.eclipse.yasson.Jsonbs.defaultJsonb;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * This class contains JSONB default mapping generics tests.
