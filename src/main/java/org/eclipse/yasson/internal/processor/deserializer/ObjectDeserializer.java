@@ -35,6 +35,7 @@ public class ObjectDeserializer implements ModelDeserializer<JsonParser> {
                 propertyDeserializerChains.get(key).deserialize(parser, context, rType);
                 break;
             case END_OBJECT:
+                context.getRtypeChain().remove(rType);
                 return context.getInstance();
             default:
                 throw new JsonbException("Unexpected state: " + next);
