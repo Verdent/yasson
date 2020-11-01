@@ -4,6 +4,7 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.json.stream.JsonParser;
@@ -20,7 +21,7 @@ import org.eclipse.yasson.internal.processor.convertor.TypeConvertors;
  */
 public class DynamicTypeDeserializer implements ModelDeserializer<JsonParser> {
 
-    private static final Map<Type, ResolvedTypeHolder> resolvedTypeCache = new ConcurrentHashMap<>();
+    private static final Map<Type, Map<Type, ResolvedTypeHolder>> resolvedTypeCache = new ConcurrentHashMap<>();
 
     private final ModelDeserializer<Object> delegate;
     private final Type unresolvedType;
@@ -35,27 +36,29 @@ public class DynamicTypeDeserializer implements ModelDeserializer<JsonParser> {
 
     @Override
     public Object deserialize(JsonParser value, DeserializationContextImpl context, Type rType) {
-        ModelDeserializer<JsonParser> modelDeserializer = resolvedTypeCache
-                .computeIfAbsent(rType, type -> new ResolvedTypeHolder())
-                .getDeserializersForType()
-                .computeIfAbsent(unresolvedType, type -> createDeserializer(rType, context));
+        ResolvedTypeHolder holder = resolvedTypeCache
+                .computeIfAbsent(rType, type -> new ConcurrentHashMap<>())
+                .computeIfAbsent(unresolvedType, type -> createHolderObject(rType, context));
 
         DeserializationContextImpl newContext = new DeserializationContextImpl(context);
-        return delegate.deserialize(modelDeserializer.deserialize(value, newContext, rType), context, rType);
+        return delegate.deserialize(holder.getDeserializer().deserialize(value, newContext, holder.getResolvedType()), context, rType);
     }
 
+    private ResolvedTypeHolder createHolderObject(Type rType, DeserializationContextImpl context) {
+        Type resolvedType = resolveType(rType, context);
+        ModelDeserializer<JsonParser> deserializer = createDeserializer(resolvedType, context);
+        return new ResolvedTypeHolder(deserializer, resolvedType);
+    }
 
-    private ModelDeserializer<JsonParser> createDeserializer(Type rType,
+    private ModelDeserializer<JsonParser> createDeserializer(Type resolvedType,
                                                              DeserializationContextImpl context) {
-
-        Type clazz = resolveType(rType, context);
-        TypeConvertor<?> convertor = TypeConvertors.getConvertor(ReflectionUtils.getRawType(clazz));
+        Class<?> rawType = ReflectionUtils.getRawType(resolvedType);
+        TypeConvertor<?> convertor = TypeConvertors.getConvertor(rawType);
         if (convertor != null) {
             return new ValueExtractor(new TypeDeserializer(JustReturn.create(), convertor));
         }
         MappingContext mappingContext = context.getMappingContext();
-        return ModelCreator.getOrCreateProcessorChain(mappingContext.getClassModel(ReflectionUtils.getRawType(clazz)),
-                                                      mappingContext);
+        return ModelCreator.getOrCreateProcessorChain(mappingContext.getClassModel(rawType), mappingContext);
     }
 
     private Type resolveType(Type rType, DeserializationContextImpl context) {
@@ -108,10 +111,20 @@ public class DynamicTypeDeserializer implements ModelDeserializer<JsonParser> {
 
     private static final class ResolvedTypeHolder {
 
-        private final Map<Type, ModelDeserializer<JsonParser>> deserializersForType = new ConcurrentHashMap<>();
+        private final ModelDeserializer<JsonParser> deserializer;
+        private final Type resolvedType;
 
-        public Map<Type, ModelDeserializer<JsonParser>> getDeserializersForType() {
-            return deserializersForType;
+        private ResolvedTypeHolder(ModelDeserializer<JsonParser> deserializer, Type resolvedType) {
+            this.deserializer = Objects.requireNonNull(deserializer);
+            this.resolvedType = Objects.requireNonNull(resolvedType);
+        }
+
+        public Type getResolvedType() {
+            return resolvedType;
+        }
+
+        public ModelDeserializer<JsonParser> getDeserializer() {
+            return deserializer;
         }
     }
 }
