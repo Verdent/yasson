@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+import jakarta.json.bind.JsonbException;
 import jakarta.json.stream.JsonParser;
 import org.eclipse.yasson.internal.MappingContext;
 import org.eclipse.yasson.internal.ReflectionUtils;
@@ -82,6 +83,9 @@ public class DynamicTypeDeserializer implements ModelDeserializer<JsonParser> {
             if (!(returnType instanceof TypeVariable)) {
                 break;
             }
+        }
+        if (returnType instanceof TypeVariable) {
+            throw new JsonbException("Could not resolve: " + unresolvedType);
         }
         //        for (Type type : chain) {
         //            if (ReflectionUtils.getRawType(type) != unresolvedType.getGenericDeclaration()) {
