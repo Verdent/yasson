@@ -8,7 +8,7 @@ import org.eclipse.yasson.internal.processor.SerializationContextImpl;
 /**
  * TODO javadoc
  */
-public class BigDecimalConvertor implements TypeConvertor<BigDecimal> {
+class BigDecimalConvertor implements TypeConvertor<BigDecimal> {
     @Override
     public String serialize(BigDecimal object, SerializationContextImpl context) {
         return object.toString();

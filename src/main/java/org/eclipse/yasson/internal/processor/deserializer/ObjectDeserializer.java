@@ -32,6 +32,8 @@ public class ObjectDeserializer implements ModelDeserializer<JsonParser> {
             case START_ARRAY:
             case VALUE_STRING:
             case VALUE_NUMBER:
+            case VALUE_FALSE:
+            case VALUE_TRUE:
                 propertyDeserializerChains.get(key).deserialize(parser, context, rType);
                 break;
             case END_OBJECT:
