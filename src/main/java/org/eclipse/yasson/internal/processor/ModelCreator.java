@@ -92,47 +92,13 @@ public class ModelCreator {
                 ModelDeserializer<JsonParser> chain = getOrCreateProcessorChain(classModel, mappingContext);
                 return (value, context, rType) -> {
                     DeserializationContextImpl newContext = new DeserializationContextImpl(context);
-                    return memberDeserializer.deserialize(chain.deserialize(value, newContext, resolveType(rType, type)), context, rType);
+                    return memberDeserializer.deserialize(chain.deserialize(value, newContext, type), context, rType);
                 };
             }
             TypeDeserializer typeDeserializer = new TypeDeserializer(memberDeserializer,
                                                                      convertor);
             return new ValueExtractor(typeDeserializer);
         }
-    }
-
-    private static Type resolveType(Type rType, Type type) {
-        if (type instanceof ParameterizedType) {
-            ParameterizedType parameterizedType = (ParameterizedType) type;
-            Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
-            Type[] resolvedTypes = new Type[actualTypeArguments.length];
-            for (int i = 0; i < actualTypeArguments.length; i++) {
-                Type t = actualTypeArguments[i];
-                Type resolved = t;
-                if (t instanceof TypeVariable) {
-                    resolved = new VariableTypeInheritanceSearch().searchParametrizedType(rType, (TypeVariable<?>) t);
-                }
-                resolvedTypes[i] = resolved;
-            }
-            //            ParameterizedTypeImpl.
-            return new ParameterizedType() {
-                @Override
-                public Type[] getActualTypeArguments() {
-                    return resolvedTypes;
-                }
-
-                @Override
-                public Type getRawType() {
-                    return parameterizedType.getRawType();
-                }
-
-                @Override
-                public Type getOwnerType() {
-                    return parameterizedType.getOwnerType();
-                }
-            };
-        }
-        return type;
     }
 
 }

@@ -3,6 +3,7 @@ package org.eclipse.yasson.internal.processor.deserializer;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,7 +42,8 @@ public class DynamicTypeDeserializer implements ModelDeserializer<JsonParser> {
                 .computeIfAbsent(unresolvedType, type -> createHolderObject(rType, context));
 
         DeserializationContextImpl newContext = new DeserializationContextImpl(context);
-        return delegate.deserialize(holder.getDeserializer().deserialize(value, newContext, holder.getResolvedType()), context, rType);
+        return delegate
+                .deserialize(holder.getDeserializer().deserialize(value, newContext, holder.getResolvedType()), context, rType);
     }
 
     private ResolvedTypeHolder createHolderObject(Type rType, DeserializationContextImpl context) {
@@ -71,14 +73,23 @@ public class DynamicTypeDeserializer implements ModelDeserializer<JsonParser> {
     private Type resolveTypeVariable(Type rType,
                                      TypeVariable<?> unresolvedType,
                                      DeserializationContextImpl context) {
-        return new VariableTypeInheritanceSearch().searchParametrizedType(rType, unresolvedType);
-//        for (Type type : context.getRtypeChain()) {
-//            if (ReflectionUtils.getRawType(type) != unresolvedType.getGenericDeclaration()) {
-//                continue;
-//            }
-//            return new VariableTypeInheritanceSearch().searchParametrizedType(type, unresolvedType);
-//        }
-//        return null;
+        //        return new VariableTypeInheritanceSearch().searchParametrizedType(rType, unresolvedType);
+        List<Type> chain = context.getRtypeChain();
+        Type returnType = unresolvedType;
+        for (int i = chain.size() - 1; i >= 0; i--) {
+            Type type = chain.get(i);
+            returnType = new VariableTypeInheritanceSearch().searchParametrizedType(type, (TypeVariable<?>) returnType);
+            if (!(returnType instanceof TypeVariable)) {
+                break;
+            }
+        }
+        //        for (Type type : chain) {
+        //            if (ReflectionUtils.getRawType(type) != unresolvedType.getGenericDeclaration()) {
+        //                continue;
+        //            }
+        //            return new VariableTypeInheritanceSearch().searchParametrizedType(type, unresolvedType);
+        //        }
+        return returnType;
     }
 
     private Type resolveMostSpecificBound(WildcardType wildcardType, Type rType, DeserializationContextImpl context) {
@@ -100,7 +111,9 @@ public class DynamicTypeDeserializer implements ModelDeserializer<JsonParser> {
             return result;
         }
         //if bound is type variable search recursively for wrapper generic expansion
-        Type resolvedBoundType = bound instanceof TypeVariable ? resolveTypeVariable(rType, (TypeVariable<?>) bound, context) : bound;
+        Type resolvedBoundType = bound instanceof TypeVariable
+                ? resolveTypeVariable(rType, (TypeVariable<?>) bound, context)
+                : bound;
         Class<?> boundRawType = ReflectionUtils.getRawType(resolvedBoundType);
         //resolved class is a subclass of a result candidate
         if (result.isAssignableFrom(boundRawType)) {
