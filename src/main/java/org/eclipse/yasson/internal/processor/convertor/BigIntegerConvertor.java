@@ -8,7 +8,7 @@ import org.eclipse.yasson.internal.processor.SerializationContextImpl;
 /**
  * TODO javadoc
  */
-public class BigIntegerConvertor implements TypeConvertor<BigInteger> {
+class BigIntegerConvertor implements TypeConvertor<BigInteger> {
     @Override
     public String serialize(BigInteger object, SerializationContextImpl context) {
         return object.toString();
