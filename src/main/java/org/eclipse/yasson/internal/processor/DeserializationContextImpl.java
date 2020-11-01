@@ -15,6 +15,7 @@ import org.eclipse.yasson.internal.JsonbContext;
 import org.eclipse.yasson.internal.ProcessingContext;
 import org.eclipse.yasson.internal.ReflectionUtils;
 import org.eclipse.yasson.internal.model.ClassModel;
+import org.eclipse.yasson.internal.processor.deserializer.DelayedDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.ModelDeserializer;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
@@ -27,6 +28,7 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
     private static final Logger LOGGER = Logger.getLogger(DeserializationContextImpl.class.getName());
 
     private final List<Type> rtypeChain;
+    private final List<DelayedDeserializer.DelayedSetter> delayedSetters = new ArrayList<>();
 
     /**
      * Parent instance for marshaller and unmarshaller.
@@ -45,6 +47,10 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
 
     public List<Type> getRtypeChain() {
         return rtypeChain;
+    }
+
+    public List<DelayedDeserializer.DelayedSetter> getDelayedSetters() {
+        return delayedSetters;
     }
 
     @Override
