@@ -61,7 +61,7 @@ public class DynamicTypeDeserializer implements ModelDeserializer<JsonParser> {
             return new ValueExtractor(new TypeDeserializer(JustReturn.create(), convertor));
         }
         MappingContext mappingContext = context.getMappingContext();
-        return ModelCreator.getOrCreateProcessorChain(mappingContext.getClassModel(rawType), mappingContext);
+        return ModelCreator.getOrCreateProcessorChain(mappingContext.getOrCreateClassModel(rawType), mappingContext);
     }
 
     private Type resolveType(Type rType, DeserializationContextImpl context) {
