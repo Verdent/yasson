@@ -25,6 +25,7 @@ import jakarta.json.bind.JsonbConfig;
 import jakarta.json.spi.JsonProvider;
 
 import org.eclipse.yasson.internal.components.JsonbComponentInstanceCreatorFactory;
+import org.eclipse.yasson.internal.processor.ChainModelCreator;
 import org.eclipse.yasson.spi.JsonbComponentInstanceCreator;
 
 /**
@@ -37,6 +38,8 @@ public class JsonbContext {
     private final JsonbConfig jsonbConfig;
 
     private final MappingContext mappingContext;
+
+    private final ChainModelCreator chainModelCreator;
 
     private final JsonbComponentInstanceCreator componentInstanceCreator;
 
@@ -60,6 +63,7 @@ public class JsonbContext {
         Objects.requireNonNull(jsonbConfig);
         this.jsonbConfig = jsonbConfig;
         this.mappingContext = new MappingContext(this);
+        this.chainModelCreator = new ChainModelCreator(this);
         this.instanceCreator = InstanceCreator.getSingleton();
         this.componentInstanceCreator = initComponentInstanceCreator(instanceCreator);
         this.componentMatcher = new ComponentMatcher(this);
@@ -84,6 +88,15 @@ public class JsonbContext {
      */
     public MappingContext getMappingContext() {
         return mappingContext;
+    }
+
+    /**
+     * Get chain model creator.
+     *
+     * @return chain model creator
+     */
+    public ChainModelCreator getChainModelCreator() {
+        return chainModelCreator;
     }
 
     /**

@@ -1,16 +1,14 @@
 package org.eclipse.yasson.internal.processor.deserializer;
 
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.json.stream.JsonParser;
 import org.eclipse.yasson.internal.MappingContext;
 import org.eclipse.yasson.internal.ReflectionUtils;
-import org.eclipse.yasson.internal.VariableTypeInheritanceSearch;
 import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
-import org.eclipse.yasson.internal.processor.ModelCreator;
+import org.eclipse.yasson.internal.processor.ChainModelCreator;
 import org.eclipse.yasson.internal.processor.convertor.TypeConvertor;
 import org.eclipse.yasson.internal.processor.convertor.TypeConvertors;
 
@@ -38,8 +36,8 @@ public class CollectionDynamicTypeDeserializer implements ModelDeserializer<Json
             return new ValueExtractor(new TypeDeserializer(JustReturn.create(), convertor));
         }
         MappingContext mappingContext = context.getMappingContext();
-        return ModelCreator.getOrCreateProcessorChain(mappingContext.getOrCreateClassModel(ReflectionUtils.getRawType(clazz)),
-                                                      mappingContext);
+        return context.getJsonbContext().getChainModelCreator()
+                .deserializerChain(mappingContext.getOrCreateClassModel(ReflectionUtils.getRawType(clazz)));
     }
 
 }
