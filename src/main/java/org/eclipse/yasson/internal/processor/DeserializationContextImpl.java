@@ -2,9 +2,7 @@ package org.eclipse.yasson.internal.processor;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import jakarta.json.bind.JsonbException;
@@ -69,7 +67,9 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
             parser.next();
             Class<?> rawType = ReflectionUtils.getRawType(type);
             ClassModel classModel = getMappingContext().getOrCreateClassModel(rawType);
-            ModelDeserializer<JsonParser> modelDeserializer = ModelCreator.getOrCreateProcessorChain(classModel, getMappingContext());
+            System.out.println(classModel.hashCode());
+            ModelDeserializer<JsonParser> modelDeserializer = getJsonbContext().getChainModelCreator()
+                    .deserializerChain(classModel);
             modelDeserializer.deserialize(parser, this, type);
             return (T) getInstance();
         } catch (JsonbException e) {

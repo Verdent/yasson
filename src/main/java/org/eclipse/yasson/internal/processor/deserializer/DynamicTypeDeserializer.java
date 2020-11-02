@@ -14,7 +14,7 @@ import org.eclipse.yasson.internal.MappingContext;
 import org.eclipse.yasson.internal.ReflectionUtils;
 import org.eclipse.yasson.internal.VariableTypeInheritanceSearch;
 import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
-import org.eclipse.yasson.internal.processor.ModelCreator;
+import org.eclipse.yasson.internal.processor.ChainModelCreator;
 import org.eclipse.yasson.internal.processor.convertor.TypeConvertor;
 import org.eclipse.yasson.internal.processor.convertor.TypeConvertors;
 
@@ -61,7 +61,8 @@ public class DynamicTypeDeserializer implements ModelDeserializer<JsonParser> {
             return new ValueExtractor(new TypeDeserializer(JustReturn.create(), convertor));
         }
         MappingContext mappingContext = context.getMappingContext();
-        return ModelCreator.getOrCreateProcessorChain(mappingContext.getOrCreateClassModel(rawType), mappingContext);
+        return context.getJsonbContext().getChainModelCreator()
+                .deserializerChain(mappingContext.getOrCreateClassModel(rawType));
     }
 
     private Type resolveType(Type rType, DeserializationContextImpl context) {
