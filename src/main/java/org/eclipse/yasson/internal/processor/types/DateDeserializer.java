@@ -7,6 +7,7 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAccessor;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Optional;
 
 import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.processor.deserializer.ModelDeserializer;
@@ -41,16 +42,13 @@ class DateDeserializer extends AbstractDateDeserializer<Date> {
     }
 
     private static Date parseWithOrWithoutZone(String jsonValue, DateTimeFormatter formatter) {
-        TemporalAccessor parsed;
-        try {
-            // Try parsing with a Zone
-            parsed = ZonedDateTime.parse(jsonValue, formatter);
-        } catch (DateTimeParseException e) {
-            // Possibly exception occures because no Offset/ZoneId was found
-            // Therefore parse with defaultZone again
+        ZonedDateTime parsed;
+        if (formatter.getZone() == null) {
             parsed = ZonedDateTime.parse(jsonValue, formatter.withZone(UTC));
+        } else {
+            parsed = ZonedDateTime.parse(jsonValue, formatter);
         }
-        return new Date(Instant.from(parsed).toEpochMilli());
+        return Date.from(parsed.toInstant());
     }
 
 }

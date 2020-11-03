@@ -8,7 +8,7 @@ import java.math.BigInteger;
 class BigIntegerDeserializer extends AbstractNumberDeserializer<BigInteger> {
 
     BigIntegerDeserializer(TypeDeserializerBuilder builder) {
-        super(builder, true);
+        super(builder, true, BigInteger.class);
     }
 
     @Override
