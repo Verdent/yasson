@@ -53,9 +53,10 @@ abstract class AbstractDateDeserializer<T> extends TypeDeserializer<T> {
         if (strictIJson) {
             return (value, context, type) -> parseWithFormatterInternal(value, JsonbDateFormatter.IJSON_DATE_FORMATTER);
         }
+        Locale locale = builder.getConfigProperties().getLocale(formatter.getLocale());
         return (value, context, type) -> {
             try {
-                return parseDefault(value, builder.getConfigProperties().getLocale(formatter.getLocale()));
+                return parseDefault(value, locale);
             } catch (DateTimeException e) {
                 throw new JsonbException(Messages.getMessage(MessageKeys.DATE_PARSE_ERROR, value, clazz), e);
             }

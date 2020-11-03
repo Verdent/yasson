@@ -7,10 +7,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import jakarta.json.stream.JsonParser;
 import org.eclipse.yasson.internal.MappingContext;
 import org.eclipse.yasson.internal.ReflectionUtils;
+import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
-import org.eclipse.yasson.internal.processor.ChainModelCreator;
-import org.eclipse.yasson.internal.processor.convertor.TypeConvertor;
-import org.eclipse.yasson.internal.processor.convertor.TypeConvertors;
+import org.eclipse.yasson.internal.processor.types.TypeDeserializers;
 
 /**
  * TODO javadoc
@@ -31,9 +30,13 @@ public class CollectionDynamicTypeDeserializer implements ModelDeserializer<Json
 
 
     private ModelDeserializer<JsonParser> createDeserializer(Type clazz, DeserializationContextImpl context) {
-        TypeConvertor<?> convertor = TypeConvertors.getConvertor(ReflectionUtils.getRawType(clazz));
-        if (convertor != null) {
-            return new ValueExtractor(new TypeDeserializer(JustReturn.create(), convertor));
+        ModelDeserializer<String> typeDeserializer = TypeDeserializers.getTypeDeserializer(ReflectionUtils.getRawType(clazz),
+                                                                                           Customization.empty(),
+                                                                                           context.getJsonbContext()
+                                                                                                   .getConfigProperties(),
+                                                                                           JustReturn.create());
+        if (typeDeserializer != null) {
+            return new ValueExtractor(typeDeserializer);
         }
         MappingContext mappingContext = context.getMappingContext();
         return context.getJsonbContext().getChainModelCreator()
