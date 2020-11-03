@@ -20,7 +20,14 @@ class BooleanDeserializer extends TypeDeserializer<Boolean> {
 
     @Override
     public Object deserializeValue(String value, DeserializationContextImpl context, Type rType) {
-        return Boolean.parseBoolean(value);
+        switch (context.getLastValueEvent()) {
+        case VALUE_FALSE:
+            return Boolean.FALSE;
+        case VALUE_TRUE:
+            return Boolean.TRUE;
+        default:
+            return Boolean.parseBoolean(value);
+        }
     }
 
 }

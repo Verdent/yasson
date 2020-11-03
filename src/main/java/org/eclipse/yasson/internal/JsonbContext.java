@@ -63,13 +63,13 @@ public class JsonbContext {
         Objects.requireNonNull(jsonbConfig);
         this.jsonbConfig = jsonbConfig;
         this.mappingContext = new MappingContext(this);
-        this.chainModelCreator = new ChainModelCreator(this);
         this.instanceCreator = InstanceCreator.getSingleton();
         this.componentInstanceCreator = initComponentInstanceCreator(instanceCreator);
         this.componentMatcher = new ComponentMatcher(this);
         this.annotationIntrospector = new AnnotationIntrospector(this);
         this.jsonProvider = jsonProvider;
         this.configProperties = new JsonbConfigProperties(jsonbConfig);
+        this.chainModelCreator = new ChainModelCreator(this);
     }
 
     /**

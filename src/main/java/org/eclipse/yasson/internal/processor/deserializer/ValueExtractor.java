@@ -18,6 +18,16 @@ public class ValueExtractor implements ModelDeserializer<JsonParser> {
 
     @Override
     public Object deserialize(JsonParser value, DeserializationContextImpl context, Type rType) {
-        return delegate.deserialize(value.getString(), context, rType);
+        String valueToPropagate;
+        JsonParser.Event last = context.getLastValueEvent();
+        switch (last) {
+        case VALUE_TRUE:
+        case VALUE_FALSE:
+            valueToPropagate = "booleanValue"; //This value is not used in deserializer. It is just placeholder.
+            break;
+        default:
+            valueToPropagate = value.getString();
+        }
+        return delegate.deserialize(valueToPropagate, context, rType);
     }
 }
