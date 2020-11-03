@@ -5,10 +5,10 @@ import java.math.BigDecimal;
 /**
  * TODO javadoc
  */
-public class BigDecimalDeserializer extends AbstractNumberDeserializer<BigDecimal> {
+class BigDecimalDeserializer extends AbstractNumberDeserializer<BigDecimal> {
 
     BigDecimalDeserializer(TypeDeserializerBuilder builder) {
-        super(builder, false);
+        super(builder, false, BigDecimal.class);
     }
 
     @Override
