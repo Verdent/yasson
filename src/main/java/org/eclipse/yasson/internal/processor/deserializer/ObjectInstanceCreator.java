@@ -39,6 +39,7 @@ public class ObjectInstanceCreator implements ModelDeserializer<JsonParser> {
         Map<String, Object> paramValues = new HashMap<>();
         while (parser.hasNext()) {
             final JsonParser.Event next = parser.next();
+            context.setLastValueEvent(next);
             switch (next) {
             case KEY_NAME:
                 key = parser.getString();
