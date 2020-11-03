@@ -27,6 +27,7 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
 
     private final List<Type> rtypeChain;
     private final List<DelayedDeserializer.DelayedSetter> delayedSetters = new ArrayList<>();
+    private JsonParser.Event lastValueEvent;
 
     /**
      * Parent instance for marshaller and unmarshaller.
@@ -41,6 +42,7 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
     public DeserializationContextImpl(DeserializationContextImpl context) {
         super(context.getJsonbContext());
         this.rtypeChain = context.getRtypeChain();
+        this.lastValueEvent = context.lastValueEvent;
     }
 
     public List<Type> getRtypeChain() {
@@ -49,6 +51,14 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
 
     public List<DelayedDeserializer.DelayedSetter> getDelayedSetters() {
         return delayedSetters;
+    }
+
+    public JsonParser.Event getLastValueEvent() {
+        return lastValueEvent;
+    }
+
+    public void setLastValueEvent(JsonParser.Event lastValueEvent) {
+        this.lastValueEvent = lastValueEvent;
     }
 
     @Override
