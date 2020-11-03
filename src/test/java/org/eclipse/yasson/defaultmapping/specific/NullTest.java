@@ -13,6 +13,7 @@
 
 package org.eclipse.yasson.defaultmapping.specific;
 
+import org.eclipse.yasson.defaultmapping.specific.model.StreetWithPrimitives;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.eclipse.yasson.Jsonbs.*;
@@ -37,6 +38,16 @@ public class NullTest {
         assertNull(result.getName());
         assertNull(result.getNumber());
     }
+//
+//    @Test
+//    public void testSetsNullToPrimitives() {
+//        String json = "{\"name\":null,\"number\":null}";
+//
+//        StreetWithPrimitives result = defaultJsonb.fromJson(json, StreetWithPrimitives.class);
+//        //these have default initialization value
+//        assertNull(result.getName());
+//        assertNull(result.getNumber());
+//    }
 
     @Test
     public void testDeserializeNull() {
