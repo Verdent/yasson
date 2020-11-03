@@ -101,7 +101,11 @@ public final class PropertyModel implements Comparable<PropertyModel> {
     private final Type getterMethodType;
 
     private final Type setterMethodType;
-    
+
+    private final boolean getterVisible;
+
+    private final boolean setterVisible;
+
     /**
      * Create a new PropertyModel that merges two existing PropertyModel that have identical read/write names.
      * The input PropertyModel objects MUST be equal (a.equals(b) == true)
@@ -122,6 +126,8 @@ public final class PropertyModel implements Comparable<PropertyModel> {
         this.customization = a.customization;
         
         // Merging steps
+        this.getterVisible = a.getterVisible || b.getterVisible;
+        this.setterVisible = a.setterVisible || b.setterVisible;
         this.getterMethodType = a.getterMethodType != null ? a.getterMethodType : b.getterMethodType;
         this.setterMethodType = a.setterMethodType != null ? a.setterMethodType : b.setterMethodType;
         this.property = a.property;
@@ -161,9 +167,9 @@ public final class PropertyModel implements Comparable<PropertyModel> {
         this.setter = property.getSetter();
         
         PropertyVisibilityStrategy strategy = classModel.getClassCustomization().getPropertyVisibilityStrategy();
-        boolean getterVisible = isMethodVisible(getter, strategy);
-        boolean setterVisible = isMethodVisible(setter, strategy);
-        
+        this.getterVisible = isMethodVisible(getter, strategy);
+        this.setterVisible = isMethodVisible(setter, strategy);
+
         this.getValueHandle = createReadHandle(field, getter, getterVisible, strategy);
         this.setValueHandle = createWriteHandle(field, setter, setterVisible, strategy);
         this.getterMethodType = getterVisible ? property.getGetterType() : null;
@@ -414,6 +420,14 @@ public final class PropertyModel implements Comparable<PropertyModel> {
      */
     public boolean isWritable() {
         return !customization.isWriteTransient() && this.setValueHandle != null;
+    }
+
+    public boolean isGetterVisible() {
+        return getterVisible;
+    }
+
+    public boolean isSetterVisible() {
+        return setterVisible;
     }
 
     /**

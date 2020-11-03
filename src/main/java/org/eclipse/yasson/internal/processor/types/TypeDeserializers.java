@@ -20,11 +20,15 @@ public class TypeDeserializers {
     private static final Map<Class<?>, Function<TypeDeserializerBuilder, ModelDeserializer<String>>> DESERIALIZERS = new HashMap<>();
 
     static {
-        DESERIALIZERS.put(Date.class, DateDeserializer::new);
-        DESERIALIZERS.put(String.class, StringDeserializer::new);
-        DESERIALIZERS.put(Integer.class, IntegerDeserializer::new);
         DESERIALIZERS.put(BigInteger.class, BigIntegerDeserializer::new);
         DESERIALIZERS.put(BigDecimal.class, BigDecimalDeserializer::new);
+        DESERIALIZERS.put(Boolean.class, BooleanDeserializer::new);
+        DESERIALIZERS.put(Boolean.TYPE, BooleanDeserializer::new);
+        DESERIALIZERS.put(Date.class, DateDeserializer::new);
+        DESERIALIZERS.put(Integer.class, IntegerDeserializer::new);
+        DESERIALIZERS.put(Integer.TYPE, IntegerDeserializer::new);
+        DESERIALIZERS.put(Long.class, LongDeserializer::new);
+        DESERIALIZERS.put(String.class, StringDeserializer::new);
     }
 
     public static ModelDeserializer<String> getTypeDeserializer(Class<?> clazz,
