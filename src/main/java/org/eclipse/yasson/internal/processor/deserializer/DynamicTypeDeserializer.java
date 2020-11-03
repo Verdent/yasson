@@ -13,10 +13,9 @@ import jakarta.json.stream.JsonParser;
 import org.eclipse.yasson.internal.MappingContext;
 import org.eclipse.yasson.internal.ReflectionUtils;
 import org.eclipse.yasson.internal.VariableTypeInheritanceSearch;
+import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
-import org.eclipse.yasson.internal.processor.ChainModelCreator;
-import org.eclipse.yasson.internal.processor.convertor.TypeConvertor;
-import org.eclipse.yasson.internal.processor.convertor.TypeConvertors;
+import org.eclipse.yasson.internal.processor.types.TypeDeserializers;
 
 /**
  * TODO javadoc
@@ -28,12 +27,15 @@ public class DynamicTypeDeserializer implements ModelDeserializer<JsonParser> {
     private final ModelDeserializer<Object> delegate;
     private final Type unresolvedType;
     private final boolean isTypeVariable;
+    private final Customization customization;
 
     public DynamicTypeDeserializer(ModelDeserializer<Object> delegate,
-                                   Type unresolvedType) {
+                                   Type unresolvedType,
+                                   Customization customization) {
         this.delegate = delegate;
         this.unresolvedType = unresolvedType;
         this.isTypeVariable = unresolvedType instanceof TypeVariable;
+        this.customization = customization;
     }
 
     @Override
@@ -56,9 +58,13 @@ public class DynamicTypeDeserializer implements ModelDeserializer<JsonParser> {
     private ModelDeserializer<JsonParser> createDeserializer(Type resolvedType,
                                                              DeserializationContextImpl context) {
         Class<?> rawType = ReflectionUtils.getRawType(resolvedType);
-        TypeConvertor<?> convertor = TypeConvertors.getConvertor(rawType);
-        if (convertor != null) {
-            return new ValueExtractor(new TypeDeserializer(JustReturn.create(), convertor));
+        ModelDeserializer<String> typeDeserializer = TypeDeserializers.getTypeDeserializer(rawType,
+                                                                                           customization,
+                                                                                           context.getJsonbContext()
+                                                                                                   .getConfigProperties(),
+                                                                                           JustReturn.create());
+        if (typeDeserializer != null) {
+            return new ValueExtractor(typeDeserializer);
         }
         MappingContext mappingContext = context.getMappingContext();
         return context.getJsonbContext().getChainModelCreator()

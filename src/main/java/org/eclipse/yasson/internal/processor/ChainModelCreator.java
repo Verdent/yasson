@@ -120,7 +120,7 @@ public class ChainModelCreator {
                                                                Customization customization,
                                                                ModelDeserializer<Object> memberDeserializer) {
         if (type instanceof TypeVariable || type instanceof WildcardType) {
-            return new DynamicTypeDeserializer(memberDeserializer, type);
+            return new DynamicTypeDeserializer(memberDeserializer, type, customization);
         }
         Class<?> rawType = ReflectionUtils.getRawType(type);
         if (Collection.class.isAssignableFrom(rawType)) {

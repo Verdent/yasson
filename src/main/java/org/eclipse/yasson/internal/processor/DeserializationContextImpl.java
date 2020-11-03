@@ -67,7 +67,6 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
             parser.next();
             Class<?> rawType = ReflectionUtils.getRawType(type);
             ClassModel classModel = getMappingContext().getOrCreateClassModel(rawType);
-            System.out.println(classModel.hashCode());
             ModelDeserializer<JsonParser> modelDeserializer = getJsonbContext().getChainModelCreator()
                     .deserializerChain(classModel);
             modelDeserializer.deserialize(parser, this, type);

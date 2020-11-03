@@ -20,17 +20,25 @@ abstract class AbstractNumberDeserializer<T extends Number> extends TypeDeserial
 
     private final ModelDeserializer<String> actualDeserializer;
     private final boolean integerOnly;
+    private final Class<T> clazz;
 
-    AbstractNumberDeserializer(TypeDeserializerBuilder builder, boolean integerOnly) {
+    AbstractNumberDeserializer(TypeDeserializerBuilder builder, boolean integerOnly, Class<T> clazz) {
         super(builder);
         this.actualDeserializer = actualDeserializer(builder);
         this.integerOnly = integerOnly;
+        this.clazz = clazz;
     }
 
     private ModelDeserializer<String> actualDeserializer(TypeDeserializerBuilder builder) {
         Customization customization = builder.getCustomization();
         if (customization.getDeserializeNumberFormatter() == null) {
-            return (value, context, type) -> parseNumberValue(value);
+            return (value, context, type) -> {
+                try {
+                    return parseNumberValue(value);
+                } catch (NumberFormatException e) {
+                    throw new JsonbException(Messages.getMessage(MessageKeys.DESERIALIZE_VALUE_ERROR, clazz));
+                }
+            };
         }
 
         final JsonbNumberFormatter numberFormat = customization.getDeserializeNumberFormatter();
@@ -53,6 +61,5 @@ abstract class AbstractNumberDeserializer<T extends Number> extends TypeDeserial
     Object deserializeValue(String value, DeserializationContextImpl context, Type rType) {
         return actualDeserializer.deserialize(value, context, rType);
     }
-
 
 }
