@@ -141,6 +141,5 @@ public class YassonParser implements JsonParser {
 
     @Override
     public void close() {
-        delegate.close();
     }
 }
