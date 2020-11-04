@@ -6,7 +6,7 @@ package org.eclipse.yasson.internal.processor.types;
 class LongDeserializer extends AbstractNumberDeserializer<Long> {
 
     LongDeserializer(TypeDeserializerBuilder builder) {
-        super(builder, true, Long.class);
+        super(builder, true);
     }
 
     @Override

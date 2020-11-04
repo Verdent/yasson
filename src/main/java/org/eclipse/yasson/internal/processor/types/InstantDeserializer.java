@@ -26,7 +26,7 @@ class InstantDeserializer extends AbstractDateDeserializer<Instant> {
     private static final DateTimeFormatter DEFAULT_FORMATTER = DateTimeFormatter.ISO_INSTANT.withZone(UTC);
 
     InstantDeserializer(TypeDeserializerBuilder builder) {
-        super(builder, Instant.class);
+        super(builder);
     }
 
     @Override

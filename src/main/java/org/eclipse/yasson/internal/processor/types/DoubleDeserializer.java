@@ -6,7 +6,7 @@ package org.eclipse.yasson.internal.processor.types;
 class DoubleDeserializer extends AbstractNumberDeserializer<Double> {
 
     DoubleDeserializer(TypeDeserializerBuilder builder) {
-        super(builder, false, Double.class);
+        super(builder, false);
     }
 
     @Override

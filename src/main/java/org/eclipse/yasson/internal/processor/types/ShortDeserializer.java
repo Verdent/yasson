@@ -6,7 +6,7 @@ package org.eclipse.yasson.internal.processor.types;
 class ShortDeserializer extends AbstractNumberDeserializer<Short> {
 
     ShortDeserializer(TypeDeserializerBuilder builder) {
-        super(builder, true, Short.class);
+        super(builder, true);
     }
 
     @Override

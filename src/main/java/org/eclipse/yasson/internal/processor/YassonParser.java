@@ -14,13 +14,26 @@ import jakarta.json.stream.JsonParser;
 /**
  * TODO javadoc
  */
-public class UserParser implements JsonParser {
+public class YassonParser implements JsonParser {
 
     private final JsonParser delegate;
-    private int level = 1;
+    private final Event firstEvent;
+    private int level;
 
-    public UserParser(JsonParser delegate) {
+    public YassonParser(JsonParser delegate, Event firstEvent) {
         this.delegate = delegate;
+        this.firstEvent = firstEvent;
+        this.level = determineLevelValue();
+    }
+
+    private int determineLevelValue() {
+        switch (firstEvent) {
+        case START_ARRAY:
+        case START_OBJECT:
+            return 1; //container start, there will be more events to come
+        default:
+            return 0; //just this single value, do not allow reading more
+        }
     }
 
     public void skipRemaining() {
