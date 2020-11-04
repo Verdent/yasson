@@ -24,6 +24,7 @@ public class ObjectDeserializer implements ModelDeserializer<JsonParser> {
         context.getRtypeChain().add(rType);
         while (parser.hasNext()) {
             final JsonParser.Event next = parser.next();
+            context.setLastValueEvent(next);
             switch (next) {
             case KEY_NAME:
                 key = parser.getString();
@@ -35,9 +36,12 @@ public class ObjectDeserializer implements ModelDeserializer<JsonParser> {
             case VALUE_NUMBER:
             case VALUE_FALSE:
             case VALUE_TRUE:
-                context.setLastValueEvent(next);
-                propertyDeserializerChains.get(key).deserialize(parser, context, rType);
+                if (propertyDeserializerChains.containsKey(key)) {
+                    propertyDeserializerChains.get(key).deserialize(parser, context, rType);
+                }
                 break;
+            case END_ARRAY:
+                continue;
             case END_OBJECT:
                 context.getRtypeChain().remove(rType);
                 return context.getInstance();

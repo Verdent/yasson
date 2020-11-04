@@ -21,6 +21,8 @@ import org.eclipse.yasson.internal.properties.Messages;
 import org.eclipse.yasson.internal.serializer.DeserializerBuilder;
 import org.eclipse.yasson.internal.serializer.JsonbDateFormatter;
 
+import static org.eclipse.yasson.internal.serializer.AbstractDateTimeDeserializer.UTC;
+
 /**
  * TODO javadoc
  */
@@ -37,23 +39,22 @@ abstract class AbstractDateDeserializer<T> extends TypeDeserializer<T> {
     }
 
     private ModelDeserializer<String> actualDeserializer(TypeDeserializerBuilder builder) {
+        JsonbConfigProperties configProperties = builder.getConfigProperties();
         final JsonbDateFormatter formatter = getJsonbDateFormatter(builder);
         if (JsonbDateFormat.TIME_IN_MILLIS.equals(formatter.getFormat())) {
             return (value, context, type) -> fromInstant(Instant.ofEpochMilli(Long.parseLong(value)));
         } else if (formatter.getDateTimeFormatter() != null) {
             return (value, context, type) -> parseWithFormatterInternal(value, formatter.getDateTimeFormatter());
         } else {
-            DateTimeFormatter configDateTimeFormatter = builder.getConfigProperties()
-                    .getConfigDateFormatter().getDateTimeFormatter();
+            DateTimeFormatter configDateTimeFormatter = configProperties.getConfigDateFormatter().getDateTimeFormatter();
             if (configDateTimeFormatter != null) {
                 return (value, context, type) -> parseWithFormatterInternal(value, configDateTimeFormatter);
             }
         }
-        final boolean strictIJson = builder.getConfigProperties().isStrictIJson();
-        if (strictIJson) {
+        if (configProperties.isStrictIJson()) {
             return (value, context, type) -> parseWithFormatterInternal(value, JsonbDateFormatter.IJSON_DATE_FORMATTER);
         }
-        Locale locale = builder.getConfigProperties().getLocale(formatter.getLocale());
+        Locale locale = configProperties.getLocale(formatter.getLocale());
         return (value, context, type) -> {
             try {
                 return parseDefault(value, locale);
@@ -107,6 +108,12 @@ abstract class AbstractDateDeserializer<T> extends TypeDeserializer<T> {
         } catch (DateTimeException e) {
             throw new JsonbException(Messages.getMessage(MessageKeys.DATE_PARSE_ERROR, jsonValue, clazz), e);
         }
+    }
+
+    protected DateTimeFormatter getZonedFormatter(DateTimeFormatter formatter) {
+        return formatter.getZone() != null
+                ? formatter
+                : formatter.withZone(UTC);
     }
 
 }
