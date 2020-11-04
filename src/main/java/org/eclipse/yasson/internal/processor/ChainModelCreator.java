@@ -13,10 +13,12 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import jakarta.json.bind.JsonbException;
 import jakarta.json.stream.JsonParser;
 import org.eclipse.yasson.internal.ComponentMatcher;
 import org.eclipse.yasson.internal.JsonbContext;
 import org.eclipse.yasson.internal.ReflectionUtils;
+import org.eclipse.yasson.internal.components.AdapterBinding;
 import org.eclipse.yasson.internal.components.DeserializerBinding;
 import org.eclipse.yasson.internal.model.ClassModel;
 import org.eclipse.yasson.internal.model.CreatorModel;
@@ -26,6 +28,7 @@ import org.eclipse.yasson.internal.model.customization.ClassCustomization;
 import org.eclipse.yasson.internal.model.customization.ComponentBoundCustomization;
 import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.model.customization.PropertyCustomization;
+import org.eclipse.yasson.internal.processor.deserializer.AdapterDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.CollectionDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.CollectionDynamicTypeDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.CollectionInstanceDeserializer;
@@ -33,7 +36,7 @@ import org.eclipse.yasson.internal.processor.deserializer.DelayedDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.DynamicTypeDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.JustReturn;
 import org.eclipse.yasson.internal.processor.deserializer.ModelDeserializer;
-import org.eclipse.yasson.internal.processor.deserializer.NullDeserializer;
+import org.eclipse.yasson.internal.processor.deserializer.NullCheckDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.ObjectDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.ObjectInstanceCreator;
 import org.eclipse.yasson.internal.processor.deserializer.ObjectDefaultInstanceCreator;
@@ -41,6 +44,8 @@ import org.eclipse.yasson.internal.processor.deserializer.ValueSetterDeserialize
 import org.eclipse.yasson.internal.processor.deserializer.UserDefinedDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.ValueExtractor;
 import org.eclipse.yasson.internal.processor.types.TypeDeserializers;
+import org.eclipse.yasson.internal.properties.MessageKeys;
+import org.eclipse.yasson.internal.properties.Messages;
 
 /**
  * TODO javadoc
@@ -58,23 +63,41 @@ public class ChainModelCreator {
     }
 
     public ModelDeserializer<JsonParser> deserializerChain(ClassModel classModel) {
-        if (deserializerChain.containsKey(classModel.getType())) {
-            return deserializerChain.get(classModel.getType());
+        Class<?> type = classModel.getType();
+        if (deserializerChain.containsKey(type)) {
+            return deserializerChain.get(type);
         }
-        if (userTypeMapping.containsKey(classModel.getType())) {
+        if (userTypeMapping.containsKey(type)) {
             return deserializerChain(jsonbContext.getMappingContext()
-                                             .getOrCreateClassModel(userTypeMapping.get(classModel.getType())));
-        } else if (Collection.class.isAssignableFrom(classModel.getType())) {
-            return deserializerChain.computeIfAbsent(classModel.getType(), coll -> {
+                                             .getOrCreateClassModel(userTypeMapping.get(type)));
+        } else if (Collection.class.isAssignableFrom(type)) {
+            return deserializerChain.computeIfAbsent(type, coll -> {
                 CollectionDeserializer collectionDeserializer =
                         new CollectionDeserializer(new CollectionDynamicTypeDeserializer());
-                return new CollectionInstanceDeserializer(collectionDeserializer, classModel.getType());
+                return new CollectionInstanceDeserializer(collectionDeserializer, type);
             });
         } else {
             ClassCustomization classCustomization = classModel.getClassCustomization();
-            Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(classModel.getType(), classCustomization);
+            ModelDeserializer<String> typeDeserializer = TypeDeserializers
+                    .getTypeDeserializer(type, classCustomization, jsonbContext.getConfigProperties(), JustReturn.create());
+            if (typeDeserializer != null) {
+                return new NullCheckDeserializer(new ValueExtractor(typeDeserializer), JustReturn.create(), type);
+            }
+            Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(type, classCustomization);
             if (deserializerBinding.isPresent()) {
                 return new UserDefinedDeserializer(deserializerBinding.get().getJsonbDeserializer(), JustReturn.create());
+            }
+            Optional<AdapterBinding> adapterBinding = adapterBinding(type, classCustomization);
+            if (adapterBinding.isPresent()) {
+                AdapterBinding adapter = adapterBinding.get();
+                ClassModel targetModel = jsonbContext.getMappingContext()
+                        .getOrCreateClassModel(ReflectionUtils.getRawType(adapter.getToType()));
+                ModelDeserializer<JsonParser> targetAdapterModel = deserializerChain(targetModel);
+                AdapterDeserializer adapterDeserializer = new AdapterDeserializer(adapter, JustReturn.create());
+                return (parser, context, rType) -> {
+                    Object fromJson = targetAdapterModel.deserialize(parser, context, adapter.getToType());
+                    return adapterDeserializer.deserialize(fromJson, context, rType);
+                };
             }
             JsonbCreator creator = classCustomization.getCreator();
             boolean hasCreator = creator != null;
@@ -100,15 +123,20 @@ public class ChainModelCreator {
             }
             ModelDeserializer<JsonParser> instanceCreator;
             if (hasCreator) {
-                instanceCreator = new ObjectInstanceCreator(processors, creator, classModel.getType());
+                instanceCreator = new ObjectInstanceCreator(processors, creator, type);
             } else {
                 ModelDeserializer<JsonParser> typeWrapper = new ObjectDeserializer(processors);
-                instanceCreator = new ObjectDefaultInstanceCreator(typeWrapper, classModel.getType(),
+                instanceCreator = new ObjectDefaultInstanceCreator(typeWrapper, type,
                                                                    classModel.getDefaultConstructor());
             }
-            deserializerChain.put(classModel.getType(), instanceCreator);
+            ModelDeserializer<JsonParser> nullChecker = new NullCheckDeserializer(instanceCreator, JustReturn.create(), type);
+            deserializerChain.put(type, nullChecker);
         }
-        return deserializerChain.get(classModel.getType());
+        return deserializerChain.get(type);
+    }
+
+    private Optional<AdapterBinding> adapterBinding(Type type, ComponentBoundCustomization classCustomization) {
+        return jsonbContext.getComponentMatcher().getDeserializeAdapterBinding(type, classCustomization);
     }
 
     private Optional<DeserializerBinding<?>> userDeserializer(Type type, ComponentBoundCustomization classCustomization) {
@@ -143,10 +171,22 @@ public class ChainModelCreator {
             return new DynamicTypeDeserializer(memberDeserializer, type, customization);
         }
         Class<?> rawType = ReflectionUtils.getRawType(type);
-        Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(rawType,
+        Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(type,
                                                                                 (ComponentBoundCustomization) customization);
         if (deserializerBinding.isPresent()) {
             return new UserDefinedDeserializer(deserializerBinding.get().getJsonbDeserializer(), memberDeserializer);
+        }
+        Optional<AdapterBinding> adapterBinding = adapterBinding(type, (ComponentBoundCustomization) customization);
+        if (adapterBinding.isPresent()) {
+            AdapterBinding adapter = adapterBinding.get();
+            ClassModel targetModel = jsonbContext.getMappingContext()
+                    .getOrCreateClassModel(ReflectionUtils.getRawType(adapter.getToType()));
+            ModelDeserializer<JsonParser> targetAdapterModel = deserializerChain(targetModel);
+            AdapterDeserializer adapterDeserializer = new AdapterDeserializer(adapter, memberDeserializer);
+            return (parser, context, rType) -> {
+                Object fromJson = targetAdapterModel.deserialize(parser, context, adapter.getToType());
+                return adapterDeserializer.deserialize(fromJson, context, rType);
+            };
         }
         if (Collection.class.isAssignableFrom(rawType)) {
             ModelDeserializer<JsonParser> modelDeserializer = deserializerChain.computeIfAbsent(rawType, coll -> {
@@ -154,7 +194,7 @@ public class ChainModelCreator {
                         new CollectionDeserializer(new CollectionDynamicTypeDeserializer());
                 return new CollectionInstanceDeserializer(collectionDeserializer, rawType);
             });
-            return new NullDeserializer((value, context, rType) -> {
+            return new NullCheckDeserializer((value, context, rType) -> {
                 DeserializationContextImpl ctx = new DeserializationContextImpl(context);
                 return memberDeserializer.deserialize(modelDeserializer.deserialize(value, ctx, type), context, rType);
             }, memberDeserializer, rawType);
@@ -163,23 +203,39 @@ public class ChainModelCreator {
                     .getTypeDeserializer(rawType, customization, jsonbContext.getConfigProperties(), memberDeserializer);
             if (typeDeserializer == null) {
                 Class<?> implClass = resolveImplClass(rawType, customization);
+                if (implClass.equals(rawType) && implClass.isInterface()) {
+                    throw new JsonbException(Messages.getMessage(MessageKeys.INFER_TYPE_FOR_UNMARSHALL, rawType.getName()));
+                }
                 ClassModel classModel = jsonbContext.getMappingContext()
                         .getOrCreateClassModel(implClass);
                 ModelDeserializer<JsonParser> chain = deserializerChain(classModel);
-                return new NullDeserializer((value, context, rType) -> {
+                return new NullCheckDeserializer((value, context, rType) -> {
                     DeserializationContextImpl newContext = new DeserializationContextImpl(context);
                     return memberDeserializer.deserialize(chain.deserialize(value, newContext, type), context, rType);
                 }, memberDeserializer, rawType);
             }
-            return new NullDeserializer(new ValueExtractor(typeDeserializer), memberDeserializer, rawType);
+            return new NullCheckDeserializer(new ValueExtractor(typeDeserializer), memberDeserializer, rawType);
         }
     }
 
     private Class<?> resolveImplClass(Class<?> rawType, Customization customization) {
-        if (customization instanceof PropertyCustomization) {
-            Class<?> implClass = ((PropertyCustomization) customization).getImplementationClass();
-            if (implClass != null) {
-                return implClass;
+        if (rawType.isInterface()) {
+            Class<?> implementationClass = null;
+            //annotation
+            if (customization instanceof PropertyCustomization) {
+                implementationClass = ((PropertyCustomization) customization).getImplementationClass();
+            }
+            //JsonbConfig
+            if (implementationClass == null) {
+                implementationClass = jsonbContext.getConfigProperties().getUserTypeMapping().get(rawType);
+            }
+            if (implementationClass != null) {
+                if (!rawType.isAssignableFrom(implementationClass)) {
+                    throw new JsonbException(Messages.getMessage(MessageKeys.IMPL_CLASS_INCOMPATIBLE,
+                                                                 implementationClass,
+                                                                 rawType));
+                }
+                return implementationClass;
             }
         }
         return rawType;

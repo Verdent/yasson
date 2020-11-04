@@ -8,15 +8,15 @@ import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
 /**
  * TODO javadoc
  */
-public class NullDeserializer implements ModelDeserializer<JsonParser> {
+public class NullCheckDeserializer implements ModelDeserializer<JsonParser> {
 
     private final ModelDeserializer<JsonParser> nonNullDeserializer;
     private final ModelDeserializer<Object> nullDeserializer;
     private final Class<?> propertyClass;
 
-    public NullDeserializer(ModelDeserializer<JsonParser> nonNullDeserializer,
-                            ModelDeserializer<Object> nullDeserializer,
-                            Class<?> propertyClass) {
+    public NullCheckDeserializer(ModelDeserializer<JsonParser> nonNullDeserializer,
+                                 ModelDeserializer<Object> nullDeserializer,
+                                 Class<?> propertyClass) {
         this.nonNullDeserializer = nonNullDeserializer;
         this.nullDeserializer = nullDeserializer;
         this.propertyClass = propertyClass;
