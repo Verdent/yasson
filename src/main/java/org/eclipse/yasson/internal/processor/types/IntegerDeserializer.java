@@ -6,7 +6,7 @@ package org.eclipse.yasson.internal.processor.types;
 class IntegerDeserializer extends AbstractNumberDeserializer<Integer> {
 
     IntegerDeserializer(TypeDeserializerBuilder builder) {
-        super(builder, true, Integer.class);
+        super(builder, true);
     }
 
     @Override

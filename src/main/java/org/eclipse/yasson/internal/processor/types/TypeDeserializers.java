@@ -44,8 +44,16 @@ public class TypeDeserializers {
                                                                 Customization customization,
                                                                 JsonbConfigProperties properties,
                                                                 ModelDeserializer<Object> delegate) {
-        TypeDeserializerBuilder builder = new TypeDeserializerBuilder(customization, properties, delegate);
-        return Optional.ofNullable(DESERIALIZERS.get(clazz)).map(it -> it.apply(builder)).orElse(null);
+        TypeDeserializerBuilder builder = new TypeDeserializerBuilder(clazz, customization, properties, delegate);
+        return Optional.ofNullable(DESERIALIZERS.get(clazz)).map(it -> it.apply(builder))
+                .orElseGet(() -> specificTypes(builder));
+    }
+
+    private static ModelDeserializer<String> specificTypes(TypeDeserializerBuilder builder) {
+        if (Enum.class.isAssignableFrom(builder.getClazz())) {
+            return new EnumDeserializer(builder);
+        }
+        return null;
     }
 
 }

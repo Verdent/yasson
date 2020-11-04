@@ -5,20 +5,15 @@ import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Optional;
 
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.annotation.JsonbDateFormat;
 import org.eclipse.yasson.internal.JsonbConfigProperties;
-import org.eclipse.yasson.internal.JsonbContext;
-import org.eclipse.yasson.internal.Unmarshaller;
-import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
 import org.eclipse.yasson.internal.processor.deserializer.ModelDeserializer;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
-import org.eclipse.yasson.internal.serializer.DeserializerBuilder;
 import org.eclipse.yasson.internal.serializer.JsonbDateFormatter;
 
 import static org.eclipse.yasson.internal.serializer.AbstractDateTimeDeserializer.UTC;
@@ -26,15 +21,12 @@ import static org.eclipse.yasson.internal.serializer.AbstractDateTimeDeserialize
 /**
  * TODO javadoc
  */
-abstract class AbstractDateDeserializer<T> extends TypeDeserializer<T> {
+abstract class AbstractDateDeserializer<T> extends TypeDeserializer {
 
     private final ModelDeserializer<String> actualDeserializer;
-    private final Class<T> clazz;
 
-    AbstractDateDeserializer(TypeDeserializerBuilder builder,
-                             Class<T> clazz) {
+    AbstractDateDeserializer(TypeDeserializerBuilder builder) {
         super(builder);
-        this.clazz = clazz;
         this.actualDeserializer = actualDeserializer(builder);
     }
 
@@ -59,7 +51,7 @@ abstract class AbstractDateDeserializer<T> extends TypeDeserializer<T> {
             try {
                 return parseDefault(value, locale);
             } catch (DateTimeException e) {
-                throw new JsonbException(Messages.getMessage(MessageKeys.DATE_PARSE_ERROR, value, clazz), e);
+                throw new JsonbException(Messages.getMessage(MessageKeys.DATE_PARSE_ERROR, value, getType()), e);
             }
         };
     }
@@ -106,7 +98,7 @@ abstract class AbstractDateDeserializer<T> extends TypeDeserializer<T> {
         try {
             return parseWithFormatter(jsonValue, formatter);
         } catch (DateTimeException e) {
-            throw new JsonbException(Messages.getMessage(MessageKeys.DATE_PARSE_ERROR, jsonValue, clazz), e);
+            throw new JsonbException(Messages.getMessage(MessageKeys.DATE_PARSE_ERROR, jsonValue, getType()), e);
         }
     }
 

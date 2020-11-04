@@ -11,23 +11,29 @@ import org.eclipse.yasson.internal.serializer.DeserializerBuilder;
 /**
  * TODO javadoc
  */
-abstract class TypeDeserializer<T> implements ModelDeserializer<String> {
+abstract class TypeDeserializer implements ModelDeserializer<String> {
 
     private final ModelDeserializer<Object> delegate;
+    private final Class<?> clazz;
 
     TypeDeserializer(TypeDeserializerBuilder builder) {
         this.delegate = builder.getDelegate();
+        this.clazz = builder.getClazz();
     }
 
     @Override
     public final Object deserialize(String value, DeserializationContextImpl context, Type rType) {
-        return delegate.deserialize(deserializeValue(value, context, rType), context, rType);
+        return delegate.deserialize(deserializeValue(value, context, clazz), context, rType);
     }
 
     abstract Object deserializeValue(String value, DeserializationContextImpl context, Type rType);
 
-    public ModelDeserializer<Object> getDelegate() {
+    ModelDeserializer<Object> getDelegate() {
         return delegate;
+    }
+
+    Class<?> getType() {
+        return clazz;
     }
 
 }

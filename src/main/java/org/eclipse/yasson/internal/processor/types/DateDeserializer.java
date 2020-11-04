@@ -23,7 +23,7 @@ class DateDeserializer extends AbstractDateDeserializer<Date> {
     private static final DateTimeFormatter DEFAULT_DATE_TIME_FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
 
     DateDeserializer(TypeDeserializerBuilder builder) {
-        super(builder, Date.class);
+        super(builder);
     }
 
     @Override
