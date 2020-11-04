@@ -2,6 +2,7 @@ package org.eclipse.yasson.internal.processor.types;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,6 +28,9 @@ public class TypeDeserializers {
         DESERIALIZERS.put(Byte.class, ByteDeserializer::new);
         DESERIALIZERS.put(Byte.TYPE, ByteDeserializer::new);
         DESERIALIZERS.put(Date.class, DateDeserializer::new);
+        DESERIALIZERS.put(Double.class, DoubleDeserializer::new);
+        DESERIALIZERS.put(Double.TYPE, DoubleDeserializer::new);
+        DESERIALIZERS.put(Instant.class, InstantDeserializer::new);
         DESERIALIZERS.put(Integer.class, IntegerDeserializer::new);
         DESERIALIZERS.put(Integer.TYPE, IntegerDeserializer::new);
         DESERIALIZERS.put(Long.class, LongDeserializer::new);
