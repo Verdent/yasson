@@ -31,7 +31,6 @@ import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.config.PropertyNamingStrategy;
 import jakarta.json.bind.config.PropertyVisibilityStrategy;
 import jakarta.json.bind.serializer.JsonbSerializer;
-
 import org.eclipse.yasson.internal.AnnotationIntrospector;
 import org.eclipse.yasson.internal.JsonbContext;
 import org.eclipse.yasson.internal.ReflectionUtils;
@@ -102,10 +101,6 @@ public final class PropertyModel implements Comparable<PropertyModel> {
 
     private final Type setterMethodType;
 
-    private final boolean getterVisible;
-
-    private final boolean setterVisible;
-
     /**
      * Create a new PropertyModel that merges two existing PropertyModel that have identical read/write names.
      * The input PropertyModel objects MUST be equal (a.equals(b) == true)
@@ -126,8 +121,6 @@ public final class PropertyModel implements Comparable<PropertyModel> {
         this.customization = a.customization;
         
         // Merging steps
-        this.getterVisible = a.getterVisible || b.getterVisible;
-        this.setterVisible = a.setterVisible || b.setterVisible;
         this.getterMethodType = a.getterMethodType != null ? a.getterMethodType : b.getterMethodType;
         this.setterMethodType = a.setterMethodType != null ? a.setterMethodType : b.setterMethodType;
         this.property = a.property;
@@ -167,8 +160,8 @@ public final class PropertyModel implements Comparable<PropertyModel> {
         this.setter = property.getSetter();
         
         PropertyVisibilityStrategy strategy = classModel.getClassCustomization().getPropertyVisibilityStrategy();
-        this.getterVisible = isMethodVisible(getter, strategy);
-        this.setterVisible = isMethodVisible(setter, strategy);
+        boolean getterVisible = isMethodVisible(getter, strategy);
+        boolean setterVisible = isMethodVisible(setter, strategy);
 
         this.getValueHandle = createReadHandle(field, getter, getterVisible, strategy);
         this.setValueHandle = createWriteHandle(field, setter, setterVisible, strategy);
@@ -422,14 +415,6 @@ public final class PropertyModel implements Comparable<PropertyModel> {
         return !customization.isWriteTransient() && this.setValueHandle != null;
     }
 
-    public boolean isGetterVisible() {
-        return getterVisible;
-    }
-
-    public boolean isSetterVisible() {
-        return setterVisible;
-    }
-
     /**
      * Default property name according to Field / Getter / Setter method names.
      * This name is use for identifying properties, for JSON serialization is used customized name
@@ -663,4 +648,13 @@ public final class PropertyModel implements Comparable<PropertyModel> {
             return Modifier.isPublic(method.getModifiers());
         }
     }
+
+    public MethodHandle getGetValueHandle() {
+        return getValueHandle;
+    }
+
+    public MethodHandle getSetValueHandle() {
+        return setValueHandle;
+    }
+
 }

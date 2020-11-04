@@ -31,14 +31,13 @@ import org.eclipse.yasson.internal.processor.deserializer.CollectionDynamicTypeD
 import org.eclipse.yasson.internal.processor.deserializer.CollectionInstanceDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.DelayedDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.DynamicTypeDeserializer;
-import org.eclipse.yasson.internal.processor.deserializer.FieldDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.JustReturn;
 import org.eclipse.yasson.internal.processor.deserializer.ModelDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.NullDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.ObjectDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.ObjectInstanceCreator;
 import org.eclipse.yasson.internal.processor.deserializer.ObjectDefaultInstanceCreator;
-import org.eclipse.yasson.internal.processor.deserializer.SetterDeserializer;
+import org.eclipse.yasson.internal.processor.deserializer.ValueSetterDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.UserDefinedDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.ValueExtractor;
 import org.eclipse.yasson.internal.processor.types.TypeDeserializers;
@@ -82,7 +81,7 @@ public class ChainModelCreator {
             List<String> params = hasCreator ? creatorParamsList(creator) : Collections.emptyList();
             Map<String, ModelDeserializer<JsonParser>> processors = new LinkedHashMap<>();
             for (PropertyModel propertyModel : classModel.getSortedProperties()) {
-                if (!propertyModel.isSetterVisible() && propertyModel.getField() == null) {
+                if (!propertyModel.isWritable()) {
                     continue;
                 }
                 ModelDeserializer<JsonParser> modelDeserializer = memberTypeProcessor(propertyModel, hasCreator,
@@ -128,10 +127,8 @@ public class ChainModelCreator {
         Type type = propertyModel.getPropertyDeserializationType();
         if (isCreatorParam) {
             memberDeserializer = JustReturn.create();
-        } else if (propertyModel.isSetterVisible()) {
-            memberDeserializer = new SetterDeserializer(propertyModel.getSetter());
         } else {
-            memberDeserializer = new FieldDeserializer(propertyModel.getField());
+            memberDeserializer = new ValueSetterDeserializer(propertyModel.getSetValueHandle());
         }
         if (hasCreator && !isCreatorParam) {
             memberDeserializer = new DelayedDeserializer(memberDeserializer);
