@@ -6,7 +6,7 @@ package org.eclipse.yasson.internal.processor.types;
 class ByteDeserializer extends AbstractNumberDeserializer<Byte> {
 
     ByteDeserializer(TypeDeserializerBuilder builder) {
-        super(builder, true, Byte.class);
+        super(builder, true);
     }
 
     @Override

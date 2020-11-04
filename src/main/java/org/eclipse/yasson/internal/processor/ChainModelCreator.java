@@ -74,7 +74,7 @@ public class ChainModelCreator {
             ClassCustomization classCustomization = classModel.getClassCustomization();
             Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(classModel.getType(), classCustomization);
             if (deserializerBinding.isPresent()) {
-                return new UserDefinedDeserializer(deserializerBinding.get().getJsonbDeserializer());
+                return new UserDefinedDeserializer(deserializerBinding.get().getJsonbDeserializer(), JustReturn.create());
             }
             JsonbCreator creator = classCustomization.getCreator();
             boolean hasCreator = creator != null;
@@ -143,6 +143,11 @@ public class ChainModelCreator {
             return new DynamicTypeDeserializer(memberDeserializer, type, customization);
         }
         Class<?> rawType = ReflectionUtils.getRawType(type);
+        Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(rawType,
+                                                                                (ComponentBoundCustomization) customization);
+        if (deserializerBinding.isPresent()) {
+            return new UserDefinedDeserializer(deserializerBinding.get().getJsonbDeserializer(), memberDeserializer);
+        }
         if (Collection.class.isAssignableFrom(rawType)) {
             ModelDeserializer<JsonParser> modelDeserializer = deserializerChain.computeIfAbsent(rawType, coll -> {
                 CollectionDeserializer collectionDeserializer =
@@ -157,11 +162,6 @@ public class ChainModelCreator {
             ModelDeserializer<String> typeDeserializer = TypeDeserializers
                     .getTypeDeserializer(rawType, customization, jsonbContext.getConfigProperties(), memberDeserializer);
             if (typeDeserializer == null) {
-                Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(type,
-                                                                                        (ComponentBoundCustomization) customization);
-                if (deserializerBinding.isPresent()) {
-                    return new UserDefinedDeserializer(deserializerBinding.get().getJsonbDeserializer());
-                }
                 Class<?> implClass = resolveImplClass(rawType, customization);
                 ClassModel classModel = jsonbContext.getMappingContext()
                         .getOrCreateClassModel(implClass);

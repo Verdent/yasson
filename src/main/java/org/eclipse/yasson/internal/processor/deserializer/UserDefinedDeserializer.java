@@ -5,7 +5,7 @@ import java.lang.reflect.Type;
 import jakarta.json.bind.serializer.JsonbDeserializer;
 import jakarta.json.stream.JsonParser;
 import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
-import org.eclipse.yasson.internal.processor.UserParser;
+import org.eclipse.yasson.internal.processor.YassonParser;
 
 /**
  * TODO javadoc
@@ -13,17 +13,21 @@ import org.eclipse.yasson.internal.processor.UserParser;
 public class UserDefinedDeserializer implements ModelDeserializer<JsonParser> {
 
     private final JsonbDeserializer<?> userDefinedDeserializer;
+    private final ModelDeserializer<Object> delegate;
 
-    public UserDefinedDeserializer(JsonbDeserializer<?> userDefinedDeserializer) {
+    public UserDefinedDeserializer(JsonbDeserializer<?> userDefinedDeserializer,
+                                   ModelDeserializer<Object> delegate) {
         this.userDefinedDeserializer = userDefinedDeserializer;
+        this.delegate = delegate;
     }
 
     @Override
     public Object deserialize(JsonParser value, DeserializationContextImpl context, Type rType) {
-        UserParser userParser = new UserParser(value);
-        Object object = userDefinedDeserializer.deserialize(userParser, context, rType);
-        userParser.skipRemaining();
-        return object;
+        YassonParser yassonParser = new YassonParser(value, context.getLastValueEvent());
+        DeserializationContextImpl newContext = new DeserializationContextImpl(context);
+        Object object = userDefinedDeserializer.deserialize(yassonParser, newContext, rType);
+        yassonParser.skipRemaining();
+        return delegate.deserialize(object, context, rType);
     }
 
 }

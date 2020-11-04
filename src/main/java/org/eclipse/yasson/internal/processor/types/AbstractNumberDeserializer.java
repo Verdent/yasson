@@ -16,17 +16,15 @@ import org.eclipse.yasson.internal.serializer.JsonbNumberFormatter;
 /**
  * TODO javadoc
  */
-abstract class AbstractNumberDeserializer<T extends Number> extends TypeDeserializer<T> {
+abstract class AbstractNumberDeserializer<T extends Number> extends TypeDeserializer {
 
     private final ModelDeserializer<String> actualDeserializer;
     private final boolean integerOnly;
-    private final Class<T> clazz;
 
-    AbstractNumberDeserializer(TypeDeserializerBuilder builder, boolean integerOnly, Class<T> clazz) {
+    AbstractNumberDeserializer(TypeDeserializerBuilder builder, boolean integerOnly) {
         super(builder);
         this.actualDeserializer = actualDeserializer(builder);
         this.integerOnly = integerOnly;
-        this.clazz = clazz;
     }
 
     private ModelDeserializer<String> actualDeserializer(TypeDeserializerBuilder builder) {
@@ -36,7 +34,7 @@ abstract class AbstractNumberDeserializer<T extends Number> extends TypeDeserial
                 try {
                     return parseNumberValue(value);
                 } catch (NumberFormatException e) {
-                    throw new JsonbException(Messages.getMessage(MessageKeys.DESERIALIZE_VALUE_ERROR, clazz));
+                    throw new JsonbException(Messages.getMessage(MessageKeys.DESERIALIZE_VALUE_ERROR, getType()));
                 }
             };
         }

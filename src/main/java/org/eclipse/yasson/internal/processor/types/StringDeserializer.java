@@ -12,7 +12,7 @@ import org.eclipse.yasson.internal.properties.Messages;
 /**
  * TODO javadoc
  */
-class StringDeserializer extends TypeDeserializer<String> {
+class StringDeserializer extends TypeDeserializer {
 
     StringDeserializer(TypeDeserializerBuilder builder) {
         super(builder);

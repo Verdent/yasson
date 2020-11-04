@@ -11,16 +11,22 @@ import org.eclipse.yasson.internal.processor.deserializer.ModelDeserializer;
  */
 class TypeDeserializerBuilder {
 
+    private final Class<?> clazz;
     private final Customization customization;
     private final JsonbConfigProperties configProperties;
     private final ModelDeserializer<Object> delegate;
 
-    TypeDeserializerBuilder(Customization customization,
+    TypeDeserializerBuilder(Class<?> clazz, Customization customization,
                             JsonbConfigProperties configProperties,
                             ModelDeserializer<Object> delegate) {
+        this.clazz = clazz;
         this.customization = Objects.requireNonNull(customization);
         this.configProperties = Objects.requireNonNull(configProperties);
         this.delegate = Objects.requireNonNull(delegate);
+    }
+
+    public Class<?> getClazz() {
+        return clazz;
     }
 
     public JsonbConfigProperties getConfigProperties() {
