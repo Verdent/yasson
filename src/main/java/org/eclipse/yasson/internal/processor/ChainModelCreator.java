@@ -14,13 +14,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import jakarta.json.stream.JsonParser;
+import org.eclipse.yasson.internal.ComponentMatcher;
 import org.eclipse.yasson.internal.JsonbContext;
 import org.eclipse.yasson.internal.ReflectionUtils;
+import org.eclipse.yasson.internal.components.DeserializerBinding;
 import org.eclipse.yasson.internal.model.ClassModel;
 import org.eclipse.yasson.internal.model.CreatorModel;
 import org.eclipse.yasson.internal.model.JsonbCreator;
 import org.eclipse.yasson.internal.model.PropertyModel;
 import org.eclipse.yasson.internal.model.customization.ClassCustomization;
+import org.eclipse.yasson.internal.model.customization.ComponentBoundCustomization;
 import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.model.customization.PropertyCustomization;
 import org.eclipse.yasson.internal.processor.deserializer.CollectionDeserializer;
@@ -36,6 +39,7 @@ import org.eclipse.yasson.internal.processor.deserializer.ObjectDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.ObjectInstanceCreator;
 import org.eclipse.yasson.internal.processor.deserializer.ObjectDefaultInstanceCreator;
 import org.eclipse.yasson.internal.processor.deserializer.SetterDeserializer;
+import org.eclipse.yasson.internal.processor.deserializer.UserDefinedDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.ValueExtractor;
 import org.eclipse.yasson.internal.processor.types.TypeDeserializers;
 
@@ -69,11 +73,18 @@ public class ChainModelCreator {
             });
         } else {
             ClassCustomization classCustomization = classModel.getClassCustomization();
+            Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(classModel.getType(), classCustomization);
+            if (deserializerBinding.isPresent()) {
+                return new UserDefinedDeserializer(deserializerBinding.get().getJsonbDeserializer());
+            }
             JsonbCreator creator = classCustomization.getCreator();
             boolean hasCreator = creator != null;
             List<String> params = hasCreator ? creatorParamsList(creator) : Collections.emptyList();
             Map<String, ModelDeserializer<JsonParser>> processors = new LinkedHashMap<>();
             for (PropertyModel propertyModel : classModel.getSortedProperties()) {
+                if (!propertyModel.isSetterVisible() && propertyModel.getField() == null) {
+                    continue;
+                }
                 ModelDeserializer<JsonParser> modelDeserializer = memberTypeProcessor(propertyModel, hasCreator,
                                                                                       params.contains(propertyModel
                                                                                                               .getReadName()));
@@ -99,6 +110,11 @@ public class ChainModelCreator {
             deserializerChain.put(classModel.getType(), instanceCreator);
         }
         return deserializerChain.get(classModel.getType());
+    }
+
+    private Optional<DeserializerBinding<?>> userDeserializer(Type type, ComponentBoundCustomization classCustomization) {
+        final ComponentMatcher componentMatcher = jsonbContext.getComponentMatcher();
+        return componentMatcher.getDeserializerBinding(type, classCustomization);
     }
 
     private List<String> creatorParamsList(JsonbCreator creator) {
@@ -144,6 +160,11 @@ public class ChainModelCreator {
             ModelDeserializer<String> typeDeserializer = TypeDeserializers
                     .getTypeDeserializer(rawType, customization, jsonbContext.getConfigProperties(), memberDeserializer);
             if (typeDeserializer == null) {
+                Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(type,
+                                                                                        (ComponentBoundCustomization) customization);
+                if (deserializerBinding.isPresent()) {
+                    return new UserDefinedDeserializer(deserializerBinding.get().getJsonbDeserializer());
+                }
                 Class<?> implClass = resolveImplClass(rawType, customization);
                 ClassModel classModel = jsonbContext.getMappingContext()
                         .getOrCreateClassModel(implClass);

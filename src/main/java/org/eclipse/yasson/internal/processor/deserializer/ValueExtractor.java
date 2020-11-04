@@ -22,8 +22,10 @@ public class ValueExtractor implements ModelDeserializer<JsonParser> {
         JsonParser.Event last = context.getLastValueEvent();
         switch (last) {
         case VALUE_TRUE:
+            valueToPropagate = "true";
+            break;
         case VALUE_FALSE:
-            valueToPropagate = "booleanValue"; //This value is not used in deserializer. It is just placeholder.
+            valueToPropagate = "false";
             break;
         default:
             valueToPropagate = value.getString();
