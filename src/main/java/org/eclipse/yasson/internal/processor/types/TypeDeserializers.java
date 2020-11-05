@@ -58,21 +58,23 @@ public class TypeDeserializers {
                 .map(it -> it.apply(builder))
                 .map(ValueExtractor::new)
                 .map(extractor -> (ModelDeserializer<JsonParser>) extractor)
-                .or(() -> assignableCases(builder))
+                .or(() -> Optional.ofNullable(assignableCases(builder)))
                 .map(deserializer -> new NullCheckDeserializer(deserializer, delegate, clazz))
                 .orElse(null);
     }
 
-    private static Optional<ModelDeserializer<JsonParser>> assignableCases(TypeDeserializerBuilder builder) {
+    private static ModelDeserializer<JsonParser> assignableCases(TypeDeserializerBuilder builder) {
         if (Enum.class.isAssignableFrom(builder.getClazz())) {
-            return Optional.of(new ValueExtractor(new EnumDeserializer(builder)));
+            return new ValueExtractor(new EnumDeserializer(builder));
+        } else if (Object.class.equals(builder.getClazz())) {
+            return new ObjectTypeDeserializer(builder);
         }
         for (Class<?> clazz : ASSIGNABLE.keySet()) {
             if (clazz.isAssignableFrom(builder.getClazz())) {
-                return Optional.of(ASSIGNABLE.get(clazz).apply(builder));
+                return ASSIGNABLE.get(clazz).apply(builder);
             }
         }
-        return Optional.empty();
+        return null;
     }
 
 }
