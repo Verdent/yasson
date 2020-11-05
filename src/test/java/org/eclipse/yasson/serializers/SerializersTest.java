@@ -369,7 +369,7 @@ public class SerializersTest {
     }
     
     @Test
-    public void testObjectDerializerWithLexOrderStrategy() {
+    public void testObjectDeserializerWithLexOrderStrategy() {
         Jsonb jsonb = JsonbBuilder.create(new JsonbConfig().withPropertyOrderStrategy(PropertyOrderStrategy.LEXICOGRAPHICAL));
         Object pojo = jsonb.fromJson("{\"first\":{},\"third\":{},\"second\":{\"second\":2,\"first\":1}}", Object.class);
         assertTrue(pojo instanceof TreeMap, "Pojo is not of type TreeMap");
@@ -380,7 +380,7 @@ public class SerializersTest {
     }
     
     @Test
-    public void testObjectDerializerWithReverseOrderStrategy() {
+    public void testObjectDeserializerWithReverseOrderStrategy() {
         Jsonb jsonb = JsonbBuilder.create(new JsonbConfig().withPropertyOrderStrategy(PropertyOrderStrategy.REVERSE));
         Object pojo = jsonb.fromJson("{\"first\":{},\"second\":{\"first\":1,\"second\":2},\"third\":{}}", Object.class);
         assertTrue(pojo instanceof ReverseTreeMap, "Pojo is not of type ReverseTreeMap");

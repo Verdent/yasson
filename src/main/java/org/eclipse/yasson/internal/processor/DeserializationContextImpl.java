@@ -74,11 +74,13 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
     @SuppressWarnings("unchecked")
     private <T> T deserializeItem(Type type, JsonParser parser) {
         try {
-            lastValueEvent = parser.next();
+            if (lastValueEvent == null) {
+                lastValueEvent = parser.next();
+            }
             Class<?> rawType = ReflectionUtils.getRawType(type);
             ClassModel classModel = getMappingContext().getOrCreateClassModel(rawType);
             ModelDeserializer<JsonParser> modelDeserializer = getJsonbContext().getChainModelCreator()
-                    .deserializerChain(classModel);
+                    .deserializerChain(type, classModel);
             return (T) modelDeserializer.deserialize(parser, this, type);
         } catch (JsonbException e) {
             LOGGER.severe(e.getMessage());

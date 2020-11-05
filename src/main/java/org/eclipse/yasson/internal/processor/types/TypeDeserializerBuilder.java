@@ -16,11 +16,12 @@ class TypeDeserializerBuilder {
     private final JsonbConfigProperties configProperties;
     private final ModelDeserializer<Object> delegate;
 
-    TypeDeserializerBuilder(Class<?> clazz, Customization customization,
+    TypeDeserializerBuilder(Class<?> clazz,
+                            Customization customization,
                             JsonbConfigProperties configProperties,
                             ModelDeserializer<Object> delegate) {
-        this.clazz = clazz;
-        this.customization = Objects.requireNonNull(customization);
+        this.clazz = Objects.requireNonNull(clazz);
+        this.customization = customization == null ? Customization.empty() : customization;
         this.configProperties = Objects.requireNonNull(configProperties);
         this.delegate = Objects.requireNonNull(delegate);
     }
