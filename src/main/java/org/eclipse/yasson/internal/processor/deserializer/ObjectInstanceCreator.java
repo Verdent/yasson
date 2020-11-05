@@ -12,6 +12,8 @@ import jakarta.json.stream.JsonParser;
 import org.eclipse.yasson.internal.model.CreatorModel;
 import org.eclipse.yasson.internal.model.JsonbCreator;
 import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
+import org.eclipse.yasson.internal.properties.MessageKeys;
+import org.eclipse.yasson.internal.properties.Messages;
 
 /**
  * TODO javadoc
@@ -63,6 +65,8 @@ public class ObjectInstanceCreator implements ModelDeserializer<JsonParser> {
                     String param = creatorParams.get(i);
                     if (paramValues.containsKey(param)) {
                         params[i] = paramValues.get(param);
+                    } else {
+                        throw new JsonbException(Messages.getMessage(MessageKeys.JSONB_CREATOR_MISSING_PROPERTY, param));
                     }
                 }
                 context.setInstance(creator.call(params, clazz));
