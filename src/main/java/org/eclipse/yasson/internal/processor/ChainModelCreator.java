@@ -78,10 +78,9 @@ public class ChainModelCreator {
             });
         } else {
             ClassCustomization classCustomization = classModel.getClassCustomization();
-            ModelDeserializer<String> typeDeserializer = TypeDeserializers
-                    .getTypeDeserializer(type, classCustomization, jsonbContext.getConfigProperties(), JustReturn.create());
+            ModelDeserializer<JsonParser> typeDeserializer = typeDeserializer(type, classCustomization, JustReturn.create());
             if (typeDeserializer != null) {
-                return new NullCheckDeserializer(new ValueExtractor(typeDeserializer), JustReturn.create(), type);
+                return typeDeserializer;
             }
             Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(type, classCustomization);
             if (deserializerBinding.isPresent()) {
@@ -199,8 +198,7 @@ public class ChainModelCreator {
                 return memberDeserializer.deserialize(modelDeserializer.deserialize(value, ctx, type), context, rType);
             }, memberDeserializer, rawType);
         } else {
-            ModelDeserializer<String> typeDeserializer = TypeDeserializers
-                    .getTypeDeserializer(rawType, customization, jsonbContext.getConfigProperties(), memberDeserializer);
+            ModelDeserializer<JsonParser> typeDeserializer = typeDeserializer(rawType, customization, memberDeserializer);
             if (typeDeserializer == null) {
                 Class<?> implClass = resolveImplClass(rawType, customization);
                 if (implClass.equals(rawType) && implClass.isInterface()) {
@@ -214,8 +212,14 @@ public class ChainModelCreator {
                     return memberDeserializer.deserialize(chain.deserialize(value, newContext, type), context, rType);
                 }, memberDeserializer, rawType);
             }
-            return new NullCheckDeserializer(new ValueExtractor(typeDeserializer), memberDeserializer, rawType);
+            return typeDeserializer;
         }
+    }
+
+    private ModelDeserializer<JsonParser> typeDeserializer(Class<?> rawType,
+                                                           Customization customization,
+                                                           ModelDeserializer<Object> delegate) {
+        return TypeDeserializers.getTypeDeserializer(rawType, customization, jsonbContext.getConfigProperties(), delegate);
     }
 
     private Class<?> resolveImplClass(Class<?> rawType, Customization customization) {
