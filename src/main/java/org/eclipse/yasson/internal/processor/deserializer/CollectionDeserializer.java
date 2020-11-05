@@ -36,8 +36,6 @@ public class CollectionDeserializer implements ModelDeserializer<JsonParser> {
                 break;
             case END_ARRAY:
                 return context.getInstance();
-//            case END_OBJECT:
-//                break;
             default:
                 throw new JsonbException("Unexpected state: " + next);
             }
