@@ -30,13 +30,13 @@ public class CollectionDynamicTypeDeserializer implements ModelDeserializer<Json
 
 
     private ModelDeserializer<JsonParser> createDeserializer(Type clazz, DeserializationContextImpl context) {
-        ModelDeserializer<String> typeDeserializer = TypeDeserializers.getTypeDeserializer(ReflectionUtils.getRawType(clazz),
+        ModelDeserializer<JsonParser> typeDeserializer = TypeDeserializers.getTypeDeserializer(ReflectionUtils.getRawType(clazz),
                                                                                            Customization.empty(),
                                                                                            context.getJsonbContext()
                                                                                                    .getConfigProperties(),
                                                                                            JustReturn.create());
         if (typeDeserializer != null) {
-            return new ValueExtractor(typeDeserializer);
+            return typeDeserializer;
         }
         MappingContext mappingContext = context.getMappingContext();
         return context.getJsonbContext().getChainModelCreator()
