@@ -9,16 +9,23 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
+import jakarta.json.JsonValue;
+import jakarta.json.stream.JsonParser;
 import org.eclipse.yasson.internal.JsonbConfigProperties;
 import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.processor.deserializer.ModelDeserializer;
+import org.eclipse.yasson.internal.processor.deserializer.NullCheckDeserializer;
+import org.eclipse.yasson.internal.processor.deserializer.ValueExtractor;
 
 /**
  * TODO javadoc
  */
 public class TypeDeserializers {
 
-    private static final Map<Class<?>, Function<TypeDeserializerBuilder, ModelDeserializer<String>>> DESERIALIZERS = new HashMap<>();
+    private static final Map<Class<?>, Function<TypeDeserializerBuilder, ModelDeserializer<String>>> DESERIALIZERS =
+            new HashMap<>();
+    private static final Map<Class<?>, Function<TypeDeserializerBuilder, ModelDeserializer<JsonParser>>> ASSIGNABLE =
+            new HashMap<>();
 
     static {
         DESERIALIZERS.put(BigInteger.class, BigIntegerDeserializer::new);
@@ -38,22 +45,34 @@ public class TypeDeserializers {
         DESERIALIZERS.put(Short.class, ShortDeserializer::new);
         DESERIALIZERS.put(Short.TYPE, ShortDeserializer::new);
         DESERIALIZERS.put(String.class, StringDeserializer::new);
+
+        ASSIGNABLE.put(JsonValue.class, JsonValueDeserializer::new);
     }
 
-    public static ModelDeserializer<String> getTypeDeserializer(Class<?> clazz,
-                                                                Customization customization,
-                                                                JsonbConfigProperties properties,
-                                                                ModelDeserializer<Object> delegate) {
+    public static ModelDeserializer<JsonParser> getTypeDeserializer(Class<?> clazz,
+                                                                    Customization customization,
+                                                                    JsonbConfigProperties properties,
+                                                                    ModelDeserializer<Object> delegate) {
         TypeDeserializerBuilder builder = new TypeDeserializerBuilder(clazz, customization, properties, delegate);
-        return Optional.ofNullable(DESERIALIZERS.get(clazz)).map(it -> it.apply(builder))
-                .orElseGet(() -> specificTypes(builder));
+        return Optional.ofNullable(DESERIALIZERS.get(clazz))
+                .map(it -> it.apply(builder))
+                .map(ValueExtractor::new)
+                .map(extractor -> (ModelDeserializer<JsonParser>) extractor)
+                .or(() -> assignableCases(builder))
+                .map(deserializer -> new NullCheckDeserializer(deserializer, delegate, clazz))
+                .orElse(null);
     }
 
-    private static ModelDeserializer<String> specificTypes(TypeDeserializerBuilder builder) {
+    private static Optional<ModelDeserializer<JsonParser>> assignableCases(TypeDeserializerBuilder builder) {
         if (Enum.class.isAssignableFrom(builder.getClazz())) {
-            return new EnumDeserializer(builder);
+            return Optional.of(new ValueExtractor(new EnumDeserializer(builder)));
         }
-        return null;
+        for (Class<?> clazz : ASSIGNABLE.keySet()) {
+            if (clazz.isAssignableFrom(builder.getClazz())) {
+                return Optional.of(ASSIGNABLE.get(clazz).apply(builder));
+            }
+        }
+        return Optional.empty();
     }
 
 }
