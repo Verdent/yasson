@@ -40,11 +40,13 @@ public class CollectionDeserializer implements ModelDeserializer<JsonParser> {
                 collection.add(delegate.deserialize(parser, newContext, colType));
                 break;
             case END_ARRAY:
+                context.getRtypeChain().removeLast();
                 return collection;
             default:
                 throw new JsonbException("Unexpected state: " + next);
             }
         }
+        context.getRtypeChain().removeLast();
         return collection;
     }
 
