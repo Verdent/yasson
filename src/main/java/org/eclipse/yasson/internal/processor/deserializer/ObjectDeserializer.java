@@ -43,13 +43,13 @@ public class ObjectDeserializer implements ModelDeserializer<JsonParser> {
             case END_ARRAY:
                 continue;
             case END_OBJECT:
-                context.getRtypeChain().remove(rType);
+                context.getRtypeChain().removeLast();
                 return context.getInstance();
             default:
                 throw new JsonbException("Unexpected state: " + next);
             }
         }
-        context.getRtypeChain().remove(rType);
+        context.getRtypeChain().removeLast();
         return context.getInstance();
     }
 }

@@ -2,6 +2,7 @@ package org.eclipse.yasson.internal.processor;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -25,7 +26,7 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
 
     private static final Logger LOGGER = Logger.getLogger(DeserializationContextImpl.class.getName());
 
-    private final List<Type> rtypeChain;
+    private final LinkedList<Type> rtypeChain;
     private final List<DelayedDeserializer.DelayedSetter> delayedSetters = new ArrayList<>();
     private JsonParser.Event lastValueEvent;
 
@@ -36,7 +37,7 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
      */
     public DeserializationContextImpl(JsonbContext jsonbContext) {
         super(jsonbContext);
-        this.rtypeChain = new ArrayList<>();
+        this.rtypeChain = new LinkedList<>();
     }
 
     public DeserializationContextImpl(DeserializationContextImpl context) {
@@ -45,7 +46,7 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
         this.lastValueEvent = context.lastValueEvent;
     }
 
-    public List<Type> getRtypeChain() {
+    public LinkedList<Type> getRtypeChain() {
         return rtypeChain;
     }
 
