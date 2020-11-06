@@ -31,19 +31,17 @@ import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.model.customization.PropertyCustomization;
 import org.eclipse.yasson.internal.processor.deserializer.AdapterDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.CollectionDeserializer;
-import org.eclipse.yasson.internal.processor.deserializer.CollectionDynamicTypeDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.CollectionInstanceDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.DelayedDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.DynamicTypeDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.JustReturn;
 import org.eclipse.yasson.internal.processor.deserializer.ModelDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.NullCheckDeserializer;
+import org.eclipse.yasson.internal.processor.deserializer.ObjectDefaultInstanceCreator;
 import org.eclipse.yasson.internal.processor.deserializer.ObjectDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.ObjectInstanceCreator;
-import org.eclipse.yasson.internal.processor.deserializer.ObjectDefaultInstanceCreator;
-import org.eclipse.yasson.internal.processor.deserializer.ValueSetterDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.UserDefinedDeserializer;
-import org.eclipse.yasson.internal.processor.deserializer.ValueExtractor;
+import org.eclipse.yasson.internal.processor.deserializer.ValueSetterDeserializer;
 import org.eclipse.yasson.internal.processor.types.TypeDeserializers;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
@@ -65,12 +63,10 @@ public class ChainModelCreator {
 
     public ModelDeserializer<JsonParser> deserializerChain(Type type, ClassModel classModel) {
         Class<?> rawType = classModel.getType();
-        if (!Collection.class.isAssignableFrom(rawType) && deserializerChain.containsKey(rawType)) {
-            return deserializerChain.get(rawType);
-        }
         if (userTypeMapping.containsKey(rawType)) {
-            return deserializerChain(type, jsonbContext.getMappingContext()
-                    .getOrCreateClassModel(userTypeMapping.get(rawType)));
+            return deserializerChain.computeIfAbsent(rawType, it ->
+                    deserializerChain(userTypeMapping.get(rawType),
+                                      jsonbContext.getMappingContext().getOrCreateClassModel(userTypeMapping.get(rawType))));
         } else if (Collection.class.isAssignableFrom(rawType)) {
             if (deserializerChain.containsKey(type)) {
                 return deserializerChain.get(type);
@@ -78,21 +74,16 @@ public class ChainModelCreator {
             Type colType = type instanceof ParameterizedType
                     ? ((ParameterizedType) type).getActualTypeArguments()[0]
                     : Object.class;
-            ClassModel colTypeModel = jsonbContext.getMappingContext().getOrCreateClassModel(ReflectionUtils.getRawType(colType));
-            CollectionDeserializer collectionDeserializer = new CollectionDeserializer(typeProcessor(colType,
-                                                                                                     colTypeModel
-                                                                                                             .getClassCustomization(),
-                                                                                                     JustReturn.create()));
+//            ClassModel colTypeModel = jsonbContext.getMappingContext().getOrCreateClassModel(ReflectionUtils.getRawType(colType));
+            ModelDeserializer<JsonParser> typeProcessor = typeProcessor(colType,
+                                                                            classModel.getClassCustomization(),
+                                                                            JustReturn.create());
+            CollectionDeserializer collectionDeserializer = new CollectionDeserializer(typeProcessor);
             CollectionInstanceDeserializer instanceDeserializer = new CollectionInstanceDeserializer(collectionDeserializer,
                                                                                                      rawType);
             NullCheckDeserializer nullChecker = new NullCheckDeserializer(instanceDeserializer, JustReturn.create(), rawType);
             deserializerChain.put(type, nullChecker);
             return nullChecker;
-            //            return deserializerChain.computeIfAbsent(rawType, coll -> {
-            //                CollectionDeserializer collectionDeserializer =
-            //                        new CollectionDeserializer(new CollectionDynamicTypeDeserializer());
-            //                return new CollectionInstanceDeserializer(collectionDeserializer, rawType);
-            //            });
         } else {
             ClassCustomization classCustomization = classModel.getClassCustomization();
             ModelDeserializer<JsonParser> typeDeserializer = typeDeserializer(rawType, classCustomization, JustReturn.create());
@@ -205,11 +196,8 @@ public class ChainModelCreator {
             };
         }
         if (Collection.class.isAssignableFrom(rawType)) {
-            ModelDeserializer<JsonParser> modelDeserializer = deserializerChain.computeIfAbsent(rawType, coll -> {
-                CollectionDeserializer collectionDeserializer =
-                        new CollectionDeserializer(new CollectionDynamicTypeDeserializer());
-                return new CollectionInstanceDeserializer(collectionDeserializer, rawType);
-            });
+            ClassModel classModel = jsonbContext.getMappingContext().getOrCreateClassModel(rawType);
+            ModelDeserializer<JsonParser> modelDeserializer = deserializerChain(type, classModel);
             return new NullCheckDeserializer((value, context, rType) -> {
                 DeserializationContextImpl ctx = new DeserializationContextImpl(context);
                 return memberDeserializer.deserialize(modelDeserializer.deserialize(value, ctx, type), context, rType);
@@ -221,8 +209,7 @@ public class ChainModelCreator {
                 if (implClass.equals(rawType) && implClass.isInterface()) {
                     throw new JsonbException(Messages.getMessage(MessageKeys.INFER_TYPE_FOR_UNMARSHALL, rawType.getName()));
                 }
-                ClassModel classModel = jsonbContext.getMappingContext()
-                        .getOrCreateClassModel(implClass);
+                ClassModel classModel = jsonbContext.getMappingContext().getOrCreateClassModel(implClass);
                 ModelDeserializer<JsonParser> chain = deserializerChain(implClass, classModel);
                 return new NullCheckDeserializer((value, context, rType) -> {
                     DeserializationContextImpl newContext = new DeserializationContextImpl(context);
