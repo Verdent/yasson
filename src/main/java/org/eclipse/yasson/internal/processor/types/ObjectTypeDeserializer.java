@@ -1,6 +1,7 @@
 package org.eclipse.yasson.internal.processor.types;
 
 import java.lang.reflect.Type;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 
@@ -32,6 +33,9 @@ class ObjectTypeDeserializer implements ModelDeserializer<JsonParser> {
             break;
         case VALUE_FALSE:
             toSet = Boolean.FALSE;
+            break;
+        case VALUE_NUMBER:
+            toSet = new BigDecimal(value.getString());
             break;
         case VALUE_STRING:
             toSet = value.getString();
