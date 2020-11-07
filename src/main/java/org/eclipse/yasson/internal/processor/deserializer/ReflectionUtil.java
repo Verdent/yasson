@@ -47,7 +47,8 @@ class ReflectionUtil {
             }
         }
         if (returnType instanceof TypeVariable) {
-            throw new JsonbException("Could not resolve: " + unresolvedType);
+//            throw new JsonbException("Could not resolve: " + unresolvedType);
+            return Object.class;
         }
         return returnType;
     }

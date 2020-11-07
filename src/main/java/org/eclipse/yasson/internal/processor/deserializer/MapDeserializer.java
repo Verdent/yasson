@@ -69,7 +69,9 @@ public class MapDeserializer implements ModelDeserializer<JsonParser> {
                 break;
             case END_OBJECT:
                 state = State.NEXT;
-                break;
+                if (mode == Mode.OBJECT) {
+                    break;
+                }
             case END_ARRAY:
                 context.getRtypeChain().removeLast();
                 return map;
