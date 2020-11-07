@@ -216,6 +216,9 @@ public class ReflectionUtils {
                 resolvedArgs[i] = new VariableTypeInheritanceSearch()
                         .searchParametrizedType(typeToSearch, (TypeVariable<?>) unresolvedArgs[i]);
                 if (resolvedArgs[i] == null) {
+                    if (typeToSearch instanceof Class) {
+                        return Object.class;
+                    }
                     //No generic information available
                     throw new IllegalStateException(Messages.getMessage(MessageKeys.GENERIC_BOUND_NOT_FOUND,
                                                                         unresolvedArgs[i],
