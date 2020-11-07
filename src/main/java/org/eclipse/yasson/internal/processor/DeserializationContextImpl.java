@@ -27,7 +27,7 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
     private static final Logger LOGGER = Logger.getLogger(DeserializationContextImpl.class.getName());
 
     private final LinkedList<Type> rtypeChain;
-    private final List<DelayedDeserializer.DelayedSetter> delayedSetters = new ArrayList<>();
+    private final List<Runnable> delayedSetters = new ArrayList<>();
     private JsonParser.Event lastValueEvent;
 
     /**
@@ -50,7 +50,7 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
         return rtypeChain;
     }
 
-    public List<DelayedDeserializer.DelayedSetter> getDelayedSetters() {
+    public List<Runnable> getDelayedSetters() {
         return delayedSetters;
     }
 

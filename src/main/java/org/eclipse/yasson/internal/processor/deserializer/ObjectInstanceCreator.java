@@ -70,7 +70,7 @@ public class ObjectInstanceCreator implements ModelDeserializer<JsonParser> {
                     }
                 }
                 context.setInstance(creator.call(params, clazz));
-                context.getDelayedSetters().forEach(DelayedDeserializer.DelayedSetter::execute);
+                context.getDelayedSetters().forEach(Runnable::run);
                 context.getDelayedSetters().clear();
                 context.getRtypeChain().remove(rType);
                 return context.getInstance();
