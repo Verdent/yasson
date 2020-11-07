@@ -32,6 +32,7 @@ import org.eclipse.yasson.internal.model.customization.PropertyCustomization;
 import org.eclipse.yasson.internal.processor.deserializer.AdapterDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.CollectionDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.CollectionInstanceCreator;
+import org.eclipse.yasson.internal.processor.deserializer.ContextSwitcher;
 import org.eclipse.yasson.internal.processor.deserializer.DelayedDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.DynamicTypeDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.JustReturn;
@@ -237,10 +238,7 @@ public class ChainModelCreator {
     private ModelDeserializer<JsonParser> createNewChain(ModelDeserializer<Object> memberDeserializer, Class<?> rawType, Type type) {
         ClassModel classModel = jsonbContext.getMappingContext().getOrCreateClassModel(rawType);
         ModelDeserializer<JsonParser> modelDeserializer = deserializerChain(type, classModel);
-        return (value, context, rType) -> {
-            DeserializationContextImpl ctx = new DeserializationContextImpl(context);
-            return memberDeserializer.deserialize(modelDeserializer.deserialize(value, ctx, type), context, rType);
-        };
+        return new ContextSwitcher(memberDeserializer, modelDeserializer, type);
     }
 
     private ModelDeserializer<JsonParser> typeDeserializer(Class<?> rawType,
