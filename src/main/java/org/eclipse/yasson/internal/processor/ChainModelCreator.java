@@ -66,13 +66,14 @@ public class ChainModelCreator {
 
     public ModelDeserializer<JsonParser> deserializerChain(Type type, ClassModel classModel) {
         Class<?> rawType = classModel.getType();
-        if (userTypeMapping.containsKey(rawType)) {
-            return deserializerChain.computeIfAbsent(rawType, it ->
-                    deserializerChain(userTypeMapping.get(rawType),
-                                      jsonbContext.getMappingContext().getOrCreateClassModel(userTypeMapping.get(rawType))));
-        } else if (Collection.class.isAssignableFrom(rawType)) {
+        if (Collection.class.isAssignableFrom(rawType)) {
             if (deserializerChain.containsKey(type)) {
                 return deserializerChain.get(type);
+            }
+            if (userTypeMapping.containsKey(rawType)) {
+                return deserializerChain.computeIfAbsent(rawType, it ->
+                        deserializerChain(userTypeMapping.get(rawType),
+                                          jsonbContext.getMappingContext().getOrCreateClassModel(userTypeMapping.get(rawType))));
             }
             Type colType = type instanceof ParameterizedType
                     ? ((ParameterizedType) type).getActualTypeArguments()[0]
@@ -88,6 +89,11 @@ public class ChainModelCreator {
         } else if (Map.class.isAssignableFrom(rawType)) {
             if (deserializerChain.containsKey(type)) {
                 return deserializerChain.get(type);
+            }
+            if (userTypeMapping.containsKey(rawType)) {
+                return deserializerChain.computeIfAbsent(rawType, it ->
+                        deserializerChain(userTypeMapping.get(rawType),
+                                          jsonbContext.getMappingContext().getOrCreateClassModel(userTypeMapping.get(rawType))));
             }
             Type keyType = type instanceof ParameterizedType
                     ? ((ParameterizedType) type).getActualTypeArguments()[0]
@@ -113,6 +119,14 @@ public class ChainModelCreator {
             deserializerChain.put(type, nullChecker);
             return nullChecker;
         } else {
+            if (deserializerChain.containsKey(rawType)) {
+                return deserializerChain.get(rawType);
+            }
+            if (userTypeMapping.containsKey(rawType)) {
+                return deserializerChain.computeIfAbsent(rawType, it ->
+                        deserializerChain(userTypeMapping.get(rawType),
+                                          jsonbContext.getMappingContext().getOrCreateClassModel(userTypeMapping.get(rawType))));
+            }
             ClassCustomization classCustomization = classModel.getClassCustomization();
             ModelDeserializer<JsonParser> typeDeserializer = typeDeserializer(rawType, classCustomization, JustReturn.create());
             if (typeDeserializer != null) {
