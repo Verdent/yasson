@@ -69,4 +69,38 @@ public interface Customization {
      */
     boolean isNillable();
 
+    /**
+     * Return empty customization.
+     *
+     * @return empty cusotmization
+     */
+    static Customization empty() {
+        return new Customization() {
+            @Override
+            public JsonbNumberFormatter getSerializeNumberFormatter() {
+                return null;
+            }
+
+            @Override
+            public JsonbNumberFormatter getDeserializeNumberFormatter() {
+                return null;
+            }
+
+            @Override
+            public JsonbDateFormatter getSerializeDateFormatter() {
+                return null;
+            }
+
+            @Override
+            public JsonbDateFormatter getDeserializeDateFormatter() {
+                return null;
+            }
+
+            @Override
+            public boolean isNillable() {
+                return false;
+            }
+        };
+    }
+
 }
