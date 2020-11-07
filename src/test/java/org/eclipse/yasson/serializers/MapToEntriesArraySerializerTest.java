@@ -451,15 +451,15 @@ public class MapToEntriesArraySerializerTest {
         // Make sure that all 3 pokemons were checked.
         int valueCheck = 0x00;
         for (Map.Entry<?, ?> entry : map.entrySet()) {
-            if ((entry.getKey() instanceof String) && "first".equals((String) entry.getKey())) {
+            if ((entry.getKey() instanceof String) && "first".equals(entry.getKey())) {
                 assertEquals("Peter Parker", entry.getValue());
                 valueCheck |= 0x01;
             }
-            if ((entry.getKey() instanceof Number) && ((Number) entry.getKey()).equals(new BigDecimal(42))) {
+            if ((entry.getKey() instanceof Number) && entry.getKey().equals(new BigDecimal(42))) {
                 assertEquals(true, entry.getValue());
                 valueCheck |= 0x02;
             }
-            if ((entry.getKey() instanceof Boolean) && ((Boolean) entry.getKey()).equals(false)) {
+            if ((entry.getKey() instanceof Boolean) && entry.getKey().equals(false)) {
                 assertEquals(new BigDecimal(21), entry.getValue());
                 valueCheck |= 0x04;
             }

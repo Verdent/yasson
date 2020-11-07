@@ -26,6 +26,9 @@ public class ObjectDefaultInstanceCreator implements ModelDeserializer<JsonParse
                                         Constructor<?> defaultConstructor) {
         this.delegate = delegate;
         this.clazz = clazz;
+        if (clazz.isInterface()) {
+            throw new JsonbException(Messages.getMessage(MessageKeys.INFER_TYPE_FOR_UNMARSHALL, clazz.getName()));
+        }
         this.defaultConstructor = Objects.requireNonNull(defaultConstructor,
                                                          () -> Messages.getMessage(MessageKeys.NO_DEFAULT_CONSTRUCTOR, clazz));
     }
