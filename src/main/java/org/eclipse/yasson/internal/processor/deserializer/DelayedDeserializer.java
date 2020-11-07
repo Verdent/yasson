@@ -23,11 +23,4 @@ public class DelayedDeserializer implements ModelDeserializer<Object> {
         return value;
     }
 
-
-    @FunctionalInterface
-    public interface DelayedSetter {
-
-        void execute();
-
-    }
 }
