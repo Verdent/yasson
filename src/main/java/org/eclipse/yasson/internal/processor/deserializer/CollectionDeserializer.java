@@ -23,7 +23,8 @@ public class CollectionDeserializer implements ModelDeserializer<JsonParser> {
     @Override
     public Object deserialize(JsonParser parser, DeserializationContextImpl context, Type rType) {
         Collection<Object> collection = (Collection<Object>) context.getInstance();
-        context.getRtypeChain().add(rType);
+        Type resolved = context.getRtypeChain().size() > 0 ? ReflectionUtils.resolveType(context.getRtypeChain(), rType) : rType;
+        context.getRtypeChain().add(resolved);
         while (parser.hasNext()) {
             final JsonParser.Event next = parser.next();
             context.setLastValueEvent(next);
@@ -35,8 +36,8 @@ public class CollectionDeserializer implements ModelDeserializer<JsonParser> {
             case VALUE_FALSE:
             case VALUE_NUMBER:
                 DeserializationContextImpl newContext = new DeserializationContextImpl(context);
-                Type colType = rType instanceof ParameterizedType
-                        ? ((ParameterizedType) rType).getActualTypeArguments()[0]
+                Type colType = resolved instanceof ParameterizedType
+                        ? ((ParameterizedType) resolved).getActualTypeArguments()[0]
                         : Object.class;
                 collection.add(delegate.deserialize(parser, newContext, colType));
                 break;
