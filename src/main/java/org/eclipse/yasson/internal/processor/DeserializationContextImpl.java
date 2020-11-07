@@ -91,8 +91,4 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
             throw new JsonbException(Messages.getMessage(MessageKeys.INTERNAL_ERROR, e.getMessage()), e);
         }
     }
-
-    private <T> JsonbDeserializer<T> initDeserializer(ClassModel classModel) {
-        return null;
-    }
 }

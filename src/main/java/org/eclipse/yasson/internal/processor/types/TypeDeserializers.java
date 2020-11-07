@@ -54,13 +54,20 @@ public class TypeDeserializers {
                                                                     JsonbConfigProperties properties,
                                                                     ModelDeserializer<Object> delegate) {
         TypeDeserializerBuilder builder = new TypeDeserializerBuilder(clazz, customization, properties, delegate);
-        return Optional.ofNullable(DESERIALIZERS.get(clazz))
-                .map(it -> it.apply(builder))
-                .map(ValueExtractor::new)
-                .map(extractor -> (ModelDeserializer<JsonParser>) extractor)
-                .or(() -> Optional.ofNullable(assignableCases(builder)))
-                .map(deserializer -> new NullCheckDeserializer(deserializer, delegate, clazz))
-                .orElse(null);
+        if (DESERIALIZERS.containsKey(clazz)) {
+//            return new ValueExtractor(DESERIALIZERS.get(clazz).apply(builder));
+            return new NullCheckDeserializer(new ValueExtractor(DESERIALIZERS.get(clazz).apply(builder)), delegate, clazz);
+        }
+
+        return assignableCases(builder);
+
+//        return Optional.ofNullable(Optional.ofNullable(DESERIALIZERS.get(clazz))
+//                .map(it -> it.apply(builder))
+//                .map(ValueExtractor::new)
+//                .map(extractor -> (ModelDeserializer<JsonParser>) extractor)
+//                .orElseGet(() -> assignableCases(builder)))
+//                .map(deserializer -> new NullCheckDeserializer(deserializer, delegate, clazz))
+//                .orElse(null);
     }
 
     private static ModelDeserializer<JsonParser> assignableCases(TypeDeserializerBuilder builder) {
