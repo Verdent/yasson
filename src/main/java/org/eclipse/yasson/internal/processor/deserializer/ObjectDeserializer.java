@@ -21,7 +21,8 @@ public class ObjectDeserializer implements ModelDeserializer<JsonParser> {
     @Override
     public Object deserialize(JsonParser parser, DeserializationContextImpl context, Type rType) {
         String key = null;
-        context.getRtypeChain().add(rType);
+        Type resolved = context.getRtypeChain().size() > 0 ? ReflectionUtils.resolveType(context.getRtypeChain(), rType) : rType;
+        context.getRtypeChain().add(resolved);
         while (parser.hasNext()) {
             final JsonParser.Event next = parser.next();
             context.setLastValueEvent(next);
@@ -37,7 +38,7 @@ public class ObjectDeserializer implements ModelDeserializer<JsonParser> {
             case VALUE_FALSE:
             case VALUE_TRUE:
                 if (propertyDeserializerChains.containsKey(key)) {
-                    propertyDeserializerChains.get(key).deserialize(parser, context, rType);
+                    propertyDeserializerChains.get(key).deserialize(parser, context, resolved);
                 }
                 break;
             case END_ARRAY:

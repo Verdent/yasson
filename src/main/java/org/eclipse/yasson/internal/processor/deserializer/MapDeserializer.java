@@ -27,7 +27,8 @@ public class MapDeserializer implements ModelDeserializer<JsonParser> {
     @Override
     public Object deserialize(JsonParser parser, DeserializationContextImpl context, Type rType) {
         Map<Object, Object> map = (Map<Object, Object>) context.getInstance();
-        context.getRtypeChain().add(rType);
+        Type resolved = context.getRtypeChain().size() > 0 ? ReflectionUtils.resolveType(context.getRtypeChain(), rType) : rType;
+        context.getRtypeChain().add(resolved);
         Object key = null;
         String keyName = null;
         Mode mode = Mode.NONE;
@@ -52,18 +53,18 @@ public class MapDeserializer implements ModelDeserializer<JsonParser> {
                         state = State.KEY;
                     } else if (state == State.KEY) {
                         validateKeyName(keyName, state);
-                        key = deserializeValue(parser, context, rType, 0, keyDelegate);
+                        key = deserializeValue(parser, context, resolved, 0, keyDelegate);
                         state = State.VALUE;
                     } else if (state == State.VALUE) {
                         validateKeyName(keyName, state);
-                        Object value = deserializeValue(parser, context, rType, 1, valueDelegate);
+                        Object value = deserializeValue(parser, context, resolved, 1, valueDelegate);
                         map.put(key, value);
                         state = State.DONE;
                     } else {
                         throw new JsonbException("Only attributes 'key' and 'value' allowed!");
                     }
                 } else {
-                    Object value = deserializeValue(parser, context, rType, 1, valueDelegate);
+                    Object value = deserializeValue(parser, context, resolved, 1, valueDelegate);
                     map.put(keyName, value);
                 }
                 break;

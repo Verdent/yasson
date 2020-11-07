@@ -231,7 +231,6 @@ public class GenericsTest {
         String expected = "{\"genericList\":[{\"field1\":[1,2],\"field2\":\"GenericsInListF2\"}],\"genericTestClass\":{\"field1\":1,\"field2\":\"first\"}}";
 
         assertEquals(expected, defaultJsonb.toJson(propagatedGenericClass, new TestTypeToken<PropagatedGenericClass<Integer, String>>(){}.getType()));
-        PropagatedGenericClass<String, String> result1 = defaultJsonb.fromJson(expected, new TestTypeToken<PropagatedGenericClass<String, String>>(){}.getType());
         PropagatedGenericClass<Integer, String> result = defaultJsonb.fromJson(expected, new TestTypeToken<PropagatedGenericClass<Integer, String>>(){}.getType());
         assertEquals(GenericTestClass.class, result.genericList.get(0).getClass());
         assertEquals(Integer.valueOf(1), result.genericList.get(0).field1.get(0));

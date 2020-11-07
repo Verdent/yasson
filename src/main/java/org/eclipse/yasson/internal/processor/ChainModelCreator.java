@@ -34,6 +34,7 @@ import org.eclipse.yasson.internal.processor.deserializer.CollectionDeserializer
 import org.eclipse.yasson.internal.processor.deserializer.CollectionInstanceCreator;
 import org.eclipse.yasson.internal.processor.deserializer.ContextSwitcher;
 import org.eclipse.yasson.internal.processor.deserializer.DelayedDeserializer;
+import org.eclipse.yasson.internal.processor.deserializer.DynamicAdapterResolver;
 import org.eclipse.yasson.internal.processor.deserializer.DynamicTypeDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.JustReturn;
 import org.eclipse.yasson.internal.processor.deserializer.MapDeserializer;
@@ -94,6 +95,18 @@ public class ChainModelCreator {
                 return deserializerChain.computeIfAbsent(rawType, it ->
                         deserializerChain(userTypeMapping.get(rawType),
                                           jsonbContext.getMappingContext().getOrCreateClassModel(userTypeMapping.get(rawType))));
+            }
+            Optional<AdapterBinding> adapterBinding = adapterBinding(type, classModel.getClassCustomization());
+            if (adapterBinding.isPresent()) {
+                AdapterBinding adapter = adapterBinding.get();
+                ClassModel targetModel = jsonbContext.getMappingContext()
+                        .getOrCreateClassModel(ReflectionUtils.getRawType(adapter.getToType()));
+                ModelDeserializer<JsonParser> targetAdapterModel = deserializerChain(adapter.getToType(), targetModel);
+                AdapterDeserializer adapterDeserializer = new AdapterDeserializer(adapter, JustReturn.create());
+                return (parser, context, rType) -> {
+                    Object fromJson = targetAdapterModel.deserialize(parser, context, adapter.getToType());
+                    return adapterDeserializer.deserialize(fromJson, context, rType);
+                };
             }
             Type keyType = type instanceof ParameterizedType
                     ? ((ParameterizedType) type).getActualTypeArguments()[0]
@@ -250,10 +263,35 @@ public class ChainModelCreator {
     }
 
     private ModelDeserializer<JsonParser> createNewChain(ModelDeserializer<Object> memberDeserializer, Class<?> rawType, Type type) {
-        ClassModel classModel = jsonbContext.getMappingContext().getOrCreateClassModel(rawType);
-        ModelDeserializer<JsonParser> modelDeserializer = deserializerChain(type, classModel);
-        return new ContextSwitcher(memberDeserializer, modelDeserializer, type);
+        boolean addDynamicAdapter = false;
+        if (type instanceof ParameterizedType) {
+            for (Type param : ((ParameterizedType) type).getActualTypeArguments()) {
+                if (param instanceof TypeVariable || param instanceof WildcardType) {
+                    addDynamicAdapter = true;
+                    break;
+                }
+            }
+        }
+        if (addDynamicAdapter) {
+            return new DynamicAdapterResolver((ParameterizedType) type, memberDeserializer);
+        } else {
+            ClassModel classModel = jsonbContext.getMappingContext().getOrCreateClassModel(rawType);
+            ModelDeserializer<JsonParser> modelDeserializer = deserializerChain(type, classModel);
+            return new ContextSwitcher(memberDeserializer, modelDeserializer, type);
+        }
     }
+//
+//    private ModelDeserializer<JsonParser> addDynamicAdapter(Type type) {
+//        boolean addDynamicAdapter = false;
+//        if (type instanceof ParameterizedType) {
+//            for (Type param : ((ParameterizedType) type).getActualTypeArguments()) {
+//                if (param instanceof TypeVariable || param instanceof WildcardType) {
+//                    addDynamicAdapter = true;
+//                    break;
+//                }
+//            }
+//        }
+//    }
 
     private ModelDeserializer<JsonParser> typeDeserializer(Class<?> rawType,
                                                            Customization customization,
