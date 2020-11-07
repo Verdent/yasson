@@ -19,6 +19,7 @@ public class CollectionDeserializer implements ModelDeserializer<JsonParser> {
         this.delegate = delegate;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Object deserialize(JsonParser parser, DeserializationContextImpl context, Type rType) {
         Collection<Object> collection = (Collection<Object>) context.getInstance();
