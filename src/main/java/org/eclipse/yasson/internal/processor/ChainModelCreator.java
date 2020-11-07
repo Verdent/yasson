@@ -147,7 +147,10 @@ public class ChainModelCreator {
             }
             Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(rawType, classCustomization);
             if (deserializerBinding.isPresent()) {
-                return new UserDefinedDeserializer(deserializerBinding.get().getJsonbDeserializer(), JustReturn.create());
+                UserDefinedDeserializer user = new UserDefinedDeserializer(deserializerBinding.get().getJsonbDeserializer(),
+                                                                           JustReturn.create());
+                deserializerChain.put(rawType, user);
+                return user;
             }
             Optional<AdapterBinding> adapterBinding = adapterBinding(rawType, classCustomization);
             if (adapterBinding.isPresent()) {
@@ -192,9 +195,9 @@ public class ChainModelCreator {
                                                                    classModel.getDefaultConstructor());
             }
             ModelDeserializer<JsonParser> nullChecker = new NullCheckDeserializer(instanceCreator, JustReturn.create(), rawType);
-            deserializerChain.put(rawType, nullChecker);
+            deserializerChain.put(type, nullChecker);
+            return nullChecker;
         }
-        return deserializerChain.get(rawType);
     }
 
     private Optional<AdapterBinding> adapterBinding(Type type, ComponentBoundCustomization classCustomization) {
@@ -246,23 +249,22 @@ public class ChainModelCreator {
             ModelDeserializer<JsonParser> targetAdapterModel = deserializerChain(adapter.getToType(), targetModel);
             AdapterDeserializer adapterDeserializer = new AdapterDeserializer(adapter, memberDeserializer);
             return (parser, context, rType) -> {
-                Object fromJson = targetAdapterModel.deserialize(parser, context, adapter.getToType());
+                DeserializationContextImpl newContext = new DeserializationContextImpl(context);
+                Object fromJson = targetAdapterModel.deserialize(parser, newContext, adapter.getToType());
                 return adapterDeserializer.deserialize(fromJson, context, rType);
             };
         }
-        if (Collection.class.isAssignableFrom(rawType)) {
-            return createNewChain(memberDeserializer, rawType, type);
-        } else {
-            ModelDeserializer<JsonParser> typeDeserializer = typeDeserializer(rawType, customization, memberDeserializer);
-            if (typeDeserializer == null) {
-                Class<?> implClass = resolveImplClass(rawType, customization);
-                return createNewChain(memberDeserializer, implClass, type);
-            }
-            return typeDeserializer;
+        ModelDeserializer<JsonParser> typeDeserializer = typeDeserializer(rawType, customization, memberDeserializer);
+        if (typeDeserializer == null) {
+            Class<?> implClass = resolveImplClass(rawType, customization);
+            return createNewChain(memberDeserializer, implClass, type);
         }
+        return typeDeserializer;
     }
 
-    private ModelDeserializer<JsonParser> createNewChain(ModelDeserializer<Object> memberDeserializer, Class<?> rawType, Type type) {
+    private ModelDeserializer<JsonParser> createNewChain(ModelDeserializer<Object> memberDeserializer,
+                                                         Class<?> rawType,
+                                                         Type type) {
         boolean addDynamicAdapter = false;
         if (type instanceof ParameterizedType) {
             for (Type param : ((ParameterizedType) type).getActualTypeArguments()) {
@@ -280,18 +282,18 @@ public class ChainModelCreator {
             return new ContextSwitcher(memberDeserializer, modelDeserializer, type);
         }
     }
-//
-//    private ModelDeserializer<JsonParser> addDynamicAdapter(Type type) {
-//        boolean addDynamicAdapter = false;
-//        if (type instanceof ParameterizedType) {
-//            for (Type param : ((ParameterizedType) type).getActualTypeArguments()) {
-//                if (param instanceof TypeVariable || param instanceof WildcardType) {
-//                    addDynamicAdapter = true;
-//                    break;
-//                }
-//            }
-//        }
-//    }
+    //
+    //    private ModelDeserializer<JsonParser> addDynamicAdapter(Type type) {
+    //        boolean addDynamicAdapter = false;
+    //        if (type instanceof ParameterizedType) {
+    //            for (Type param : ((ParameterizedType) type).getActualTypeArguments()) {
+    //                if (param instanceof TypeVariable || param instanceof WildcardType) {
+    //                    addDynamicAdapter = true;
+    //                    break;
+    //                }
+    //            }
+    //        }
+    //    }
 
     private ModelDeserializer<JsonParser> typeDeserializer(Class<?> rawType,
                                                            Customization customization,
