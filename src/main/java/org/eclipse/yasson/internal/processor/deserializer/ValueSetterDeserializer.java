@@ -1,7 +1,6 @@
 package org.eclipse.yasson.internal.processor.deserializer;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.reflect.Type;
 
 import jakarta.json.bind.JsonbException;
 import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
@@ -18,7 +17,7 @@ public class ValueSetterDeserializer implements ModelDeserializer<Object>{
     }
 
     @Override
-    public Object deserialize(Object value, DeserializationContextImpl context, Type rType) {
+    public Object deserialize(Object value, DeserializationContextImpl context) {
         Object object = context.getInstance();
         try {
             valueSetter.invoke(object, value);

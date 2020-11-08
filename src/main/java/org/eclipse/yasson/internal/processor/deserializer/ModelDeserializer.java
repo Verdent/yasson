@@ -1,7 +1,5 @@
 package org.eclipse.yasson.internal.processor.deserializer;
 
-import java.lang.reflect.Type;
-
 import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
 
 /**
@@ -9,6 +7,6 @@ import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
  */
 public interface ModelDeserializer<T> {
 
-    Object deserialize(T value, DeserializationContextImpl context, Type rType);
+    Object deserialize(T value, DeserializationContextImpl context);
 
 }

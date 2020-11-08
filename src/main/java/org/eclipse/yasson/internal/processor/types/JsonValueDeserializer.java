@@ -1,7 +1,5 @@
 package org.eclipse.yasson.internal.processor.types;
 
-import java.lang.reflect.Type;
-
 import jakarta.json.JsonValue;
 import jakarta.json.bind.JsonbException;
 import jakarta.json.stream.JsonParser;
@@ -22,9 +20,9 @@ class JsonValueDeserializer implements ModelDeserializer<JsonParser> {
     }
 
     @Override
-    public Object deserialize(JsonParser value, DeserializationContextImpl context, Type rType) {
+    public Object deserialize(JsonParser value, DeserializationContextImpl context) {
         JsonParser.Event last = context.getLastValueEvent();
-        return delegate.deserialize(deserializeValue(last, value), context, rType);
+        return delegate.deserialize(deserializeValue(last, value), context);
     }
 
     private JsonValue deserializeValue(JsonParser.Event last, JsonParser parser) {

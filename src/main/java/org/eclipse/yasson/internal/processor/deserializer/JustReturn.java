@@ -1,7 +1,5 @@
 package org.eclipse.yasson.internal.processor.deserializer;
 
-import java.lang.reflect.Type;
-
 import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
 
 /**
@@ -19,7 +17,7 @@ public class JustReturn implements ModelDeserializer<Object> {
     }
 
     @Override
-    public Object deserialize(Object value, DeserializationContextImpl context, Type rType) {
+    public Object deserialize(Object value, DeserializationContextImpl context) {
         return value;
     }
 }

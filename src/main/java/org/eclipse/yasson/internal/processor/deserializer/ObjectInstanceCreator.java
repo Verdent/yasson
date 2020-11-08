@@ -1,6 +1,5 @@
 package org.eclipse.yasson.internal.processor.deserializer;
 
-import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -35,9 +34,8 @@ public class ObjectInstanceCreator implements ModelDeserializer<JsonParser> {
     }
 
     @Override
-    public Object deserialize(JsonParser parser, DeserializationContextImpl context, Type rType) {
+    public Object deserialize(JsonParser parser, DeserializationContextImpl context) {
         String key = null;
-        context.getRtypeChain().add(rType);
         Map<String, Object> paramValues = new HashMap<>();
         while (parser.hasNext()) {
             final JsonParser.Event next = parser.next();
@@ -54,7 +52,7 @@ public class ObjectInstanceCreator implements ModelDeserializer<JsonParser> {
             case VALUE_NUMBER:
             case VALUE_FALSE:
             case VALUE_TRUE:
-                Object o = propertyDeserializerChains.get(key).deserialize(parser, context, rType);
+                Object o = propertyDeserializerChains.get(key).deserialize(parser, context);
                 if (creatorParams.contains(key)) {
                     paramValues.put(key, o);
                 }
@@ -72,13 +70,11 @@ public class ObjectInstanceCreator implements ModelDeserializer<JsonParser> {
                 context.setInstance(creator.call(params, clazz));
                 context.getDelayedSetters().forEach(Runnable::run);
                 context.getDelayedSetters().clear();
-                context.getRtypeChain().remove(rType);
                 return context.getInstance();
             default:
                 throw new JsonbException("Unexpected state: " + next);
             }
         }
-        context.getRtypeChain().remove(rType);
         return context.getInstance();
     }
 

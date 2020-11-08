@@ -8,13 +8,11 @@ import java.util.logging.Logger;
 
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.serializer.DeserializationContext;
-import jakarta.json.bind.serializer.JsonbDeserializer;
 import jakarta.json.stream.JsonParser;
 import org.eclipse.yasson.internal.JsonbContext;
 import org.eclipse.yasson.internal.ProcessingContext;
 import org.eclipse.yasson.internal.ReflectionUtils;
 import org.eclipse.yasson.internal.model.ClassModel;
-import org.eclipse.yasson.internal.processor.deserializer.DelayedDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.ModelDeserializer;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
@@ -26,7 +24,6 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
 
     private static final Logger LOGGER = Logger.getLogger(DeserializationContextImpl.class.getName());
 
-    private final LinkedList<Type> rtypeChain;
     private final List<Runnable> delayedSetters = new ArrayList<>();
     private JsonParser.Event lastValueEvent;
 
@@ -37,17 +34,11 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
      */
     public DeserializationContextImpl(JsonbContext jsonbContext) {
         super(jsonbContext);
-        this.rtypeChain = new LinkedList<>();
     }
 
     public DeserializationContextImpl(DeserializationContextImpl context) {
         super(context.getJsonbContext());
-        this.rtypeChain = context.getRtypeChain();
         this.lastValueEvent = context.lastValueEvent;
-    }
-
-    public LinkedList<Type> getRtypeChain() {
-        return rtypeChain;
     }
 
     public List<Runnable> getDelayedSetters() {
@@ -82,7 +73,7 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
             ClassModel classModel = getMappingContext().getOrCreateClassModel(rawType);
             ModelDeserializer<JsonParser> modelDeserializer = getJsonbContext().getChainModelCreator()
                     .deserializerChain(type, classModel);
-            return (T) modelDeserializer.deserialize(parser, this, type);
+            return (T) modelDeserializer.deserialize(parser, this);
         } catch (JsonbException e) {
             LOGGER.severe(e.getMessage());
             throw e;

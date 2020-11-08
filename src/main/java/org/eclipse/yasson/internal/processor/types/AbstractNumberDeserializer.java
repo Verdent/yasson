@@ -30,7 +30,7 @@ abstract class AbstractNumberDeserializer<T extends Number> extends TypeDeserial
     private ModelDeserializer<String> actualDeserializer(TypeDeserializerBuilder builder) {
         Customization customization = builder.getCustomization();
         if (customization.getDeserializeNumberFormatter() == null) {
-            return (value, context, type) -> {
+            return (value, context) -> {
                 try {
                     return parseNumberValue(value);
                 } catch (NumberFormatException e) {
@@ -44,7 +44,7 @@ abstract class AbstractNumberDeserializer<T extends Number> extends TypeDeserial
         final NumberFormat format = NumberFormat.getInstance(builder.getConfigProperties().getLocale(numberFormat.getLocale()));
         ((DecimalFormat) format).applyPattern(numberFormat.getFormat());
         format.setParseIntegerOnly(integerOnly);
-        return (value, context, type) -> {
+        return (value, context) -> {
             try {
                 return parseNumberValue(String.valueOf(format.parse(value)));
             } catch (ParseException e) {
@@ -57,7 +57,7 @@ abstract class AbstractNumberDeserializer<T extends Number> extends TypeDeserial
 
     @Override
     Object deserializeValue(String value, DeserializationContextImpl context, Type rType) {
-        return actualDeserializer.deserialize(value, context, rType);
+        return actualDeserializer.deserialize(value, context);
     }
 
 }

@@ -1,7 +1,5 @@
 package org.eclipse.yasson.internal.processor.deserializer;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.Collection;
 
 import jakarta.json.bind.JsonbException;
@@ -21,10 +19,8 @@ public class CollectionDeserializer implements ModelDeserializer<JsonParser> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public Object deserialize(JsonParser parser, DeserializationContextImpl context, Type rType) {
+    public Object deserialize(JsonParser parser, DeserializationContextImpl context) {
         Collection<Object> collection = (Collection<Object>) context.getInstance();
-        Type resolved = context.getRtypeChain().size() > 0 ? ReflectionUtils.resolveType(context.getRtypeChain(), rType) : rType;
-        context.getRtypeChain().add(resolved);
         while (parser.hasNext()) {
             final JsonParser.Event next = parser.next();
             context.setLastValueEvent(next);
@@ -36,19 +32,14 @@ public class CollectionDeserializer implements ModelDeserializer<JsonParser> {
             case VALUE_FALSE:
             case VALUE_NUMBER:
                 DeserializationContextImpl newContext = new DeserializationContextImpl(context);
-                Type colType = resolved instanceof ParameterizedType
-                        ? ((ParameterizedType) resolved).getActualTypeArguments()[0]
-                        : Object.class;
-                collection.add(delegate.deserialize(parser, newContext, colType));
+                collection.add(delegate.deserialize(parser, newContext));
                 break;
             case END_ARRAY:
-                context.getRtypeChain().removeLast();
                 return collection;
             default:
                 throw new JsonbException("Unexpected state: " + next);
             }
         }
-        context.getRtypeChain().removeLast();
         return collection;
     }
 

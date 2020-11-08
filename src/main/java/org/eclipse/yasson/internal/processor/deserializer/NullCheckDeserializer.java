@@ -1,7 +1,5 @@
 package org.eclipse.yasson.internal.processor.deserializer;
 
-import java.lang.reflect.Type;
-
 import jakarta.json.stream.JsonParser;
 import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
 
@@ -23,12 +21,12 @@ public class NullCheckDeserializer implements ModelDeserializer<JsonParser> {
     }
 
     @Override
-    public Object deserialize(JsonParser value, DeserializationContextImpl context, Type rType) {
+    public Object deserialize(JsonParser value, DeserializationContextImpl context) {
         if (context.getLastValueEvent() != JsonParser.Event.VALUE_NULL) {
-            return nonNullDeserializer.deserialize(value, context, rType);
+            return nonNullDeserializer.deserialize(value, context);
         } else if (propertyClass.isPrimitive()) {
             return null;
         }
-        return nullDeserializer.deserialize(null, context, rType);
+        return nullDeserializer.deserialize(null, context);
     }
 }

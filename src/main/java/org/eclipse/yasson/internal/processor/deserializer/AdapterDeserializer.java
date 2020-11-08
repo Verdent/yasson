@@ -1,7 +1,5 @@
 package org.eclipse.yasson.internal.processor.deserializer;
 
-import java.lang.reflect.Type;
-
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.adapter.JsonbAdapter;
 import org.eclipse.yasson.internal.components.AdapterBinding;
@@ -27,9 +25,9 @@ public class AdapterDeserializer implements ModelDeserializer<Object> {
     }
 
     @Override
-    public Object deserialize(Object value, DeserializationContextImpl context, Type rType) {
+    public Object deserialize(Object value, DeserializationContextImpl context) {
         try {
-            return delegate.deserialize(adapter.adaptFromJson(value), context, rType);
+            return delegate.deserialize(adapter.adaptFromJson(value), context);
         } catch (Exception e) {
             throw new JsonbException(Messages.getMessage(MessageKeys.ADAPTER_EXCEPTION,
                                                          adapterBinding.getBindingType(),
