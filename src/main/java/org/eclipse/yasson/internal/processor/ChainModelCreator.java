@@ -88,7 +88,8 @@ public class ChainModelCreator {
             Class<?> userTypeRaw = userTypeMapping.get(rawType);
             ClassModel userTypeModel = jsonbContext.getMappingContext().getOrCreateClassModel(userTypeRaw);
             ModelDeserializer<JsonParser> deserializer = deserializerChain(userTypeRaw, userTypeModel);
-            return deserializerChain.put(type, deserializer);
+            deserializerChain.put(type, deserializer);
+            return deserializer;
         }
         ClassCustomization classCustomization = classModel.getClassCustomization();
         Optional<AdapterBinding> adapterBinding = adapterBinding(type, classCustomization);
