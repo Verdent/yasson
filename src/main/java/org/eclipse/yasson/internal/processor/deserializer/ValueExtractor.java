@@ -1,7 +1,5 @@
 package org.eclipse.yasson.internal.processor.deserializer;
 
-import java.lang.reflect.Type;
-
 import jakarta.json.stream.JsonParser;
 import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
 
@@ -17,7 +15,7 @@ public class ValueExtractor implements ModelDeserializer<JsonParser> {
     }
 
     @Override
-    public Object deserialize(JsonParser value, DeserializationContextImpl context, Type rType) {
+    public Object deserialize(JsonParser value, DeserializationContextImpl context) {
         String valueToPropagate;
         JsonParser.Event last = context.getLastValueEvent();
         switch (last) {
@@ -30,6 +28,6 @@ public class ValueExtractor implements ModelDeserializer<JsonParser> {
         default:
             valueToPropagate = value.getString();
         }
-        return delegate.deserialize(valueToPropagate, context, rType);
+        return delegate.deserialize(valueToPropagate, context);
     }
 }

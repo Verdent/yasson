@@ -59,7 +59,9 @@ public class TypeDeserializers {
         TypeDeserializerBuilder builder = new TypeDeserializerBuilder(clazz, customization, properties, delegate);
         if (DESERIALIZERS.containsKey(clazz)) {
             ValueExtractor valueExtractor = new ValueExtractor(DESERIALIZERS.get(clazz).apply(builder));
-            return new NullCheckDeserializer(new PositionChecker(PositionChecker.Checker.VALUE, valueExtractor), delegate, clazz);
+            return new NullCheckDeserializer(new PositionChecker(PositionChecker.Checker.VALUE, valueExtractor, clazz),
+                                             delegate,
+                                             clazz);
         }
 
         ModelDeserializer<JsonParser> deserializer = assignableCases(builder);

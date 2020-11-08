@@ -1,9 +1,5 @@
 package org.eclipse.yasson.internal.processor.deserializer;
 
-import java.lang.reflect.Type;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-
 import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
 
 /**
@@ -18,8 +14,8 @@ public class DelayedDeserializer implements ModelDeserializer<Object> {
     }
 
     @Override
-    public Object deserialize(Object value, DeserializationContextImpl context, Type rType) {
-        context.getDelayedSetters().add(() -> delegate.deserialize(value, context, rType));
+    public Object deserialize(Object value, DeserializationContextImpl context) {
+        context.getDelayedSetters().add(() -> delegate.deserialize(value, context));
         return value;
     }
 

@@ -1,8 +1,6 @@
 package org.eclipse.yasson.internal.processor.deserializer;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Type;
 import java.util.Objects;
 
 import jakarta.json.bind.JsonbException;
@@ -18,14 +16,12 @@ import org.eclipse.yasson.internal.properties.Messages;
 public class ObjectDefaultInstanceCreator implements ModelDeserializer<JsonParser> {
 
     private final ModelDeserializer<JsonParser> delegate;
-    private final Class<?> clazz;
     private final Constructor<?> defaultConstructor;
 
     public ObjectDefaultInstanceCreator(ModelDeserializer<JsonParser> delegate,
                                         Class<?> clazz,
                                         Constructor<?> defaultConstructor) {
         this.delegate = delegate;
-        this.clazz = clazz;
         if (clazz.isInterface()) {
             throw new JsonbException(Messages.getMessage(MessageKeys.INFER_TYPE_FOR_UNMARSHALL, clazz.getName()));
         }
@@ -34,9 +30,9 @@ public class ObjectDefaultInstanceCreator implements ModelDeserializer<JsonParse
     }
 
     @Override
-    public Object deserialize(JsonParser value, DeserializationContextImpl context, Type rType) {
+    public Object deserialize(JsonParser value, DeserializationContextImpl context) {
         Object instance = ReflectionUtils.createNoArgConstructorInstance(defaultConstructor);
         context.setInstance(instance);
-        return delegate.deserialize(value, context, rType);
+        return delegate.deserialize(value, context);
     }
 }

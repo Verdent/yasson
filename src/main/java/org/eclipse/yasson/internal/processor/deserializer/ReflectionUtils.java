@@ -24,18 +24,15 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Logger;
 
 import jakarta.json.bind.JsonbException;
-import org.eclipse.yasson.internal.RuntimeTypeInfo;
 import org.eclipse.yasson.internal.VariableTypeInheritanceSearch;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
 import org.eclipse.yasson.internal.serializer.AbstractItem;
-import org.eclipse.yasson.internal.serializer.EmbeddedItem;
 import org.eclipse.yasson.internal.serializer.ResolvedParameterizedType;
 
 /**

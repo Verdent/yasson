@@ -37,18 +37,16 @@ public class CollectionInstanceCreator implements ModelDeserializer<JsonParser> 
 
     @SuppressWarnings("unchecked")
     @Override
-    public Object deserialize(JsonParser value, DeserializationContextImpl context, Type rType) {
+    public Object deserialize(JsonParser value, DeserializationContextImpl context) {
         Object instance;
         if (isEnumSet) {
-            Type resolvedType = type instanceof ParameterizedType
-                    ? ReflectionUtil.resolveType(((ParameterizedType) type).getActualTypeArguments()[0], context)
-                    : Object.class;
+            Type resolvedType = ((ParameterizedType) type).getActualTypeArguments()[0];
             instance = EnumSet.noneOf((Class<Enum>) resolvedType);
         } else {
             instance = InstanceCreator.createInstance(clazz);
         }
         context.setInstance(instance);
-        return delegate.deserialize(value, context, rType);
+        return delegate.deserialize(value, context);
     }
 
     private Class<?> implementationClass(Class<?> type) {

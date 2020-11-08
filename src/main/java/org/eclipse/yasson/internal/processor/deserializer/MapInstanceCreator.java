@@ -1,6 +1,5 @@
 package org.eclipse.yasson.internal.processor.deserializer;
 
-import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -35,10 +34,10 @@ public class MapInstanceCreator implements ModelDeserializer<JsonParser> {
     }
 
     @Override
-    public Object deserialize(JsonParser value, DeserializationContextImpl context, Type rType) {
+    public Object deserialize(JsonParser value, DeserializationContextImpl context) {
         Map<?, ?> map = createInstance(clazz);
         context.setInstance(map);
-        return delegate.deserialize(value, context, rType);
+        return delegate.deserialize(value, context);
     }
 
     private Map<?, ?> createInstance(Class<?> clazz) {

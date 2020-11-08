@@ -5,7 +5,6 @@ import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.List;
 
-import jakarta.json.bind.JsonbException;
 import org.eclipse.yasson.internal.ReflectionUtils;
 import org.eclipse.yasson.internal.VariableTypeInheritanceSearch;
 import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
@@ -34,7 +33,8 @@ class ReflectionUtil {
 
     private static Type resolveTypeVariable(TypeVariable<?> unresolvedType,
                                             DeserializationContextImpl context) {
-        List<Type> chain = context.getRtypeChain();
+//        List<Type> chain = context.getRtypeChain();
+        List<Type> chain = null;
         Type returnType = unresolvedType;
         for (int i = chain.size() - 1; i >= 0; i--) {
             Type type = chain.get(i);
