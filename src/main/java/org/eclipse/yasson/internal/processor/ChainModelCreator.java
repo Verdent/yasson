@@ -31,9 +31,8 @@ import org.eclipse.yasson.internal.processor.deserializer.AdapterDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.CollectionDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.CollectionInstanceCreator;
 import org.eclipse.yasson.internal.processor.deserializer.ContextSwitcher;
-import org.eclipse.yasson.internal.processor.deserializer.CyrcularReferenceDeserializer;
+import org.eclipse.yasson.internal.processor.deserializer.CyclicReferenceDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.DelayedDeserializer;
-import org.eclipse.yasson.internal.processor.deserializer.DynamicTypeDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.JustReturn;
 import org.eclipse.yasson.internal.processor.deserializer.MapDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.MapInstanceCreator;
@@ -71,7 +70,7 @@ public class ChainModelCreator {
 
     private ModelDeserializer<JsonParser> deserializerChain(LinkedList<Type> chain, Type type, ClassModel classModel) {
         if (chain.contains(type)) {
-            return new CyrcularReferenceDeserializer(type);
+            return new CyclicReferenceDeserializer(type);
         }
         try {
             chain.add(type);
@@ -241,10 +240,6 @@ public class ChainModelCreator {
                                                         ModelDeserializer<Object> memberDeserializer) {
         Type resolved = ReflectionUtils.resolveType(chain, type);
         Class<?> rawType = ReflectionUtils.getRawType(resolved);
-        Class<?> parentRaw = ReflectionUtils.getRawType(chain.getLast());
-        if (rawType != Object.class && (parentRaw.isAssignableFrom(rawType) || rawType.isAssignableFrom(parentRaw))) {
-            return new DynamicTypeDeserializer(memberDeserializer, type, customization);
-        }
         Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(resolved,
                                                                                 (ComponentBoundCustomization) customization);
         if (deserializerBinding.isPresent()) {
@@ -283,38 +278,10 @@ public class ChainModelCreator {
                                                          ModelDeserializer<Object> memberDeserializer,
                                                          Class<?> rawType,
                                                          Type type) {
-//        boolean addDynamicAdapter = false;
-//        if (type instanceof ParameterizedType) {
-//            for (Type param : ((ParameterizedType) type).getActualTypeArguments()) {
-//                if (param instanceof TypeVariable || param instanceof WildcardType) {
-//                    addDynamicAdapter = true;
-//                    break;
-//                }
-//            }
-//        }
-//        if (addDynamicAdapter) {
-//            return new DynamicAdapterResolver((ParameterizedType) type, memberDeserializer);
-//        } else {
-//            ClassModel classModel = jsonbContext.getMappingContext().getOrCreateClassModel(rawType);
-//            ModelDeserializer<JsonParser> modelDeserializer = deserializerChain(chain, type, classModel);
-//            return new ContextSwitcher(memberDeserializer, modelDeserializer, type);
-//        }
         ClassModel classModel = jsonbContext.getMappingContext().getOrCreateClassModel(rawType);
         ModelDeserializer<JsonParser> modelDeserializer = deserializerChain(chain, type, classModel);
         return new ContextSwitcher(memberDeserializer, modelDeserializer, type);
     }
-    //
-    //    private ModelDeserializer<JsonParser> addDynamicAdapter(Type type) {
-    //        boolean addDynamicAdapter = false;
-    //        if (type instanceof ParameterizedType) {
-    //            for (Type param : ((ParameterizedType) type).getActualTypeArguments()) {
-    //                if (param instanceof TypeVariable || param instanceof WildcardType) {
-    //                    addDynamicAdapter = true;
-    //                    break;
-    //                }
-    //            }
-    //        }
-    //    }
 
     private ModelDeserializer<JsonParser> typeDeserializer(Class<?> rawType,
                                                            Customization customization,

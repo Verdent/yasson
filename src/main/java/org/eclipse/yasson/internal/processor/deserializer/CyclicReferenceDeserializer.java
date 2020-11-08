@@ -9,12 +9,12 @@ import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
 /**
  * TODO javadoc
  */
-public class CyrcularReferenceDeserializer implements ModelDeserializer<JsonParser> {
+public class CyclicReferenceDeserializer implements ModelDeserializer<JsonParser> {
 
     private final Type type;
     private ModelDeserializer<JsonParser> delegate;
 
-    public CyrcularReferenceDeserializer(Type type) {
+    public CyclicReferenceDeserializer(Type type) {
         this.type = type;
     }
 
