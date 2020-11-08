@@ -41,10 +41,12 @@ class ObjectTypeDeserializer implements ModelDeserializer<JsonParser> {
             toSet = value.getString();
             break;
         case START_OBJECT:
-            toSet = context.deserialize(MAP, value);
+            DeserializationContextImpl newContext = new DeserializationContextImpl(context);
+            toSet = newContext.deserialize(MAP, value);
             break;
         case START_ARRAY:
-            toSet = context.deserialize(LIST, value);
+            DeserializationContextImpl newContext1 = new DeserializationContextImpl(context);
+            toSet = newContext1.deserialize(LIST, value);
             break;
         default:
             throw new JsonbException("Unexpected event: " + context.getLastValueEvent());

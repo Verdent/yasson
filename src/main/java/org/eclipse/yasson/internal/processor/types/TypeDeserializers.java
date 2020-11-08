@@ -6,7 +6,6 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 
 import jakarta.json.JsonValue;
@@ -37,11 +36,14 @@ public class TypeDeserializers {
         DESERIALIZERS.put(Date.class, DateDeserializer::new);
         DESERIALIZERS.put(Double.class, DoubleDeserializer::new);
         DESERIALIZERS.put(Double.TYPE, DoubleDeserializer::new);
+        DESERIALIZERS.put(Float.class, FloatDeserializer::new);
+        DESERIALIZERS.put(Float.TYPE, FloatDeserializer::new);
         DESERIALIZERS.put(Instant.class, InstantDeserializer::new);
         DESERIALIZERS.put(Integer.class, IntegerDeserializer::new);
         DESERIALIZERS.put(Integer.TYPE, IntegerDeserializer::new);
         DESERIALIZERS.put(Long.class, LongDeserializer::new);
         DESERIALIZERS.put(Long.TYPE, LongDeserializer::new);
+        DESERIALIZERS.put(Number.class, NumberDeserializer::new);
         DESERIALIZERS.put(Short.class, ShortDeserializer::new);
         DESERIALIZERS.put(Short.TYPE, ShortDeserializer::new);
         DESERIALIZERS.put(String.class, StringDeserializer::new);
@@ -55,19 +57,23 @@ public class TypeDeserializers {
                                                                     ModelDeserializer<Object> delegate) {
         TypeDeserializerBuilder builder = new TypeDeserializerBuilder(clazz, customization, properties, delegate);
         if (DESERIALIZERS.containsKey(clazz)) {
-//            return new ValueExtractor(DESERIALIZERS.get(clazz).apply(builder));
+            //            return new ValueExtractor(DESERIALIZERS.get(clazz).apply(builder));
             return new NullCheckDeserializer(new ValueExtractor(DESERIALIZERS.get(clazz).apply(builder)), delegate, clazz);
         }
 
-        return assignableCases(builder);
+        ModelDeserializer<JsonParser> deserializer = assignableCases(builder);
+        if (deserializer != null) {
+            return new NullCheckDeserializer(deserializer, delegate, clazz);
+        }
+        return null;
 
-//        return Optional.ofNullable(Optional.ofNullable(DESERIALIZERS.get(clazz))
-//                .map(it -> it.apply(builder))
-//                .map(ValueExtractor::new)
-//                .map(extractor -> (ModelDeserializer<JsonParser>) extractor)
-//                .orElseGet(() -> assignableCases(builder)))
-//                .map(deserializer -> new NullCheckDeserializer(deserializer, delegate, clazz))
-//                .orElse(null);
+        //        return Optional.ofNullable(Optional.ofNullable(DESERIALIZERS.get(clazz))
+        //                .map(it -> it.apply(builder))
+        //                .map(ValueExtractor::new)
+        //                .map(extractor -> (ModelDeserializer<JsonParser>) extractor)
+        //                .orElseGet(() -> assignableCases(builder)))
+        //                .map(deserializer -> new NullCheckDeserializer(deserializer, delegate, clazz))
+        //                .orElse(null);
     }
 
     private static ModelDeserializer<JsonParser> assignableCases(TypeDeserializerBuilder builder) {

@@ -48,6 +48,7 @@ public class MapDeserializer implements ModelDeserializer<JsonParser> {
             case VALUE_TRUE:
             case VALUE_FALSE:
             case VALUE_NUMBER:
+            case VALUE_NULL:
                 if (mode == Mode.OBJECT) {
                     if (state == State.NEXT) {
                         state = State.KEY;
