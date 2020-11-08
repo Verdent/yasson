@@ -14,20 +14,23 @@ public class UserDefinedDeserializer implements ModelDeserializer<JsonParser> {
 
     private final JsonbDeserializer<?> userDefinedDeserializer;
     private final ModelDeserializer<Object> delegate;
+    private final Type rType;
 
     public UserDefinedDeserializer(JsonbDeserializer<?> userDefinedDeserializer,
-                                   ModelDeserializer<Object> delegate) {
+                                   ModelDeserializer<Object> delegate,
+                                   Type rType) {
         this.userDefinedDeserializer = userDefinedDeserializer;
         this.delegate = delegate;
+        this.rType = rType;
     }
 
     @Override
-    public Object deserialize(JsonParser value, DeserializationContextImpl context, Type rType) {
+    public Object deserialize(JsonParser value, DeserializationContextImpl context) {
         DeserializationContextImpl newContext = new DeserializationContextImpl(context);
         YassonParser yassonParser = new YassonParser(value, context.getLastValueEvent(), newContext);
         Object object = userDefinedDeserializer.deserialize(yassonParser, newContext, rType);
         yassonParser.skipRemaining();
-        return delegate.deserialize(object, context, rType);
+        return delegate.deserialize(object, context);
     }
 
 }

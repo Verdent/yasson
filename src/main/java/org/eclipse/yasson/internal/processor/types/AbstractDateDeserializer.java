@@ -34,20 +34,20 @@ abstract class AbstractDateDeserializer<T> extends TypeDeserializer {
         JsonbConfigProperties configProperties = builder.getConfigProperties();
         final JsonbDateFormatter formatter = getJsonbDateFormatter(builder);
         if (JsonbDateFormat.TIME_IN_MILLIS.equals(formatter.getFormat())) {
-            return (value, context, type) -> fromInstant(Instant.ofEpochMilli(Long.parseLong(value)));
+            return (value, context) -> fromInstant(Instant.ofEpochMilli(Long.parseLong(value)));
         } else if (formatter.getDateTimeFormatter() != null) {
-            return (value, context, type) -> parseWithFormatterInternal(value, formatter.getDateTimeFormatter());
+            return (value, context) -> parseWithFormatterInternal(value, formatter.getDateTimeFormatter());
         } else {
             DateTimeFormatter configDateTimeFormatter = configProperties.getConfigDateFormatter().getDateTimeFormatter();
             if (configDateTimeFormatter != null) {
-                return (value, context, type) -> parseWithFormatterInternal(value, configDateTimeFormatter);
+                return (value, context) -> parseWithFormatterInternal(value, configDateTimeFormatter);
             }
         }
         if (configProperties.isStrictIJson()) {
-            return (value, context, type) -> parseWithFormatterInternal(value, JsonbDateFormatter.IJSON_DATE_FORMATTER);
+            return (value, context) -> parseWithFormatterInternal(value, JsonbDateFormatter.IJSON_DATE_FORMATTER);
         }
         Locale locale = configProperties.getLocale(formatter.getLocale());
-        return (value, context, type) -> {
+        return (value, context) -> {
             try {
                 return parseDefault(value, locale);
             } catch (DateTimeException e) {
@@ -63,7 +63,7 @@ abstract class AbstractDateDeserializer<T> extends TypeDeserializer {
 
     @Override
     public Object deserializeValue(String value, DeserializationContextImpl context, Type rType) {
-        return actualDeserializer.deserialize(value, context, rType);
+        return actualDeserializer.deserialize(value, context);
     }
 
     /**

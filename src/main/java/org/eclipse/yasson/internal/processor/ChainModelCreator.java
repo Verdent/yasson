@@ -105,9 +105,9 @@ public class ChainModelCreator {
             }
             ModelDeserializer<JsonParser> targetAdapterModel = typeDeserializer;
             AdapterDeserializer adapterDeserializer = new AdapterDeserializer(adapter, JustReturn.create());
-            ModelDeserializer<JsonParser> adapterDeser = (parser, context, rType) -> {
-                Object fromJson = targetAdapterModel.deserialize(parser, context, adapter.getToType());
-                return adapterDeserializer.deserialize(fromJson, context, rType);
+            ModelDeserializer<JsonParser> adapterDeser = (parser, context) -> {
+                Object fromJson = targetAdapterModel.deserialize(parser, context);
+                return adapterDeserializer.deserialize(fromJson, context);
             };
             deserializerChain.put(type, adapterDeser);
             return adapterDeser;
@@ -155,7 +155,7 @@ public class ChainModelCreator {
             Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(type, classCustomization);
             if (deserializerBinding.isPresent()) {
                 UserDefinedDeserializer user = new UserDefinedDeserializer(deserializerBinding.get().getJsonbDeserializer(),
-                                                                           JustReturn.create());
+                                                                           JustReturn.create(), type);
                 deserializerChain.put(type, user);
                 return user;
             }
@@ -244,7 +244,7 @@ public class ChainModelCreator {
         Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(resolved,
                                                                                 (ComponentBoundCustomization) customization);
         if (deserializerBinding.isPresent()) {
-            return new UserDefinedDeserializer(deserializerBinding.get().getJsonbDeserializer(), memberDeserializer);
+            return new UserDefinedDeserializer(deserializerBinding.get().getJsonbDeserializer(), memberDeserializer, resolved);
         }
         Optional<AdapterBinding> adapterBinding = adapterBinding(resolved, (ComponentBoundCustomization) customization);
         if (adapterBinding.isPresent()) {
@@ -261,10 +261,10 @@ public class ChainModelCreator {
             ModelDeserializer<JsonParser> targetAdapterModel = typeDeserializer;
 
             AdapterDeserializer adapterDeserializer = new AdapterDeserializer(adapter, memberDeserializer);
-            return (parser, context, rType) -> {
+            return (parser, context) -> {
                 DeserializationContextImpl newContext = new DeserializationContextImpl(context);
-                Object fromJson = targetAdapterModel.deserialize(parser, newContext, adapter.getToType());
-                return adapterDeserializer.deserialize(fromJson, context, rType);
+                Object fromJson = targetAdapterModel.deserialize(parser, newContext);
+                return adapterDeserializer.deserialize(fromJson, context);
             };
         }
         ModelDeserializer<JsonParser> typeDeserializer = typeDeserializer(rawType, customization, memberDeserializer);
@@ -281,7 +281,7 @@ public class ChainModelCreator {
                                                          Type type) {
         ClassModel classModel = jsonbContext.getMappingContext().getOrCreateClassModel(rawType);
         ModelDeserializer<JsonParser> modelDeserializer = deserializerChain(chain, type, classModel);
-        return new ContextSwitcher(memberDeserializer, modelDeserializer, type);
+        return new ContextSwitcher(memberDeserializer, modelDeserializer);
     }
 
     private ModelDeserializer<JsonParser> typeDeserializer(Class<?> rawType,

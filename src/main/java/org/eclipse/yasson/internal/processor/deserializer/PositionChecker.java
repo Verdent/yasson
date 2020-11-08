@@ -14,15 +14,17 @@ public class PositionChecker implements ModelDeserializer<JsonParser> {
 
     private final Checker checker;
     private final ModelDeserializer<JsonParser> delegate;
+    private final Type rType;
 
     public PositionChecker(Checker checker,
-                           ModelDeserializer<JsonParser> delegate) {
+                           ModelDeserializer<JsonParser> delegate, Type rType) {
         this.checker = checker;
         this.delegate = delegate;
+        this.rType = rType;
     }
 
     @Override
-    public Object deserialize(JsonParser value, DeserializationContextImpl context, Type rType) {
+    public Object deserialize(JsonParser value, DeserializationContextImpl context) {
         if (!checker.check.apply(context.getLastValueEvent())) {
             JsonParser.Event next = value.next();
             context.setLastValueEvent(next);
@@ -31,7 +33,7 @@ public class PositionChecker implements ModelDeserializer<JsonParser> {
                                                  + "Received event: " + next);
             }
         }
-        return delegate.deserialize(value, context, rType);
+        return delegate.deserialize(value, context);
     }
 
     public enum Checker {
