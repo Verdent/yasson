@@ -14,6 +14,7 @@ import org.eclipse.yasson.internal.JsonbConfigProperties;
 import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.processor.deserializer.ModelDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.NullCheckDeserializer;
+import org.eclipse.yasson.internal.processor.deserializer.PositionChecker;
 import org.eclipse.yasson.internal.processor.deserializer.ValueExtractor;
 
 /**
@@ -57,8 +58,8 @@ public class TypeDeserializers {
                                                                     ModelDeserializer<Object> delegate) {
         TypeDeserializerBuilder builder = new TypeDeserializerBuilder(clazz, customization, properties, delegate);
         if (DESERIALIZERS.containsKey(clazz)) {
-            //            return new ValueExtractor(DESERIALIZERS.get(clazz).apply(builder));
-            return new NullCheckDeserializer(new ValueExtractor(DESERIALIZERS.get(clazz).apply(builder)), delegate, clazz);
+            ValueExtractor valueExtractor = new ValueExtractor(DESERIALIZERS.get(clazz).apply(builder));
+            return new NullCheckDeserializer(new PositionChecker(PositionChecker.Checker.VALUE, valueExtractor), delegate, clazz);
         }
 
         ModelDeserializer<JsonParser> deserializer = assignableCases(builder);

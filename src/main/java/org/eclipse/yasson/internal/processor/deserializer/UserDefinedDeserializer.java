@@ -23,8 +23,8 @@ public class UserDefinedDeserializer implements ModelDeserializer<JsonParser> {
 
     @Override
     public Object deserialize(JsonParser value, DeserializationContextImpl context, Type rType) {
-        YassonParser yassonParser = new YassonParser(value, context.getLastValueEvent());
         DeserializationContextImpl newContext = new DeserializationContextImpl(context);
+        YassonParser yassonParser = new YassonParser(value, context.getLastValueEvent(), newContext);
         Object object = userDefinedDeserializer.deserialize(yassonParser, newContext, rType);
         yassonParser.skipRemaining();
         return delegate.deserialize(object, context, rType);
