@@ -18,6 +18,7 @@ public class AdapterDeserializer implements ModelDeserializer<Object> {
     private final AdapterBinding adapterBinding;
     private final ModelDeserializer<Object> delegate;
 
+    @SuppressWarnings("unchecked")
     public AdapterDeserializer(AdapterBinding adapterBinding,
                                ModelDeserializer<Object> delegate) {
         this.adapterBinding = adapterBinding;

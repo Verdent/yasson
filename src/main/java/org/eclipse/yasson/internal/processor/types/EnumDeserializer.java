@@ -13,6 +13,7 @@ class EnumDeserializer extends TypeDeserializer {
         super(builder);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     Object deserializeValue(String value, DeserializationContextImpl context, Type rType) {
         return Enum.valueOf((Class<Enum>) rType, value);

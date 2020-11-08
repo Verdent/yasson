@@ -18,11 +18,13 @@ public class YassonParser implements JsonParser {
 
     private final JsonParser delegate;
     private final Event firstEvent;
+    private final DeserializationContextImpl context;
     private int level;
 
-    public YassonParser(JsonParser delegate, Event firstEvent) {
+    public YassonParser(JsonParser delegate, Event firstEvent, DeserializationContextImpl context) {
         this.delegate = delegate;
         this.firstEvent = firstEvent;
+        this.context = context;
         this.level = determineLevelValue();
     }
 
@@ -56,6 +58,7 @@ public class YassonParser implements JsonParser {
             throw new NoSuchElementException("There are no more elements available!");
         }
         Event next = delegate.next();
+        context.setLastValueEvent(next);
         switch (next) {
         case START_OBJECT:
         case START_ARRAY:
