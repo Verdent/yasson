@@ -34,7 +34,7 @@ public class SimpleTest {
 
     @Test
     public void testSimpleDeserializer() {
-        final StringWrapper stringWrapper = defaultJsonb.fromJson("{\"value\":\"abc\", \"test\": [1, 2, 3]}", StringWrapper.class);
+        final StringWrapper stringWrapper = defaultJsonb.fromJson("{\"value\":\"abc\"}", StringWrapper.class);
         assertEquals("abc", stringWrapper.value);
     }
 
