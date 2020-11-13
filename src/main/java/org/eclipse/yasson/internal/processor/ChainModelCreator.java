@@ -14,8 +14,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import jakarta.json.bind.JsonbException;
+import jakarta.json.bind.config.BinaryDataStrategy;
 import jakarta.json.stream.JsonParser;
 import org.eclipse.yasson.internal.ComponentMatcher;
+import org.eclipse.yasson.internal.JsonbConfigProperties;
 import org.eclipse.yasson.internal.JsonbContext;
 import org.eclipse.yasson.internal.components.AdapterBinding;
 import org.eclipse.yasson.internal.components.DeserializerBinding;
@@ -28,6 +30,8 @@ import org.eclipse.yasson.internal.model.customization.ComponentBoundCustomizati
 import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.model.customization.PropertyCustomization;
 import org.eclipse.yasson.internal.processor.deserializer.AdapterDeserializer;
+import org.eclipse.yasson.internal.processor.deserializer.ArrayDeserializer;
+import org.eclipse.yasson.internal.processor.deserializer.ArrayInstanceCreator;
 import org.eclipse.yasson.internal.processor.deserializer.CollectionDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.CollectionInstanceCreator;
 import org.eclipse.yasson.internal.processor.deserializer.ContextSwitcher;
@@ -112,6 +116,7 @@ public class ChainModelCreator {
             deserializerChain.put(type, adapterDeser);
             return adapterDeser;
         }
+        JsonbConfigProperties configProperties = jsonbContext.getConfigProperties();
         if (Collection.class.isAssignableFrom(rawType)) {
             Type colType = type instanceof ParameterizedType
                     ? ((ParameterizedType) type).getActualTypeArguments()[0]
@@ -149,6 +154,29 @@ public class ChainModelCreator {
                                                                            jsonbContext.getConfigProperties(),
                                                                            rawType);
             NullCheckDeserializer nullChecker = new NullCheckDeserializer(mapInstanceCreator, JustReturn.create(), rawType);
+            deserializerChain.put(type, nullChecker);
+            return nullChecker;
+        } else if (rawType.isArray()) {
+            if (rawType.equals(byte[].class) && !configProperties.getBinaryDataStrategy().equals(BinaryDataStrategy.BYTE)) {
+                String strategy = configProperties.getBinaryDataStrategy();
+                ModelDeserializer<JsonParser> typeProcessor = typeProcessor(chain,
+                                                                            String.class,
+                                                                            classCustomization,
+                                                                            JustReturn.create());
+                ModelDeserializer<JsonParser> base64Deserializer = ArrayInstanceCreator
+                        .createBase64Deserializer(strategy, typeProcessor);
+                NullCheckDeserializer nullChecker = new NullCheckDeserializer(base64Deserializer, JustReturn.create(), rawType);
+                deserializerChain.put(type, nullChecker);
+                return nullChecker;
+            }
+            Class<?> arrayType = rawType.getComponentType();
+            ModelDeserializer<JsonParser> typeProcessor = typeProcessor(chain,
+                                                                        arrayType,
+                                                                        classCustomization,
+                                                                        JustReturn.create());
+            ArrayDeserializer arrayDeserializer = new ArrayDeserializer(typeProcessor, arrayType);
+            ArrayInstanceCreator arrayInstanceCreator = ArrayInstanceCreator.create(rawType, arrayDeserializer);
+            NullCheckDeserializer nullChecker = new NullCheckDeserializer(arrayInstanceCreator, JustReturn.create(), rawType);
             deserializerChain.put(type, nullChecker);
             return nullChecker;
         } else {
