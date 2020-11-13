@@ -3,6 +3,7 @@ package org.eclipse.yasson.internal.processor.types;
 import java.lang.reflect.Type;
 import java.time.DateTimeException;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Optional;
@@ -22,6 +23,8 @@ import static org.eclipse.yasson.internal.serializer.AbstractDateTimeDeserialize
  * TODO javadoc
  */
 abstract class AbstractDateDeserializer<T> extends TypeDeserializer {
+
+    static final ZoneId UTC = ZoneId.of("UTC");
 
     private final ModelDeserializer<String> actualDeserializer;
 
