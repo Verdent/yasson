@@ -45,16 +45,17 @@ public class ObjectInstanceCreator implements ModelDeserializer<JsonParser> {
                 key = parser.getString();
                 break;
             case VALUE_NULL:
-                break;
             case START_OBJECT:
             case START_ARRAY:
             case VALUE_STRING:
             case VALUE_NUMBER:
             case VALUE_FALSE:
             case VALUE_TRUE:
-                Object o = propertyDeserializerChains.get(key).deserialize(parser, context);
-                if (creatorParams.contains(key)) {
-                    paramValues.put(key, o);
+                if (propertyDeserializerChains.containsKey(key)) {
+                    Object o = propertyDeserializerChains.get(key).deserialize(parser, context);
+                    if (creatorParams.contains(key)) {
+                        paramValues.put(key, o);
+                    }
                 }
                 break;
             case END_OBJECT:
