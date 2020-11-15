@@ -115,12 +115,18 @@ public class ReflectionUtils {
     }
 
     private static Type resolveType(List<Type> chain, Type type, boolean warn) {
-        if (type instanceof WildcardType) {
-            return resolveMostSpecificBound(chain, (WildcardType) type, warn);
-        } else if (type instanceof TypeVariable) {
-            return resolveItemVariableType(chain, (TypeVariable<?>) type, warn);
-        } else if (type instanceof ParameterizedType && chain != null) {
-            return resolveTypeArguments((ParameterizedType) type, chain.get(chain.size() - 1));
+        Type toResolve = type;
+        if (type instanceof GenericArrayType) {
+            toResolve = ((GenericArrayType) type).getGenericComponentType();
+            Type resolved = resolveItemVariableType(chain, (TypeVariable<?>) toResolve, warn);
+            return new GenericArrayTypeImpl(resolved);
+        }
+        if (toResolve instanceof WildcardType) {
+            return resolveMostSpecificBound(chain, (WildcardType) toResolve, warn);
+        } else if (toResolve instanceof TypeVariable) {
+            return resolveItemVariableType(chain, (TypeVariable<?>) toResolve, warn);
+        } else if (toResolve instanceof ParameterizedType) {
+            return resolveTypeArguments((ParameterizedType) toResolve, chain.get(chain.size() - 1));
         }
         return type;
     }
@@ -207,23 +213,30 @@ public class ReflectionUtils {
         final Type[] unresolvedArgs = typeToResolve.getActualTypeArguments();
         Type[] resolvedArgs = new Type[unresolvedArgs.length];
         for (int i = 0; i < unresolvedArgs.length; i++) {
-            if (!(unresolvedArgs[i] instanceof TypeVariable)) {
-                resolvedArgs[i] = unresolvedArgs[i];
+            Type unresolvedArg = unresolvedArgs[i];
+            if (!(unresolvedArg instanceof TypeVariable) && !(unresolvedArg instanceof GenericArrayType)) {
+                resolvedArgs[i] = unresolvedArg;
             } else {
+                Type variableType = unresolvedArg;
+                if (variableType instanceof GenericArrayType) {
+                    variableType = ((GenericArrayType) variableType).getGenericComponentType();
+                }
                 resolvedArgs[i] = new VariableTypeInheritanceSearch()
-                        .searchParametrizedType(typeToSearch, (TypeVariable<?>) unresolvedArgs[i]);
+                        .searchParametrizedType(typeToSearch, (TypeVariable<?>) variableType);
                 if (resolvedArgs[i] == null) {
                     if (typeToSearch instanceof Class) {
                         return Object.class;
                     }
                     //No generic information available
                     throw new IllegalStateException(Messages.getMessage(MessageKeys.GENERIC_BOUND_NOT_FOUND,
-                                                                        unresolvedArgs[i],
+                                                                        variableType,
                                                                         typeToSearch));
                 }
             }
             if (resolvedArgs[i] instanceof ParameterizedType) {
                 resolvedArgs[i] = resolveTypeArguments((ParameterizedType) resolvedArgs[i], typeToSearch);
+            } else if (unresolvedArg instanceof GenericArrayType) {
+                resolvedArgs[i] = new GenericArrayTypeImpl(resolvedArgs[i]);
             }
         }
         return Arrays.equals(resolvedArgs, unresolvedArgs)
@@ -363,5 +376,46 @@ public class ReflectionUtils {
             result = boundRawType;
         }
         return result;
+    }
+
+    public static final class GenericArrayTypeImpl implements GenericArrayType {
+        private final Type genericComponentType;
+
+        // private constructor enforces use of static factory
+        private GenericArrayTypeImpl(Type ct) {
+            genericComponentType = ct;
+        }
+
+
+        /**
+         * Returns a {@code Type} object representing the component type
+         * of this array.
+         *
+         * @return a {@code Type} object representing the component type
+         *     of this array
+         * @since 1.5
+         */
+        public Type getGenericComponentType() {
+            return genericComponentType; // return cached component type
+        }
+
+        public String toString() {
+            return getGenericComponentType().getTypeName() + "[]";
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o instanceof GenericArrayType) {
+                GenericArrayType that = (GenericArrayType) o;
+
+                return Objects.equals(genericComponentType, that.getGenericComponentType());
+            } else
+                return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(genericComponentType);
+        }
     }
 }
