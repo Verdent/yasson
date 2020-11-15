@@ -38,11 +38,11 @@ public abstract class ArrayInstanceCreator implements ModelDeserializer<JsonPars
         this.delegate = delegate;
     }
 
-    public static ArrayInstanceCreator create(Class<?> arrayType, ModelDeserializer<JsonParser> delegate) {
+    public static ArrayInstanceCreator create(Class<?> arrayType, Class<?> componentClass, ModelDeserializer<JsonParser> delegate) {
         if (CACHE.containsKey(arrayType)) {
             return CACHE.get(arrayType).apply(delegate);
         }
-        return new ObjectArrayCreator(delegate, arrayType.getComponentType());
+        return new ObjectArrayCreator(delegate, componentClass);
     }
 
     public static ModelDeserializer<JsonParser> createBase64Deserializer(String strategy,
