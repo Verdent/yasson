@@ -13,11 +13,9 @@ import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
 public class ArrayDeserializer implements ModelDeserializer<JsonParser> {
 
     private final ModelDeserializer<JsonParser> delegate;
-    private final Class<?> arrayType;
 
-    public ArrayDeserializer(ModelDeserializer<JsonParser> delegate, Class<?> arrayType) {
+    public ArrayDeserializer(ModelDeserializer<JsonParser> delegate) {
         this.delegate = delegate;
-        this.arrayType = arrayType;
     }
 
     @SuppressWarnings("unchecked")

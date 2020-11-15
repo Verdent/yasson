@@ -1,5 +1,6 @@
 package org.eclipse.yasson.internal.processor;
 
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Arrays;
@@ -174,8 +175,19 @@ public class ChainModelCreator {
                                                                         arrayType,
                                                                         classCustomization,
                                                                         JustReturn.create());
-            ArrayDeserializer arrayDeserializer = new ArrayDeserializer(typeProcessor, arrayType);
-            ArrayInstanceCreator arrayInstanceCreator = ArrayInstanceCreator.create(rawType, arrayDeserializer);
+            ArrayDeserializer arrayDeserializer = new ArrayDeserializer(typeProcessor);
+            ArrayInstanceCreator arrayInstanceCreator = ArrayInstanceCreator.create(rawType, arrayType, arrayDeserializer);
+            NullCheckDeserializer nullChecker = new NullCheckDeserializer(arrayInstanceCreator, JustReturn.create(), rawType);
+            deserializerChain.put(type, nullChecker);
+            return nullChecker;
+        } else if (type instanceof GenericArrayType) {
+            Class<?> component = ReflectionUtils.getRawType(((GenericArrayType) type).getGenericComponentType());
+            ModelDeserializer<JsonParser> typeProcessor = typeProcessor(chain,
+                                                                        ((GenericArrayType) type).getGenericComponentType(),
+                                                                        classCustomization,
+                                                                        JustReturn.create());
+            ArrayDeserializer arrayDeserializer = new ArrayDeserializer(typeProcessor);
+            ArrayInstanceCreator arrayInstanceCreator = ArrayInstanceCreator.create(rawType, component, arrayDeserializer);
             NullCheckDeserializer nullChecker = new NullCheckDeserializer(arrayInstanceCreator, JustReturn.create(), rawType);
             deserializerChain.put(type, nullChecker);
             return nullChecker;
@@ -198,24 +210,23 @@ public class ChainModelCreator {
             List<String> params = hasCreator ? creatorParamsList(creator) : Collections.emptyList();
             Map<String, ModelDeserializer<JsonParser>> processors = new LinkedHashMap<>();
             for (PropertyModel propertyModel : classModel.getSortedProperties()) {
-                if (!propertyModel.isWritable()) {
+                if (!propertyModel.isWritable() || params.contains(propertyModel.getReadName())) {
                     continue;
                 }
                 ModelDeserializer<JsonParser> modelDeserializer = memberTypeProcessor(chain,
                                                                                       propertyModel, hasCreator,
-                                                                                      params.contains(propertyModel
-                                                                                                              .getReadName()));
+                                                                                      false);
                 processors.put(propertyModel.getReadName(), modelDeserializer);
             }
             for (String s : params) {
-                if (!processors.containsKey(s)) {
-                    CreatorModel creatorModel = creator.findByName(s);
-                    ModelDeserializer<JsonParser> modelDeserializer = typeProcessor(chain,
-                                                                                    creatorModel.getType(),
-                                                                                    creatorModel.getCustomization(),
-                                                                                    JustReturn.create());
-                    processors.put(creatorModel.getName(), modelDeserializer);
-                }
+                //                if (!processors.containsKey(s)) { //TODO analyze proper behavior with annotation overriding
+                CreatorModel creatorModel = creator.findByName(s);
+                ModelDeserializer<JsonParser> modelDeserializer = typeProcessor(chain,
+                                                                                creatorModel.getType(),
+                                                                                creatorModel.getCustomization(),
+                                                                                JustReturn.create());
+                processors.put(creatorModel.getName(), modelDeserializer);
+                //                }
             }
             ModelDeserializer<JsonParser> instanceCreator;
             if (hasCreator) {
