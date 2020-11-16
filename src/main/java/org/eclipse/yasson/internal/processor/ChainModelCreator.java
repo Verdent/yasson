@@ -12,10 +12,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import jakarta.json.JsonArray;
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.config.BinaryDataStrategy;
+import jakarta.json.bind.config.PropertyNamingStrategy;
 import jakarta.json.stream.JsonParser;
 import org.eclipse.yasson.internal.ComponentMatcher;
 import org.eclipse.yasson.internal.JsonbConfigProperties;
@@ -53,6 +56,8 @@ import org.eclipse.yasson.internal.processor.deserializer.ValueSetterDeserialize
 import org.eclipse.yasson.internal.processor.types.TypeDeserializers;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
+
+import static jakarta.json.bind.JsonbConfig.PROPERTY_NAMING_STRATEGY;
 
 /**
  * TODO javadoc
@@ -117,6 +122,13 @@ public class ChainModelCreator {
             };
             deserializerChain.put(type, adapterDeser);
             return adapterDeser;
+        }
+        ModelDeserializer<JsonParser> typeDeserializer = typeDeserializer(rawType,
+                                                                          classCustomization,
+                                                                          JustReturn.create());
+        if (typeDeserializer != null) {
+            deserializerChain.put(type, typeDeserializer);
+            return typeDeserializer;
         }
         JsonbConfigProperties configProperties = jsonbContext.getConfigProperties();
         if (Collection.class.isAssignableFrom(rawType)) {
@@ -211,16 +223,10 @@ public class ChainModelCreator {
                 deserializerChain.put(type, user);
                 return user;
             }
-            ModelDeserializer<JsonParser> typeDeserializer = typeDeserializer(rawType,
-                                                                              classCustomization,
-                                                                              JustReturn.create());
-            if (typeDeserializer != null) {
-                deserializerChain.put(type, typeDeserializer);
-                return typeDeserializer;
-            }
             JsonbCreator creator = classCustomization.getCreator();
             boolean hasCreator = creator != null;
             List<String> params = hasCreator ? creatorParamsList(creator) : Collections.emptyList();
+            Function<String, String> renamer = propertyRenamer();
             Map<String, ModelDeserializer<JsonParser>> processors = new LinkedHashMap<>();
             for (PropertyModel propertyModel : classModel.getSortedProperties()) {
                 if (!propertyModel.isWritable() || params.contains(propertyModel.getReadName())) {
@@ -229,7 +235,7 @@ public class ChainModelCreator {
                 ModelDeserializer<JsonParser> modelDeserializer = memberTypeProcessor(chain,
                                                                                       propertyModel, hasCreator,
                                                                                       false);
-                processors.put(propertyModel.getReadName(), modelDeserializer);
+                processors.put(renamer.apply(propertyModel.getReadName()), modelDeserializer);
             }
             for (String s : params) {
                 //                if (!processors.containsKey(s)) { //TODO analyze proper behavior with annotation overriding
@@ -238,14 +244,14 @@ public class ChainModelCreator {
                                                                                 creatorModel.getType(),
                                                                                 creatorModel.getCustomization(),
                                                                                 JustReturn.create());
-                processors.put(creatorModel.getName(), modelDeserializer);
+                processors.put(renamer.apply(creatorModel.getName()), modelDeserializer);
                 //                }
             }
             ModelDeserializer<JsonParser> instanceCreator;
             if (hasCreator) {
-                instanceCreator = new ObjectInstanceCreator(processors, creator, rawType);
+                instanceCreator = new ObjectInstanceCreator(processors, creator, rawType, renamer);
             } else {
-                ModelDeserializer<JsonParser> typeWrapper = new ObjectDeserializer(processors);
+                ModelDeserializer<JsonParser> typeWrapper = new ObjectDeserializer(processors, renamer);
                 instanceCreator = new ObjectDefaultInstanceCreator(typeWrapper, rawType,
                                                                    classModel.getDefaultConstructor());
             }
@@ -255,6 +261,17 @@ public class ChainModelCreator {
             deserializerChain.put(type, nullChecker);
             return nullChecker;
         }
+    }
+
+    private Function<String, String> propertyRenamer() {
+        boolean isCaseInsensitive = jsonbContext.getConfig()
+                .getProperty(PROPERTY_NAMING_STRATEGY)
+                .filter(prop -> prop.equals(PropertyNamingStrategy.CASE_INSENSITIVE))
+                .isPresent();
+
+        return isCaseInsensitive
+                ? String::toLowerCase
+                : value -> value;
     }
 
     private Optional<AdapterBinding> adapterBinding(Type type, ComponentBoundCustomization classCustomization) {

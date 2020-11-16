@@ -22,7 +22,7 @@ class TypeDeserializerBuilder {
                             ModelDeserializer<Object> delegate) {
         this.clazz = Objects.requireNonNull(clazz);
         this.customization = customization == null ? Customization.empty() : customization;
-        this.configProperties = Objects.requireNonNull(configProperties);
+        this.configProperties = configProperties;
         this.delegate = Objects.requireNonNull(delegate);
     }
 

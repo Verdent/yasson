@@ -68,6 +68,7 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
         try {
             if (lastValueEvent == null) {
                 lastValueEvent = parser.next();
+                checkState();
             }
             Class<?> rawType = ReflectionUtils.getRawType(type);
             ClassModel classModel = getMappingContext().getOrCreateClassModel(rawType);
@@ -80,6 +81,12 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
         } catch (Exception e) {
             LOGGER.severe(e.getMessage());
             throw new JsonbException(Messages.getMessage(MessageKeys.INTERNAL_ERROR, e.getMessage()), e);
+        }
+    }
+
+    private void checkState() {
+        if (lastValueEvent == JsonParser.Event.KEY_NAME) {
+            throw new JsonbException("JsonParser has incorrect position as the first event: KEY_NAME");
         }
     }
 }
