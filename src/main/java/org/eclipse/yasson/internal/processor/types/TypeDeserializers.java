@@ -7,12 +7,17 @@ import java.time.LocalDate;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
+import java.util.OptionalLong;
 import java.util.function.Function;
 
 import jakarta.json.JsonValue;
+import jakarta.json.bind.JsonbException;
 import jakarta.json.stream.JsonParser;
 import org.eclipse.yasson.internal.JsonbConfigProperties;
 import org.eclipse.yasson.internal.model.customization.Customization;
+import org.eclipse.yasson.internal.processor.deserializer.JustReturn;
 import org.eclipse.yasson.internal.processor.deserializer.ModelDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.NullCheckDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.PositionChecker;
@@ -27,6 +32,7 @@ public class TypeDeserializers {
             new HashMap<>();
     private static final Map<Class<?>, Function<TypeDeserializerBuilder, ModelDeserializer<JsonParser>>> ASSIGNABLE =
             new HashMap<>();
+    private static final Map<Class<?>, Class<?>> OPTIONAL_TYPES = new HashMap<>();
 
     static {
         DESERIALIZERS.put(BigInteger.class, BigIntegerDeserializer::new);
@@ -54,12 +60,34 @@ public class TypeDeserializers {
         DESERIALIZERS.put(String.class, StringDeserializer::new);
 
         ASSIGNABLE.put(JsonValue.class, JsonValueDeserializer::new);
+
+        OPTIONAL_TYPES.put(OptionalLong.class, Long.class);
+        OPTIONAL_TYPES.put(OptionalInt.class, Integer.class);
+        OPTIONAL_TYPES.put(OptionalDouble.class, Double.class);
     }
 
     public static ModelDeserializer<JsonParser> getTypeDeserializer(Class<?> clazz,
                                                                     Customization customization,
                                                                     JsonbConfigProperties properties,
                                                                     ModelDeserializer<Object> delegate) {
+        if (OPTIONAL_TYPES.containsKey(clazz)) {
+            Class<?> optionalType = OPTIONAL_TYPES.get(clazz);
+            TypeDeserializerBuilder builder = new TypeDeserializerBuilder(optionalType,
+                                                                          customization,
+                                                                          properties,
+                                                                          JustReturn.create());
+            ValueExtractor valueExtractor = new ValueExtractor(DESERIALIZERS.get(optionalType).apply(builder));
+            if (OptionalLong.class.equals(clazz)) {
+                return new OptionalLongDeserializer(valueExtractor, delegate);
+            } else if (OptionalInt.class.equals(clazz)) {
+                return new OptionalIntDeserializer(valueExtractor, delegate);
+            } else if (OptionalDouble.class.equals(clazz)) {
+                return new OptionalDoubleDeserializer(valueExtractor, delegate);
+            } else {
+                throw new JsonbException("Unsupported Optional type for deserialization: " + clazz);
+            }
+        }
+
         TypeDeserializerBuilder builder = new TypeDeserializerBuilder(clazz, customization, properties, delegate);
         if (DESERIALIZERS.containsKey(clazz)) {
             ValueExtractor valueExtractor = new ValueExtractor(DESERIALIZERS.get(clazz).apply(builder));

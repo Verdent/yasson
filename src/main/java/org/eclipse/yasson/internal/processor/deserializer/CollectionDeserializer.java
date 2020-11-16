@@ -25,6 +25,7 @@ public class CollectionDeserializer implements ModelDeserializer<JsonParser> {
             final JsonParser.Event next = parser.next();
             context.setLastValueEvent(next);
             switch (next) {
+            case VALUE_NULL:
             case START_OBJECT:
             case START_ARRAY:
             case VALUE_STRING:
