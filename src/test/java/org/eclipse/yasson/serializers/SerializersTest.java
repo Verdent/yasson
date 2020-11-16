@@ -391,7 +391,7 @@ public class SerializersTest {
     }
 
     @Test
-    public void testObjectDerializerWithAnyOrNoneOrderStrategy() {
+    public void testObjectDeserializerWithAnyOrNoneOrderStrategy() {
         String json = "{\"first\":{},\"second\":{\"first\":1,\"second\":2},\"third\":{}}";
         // ANY
         Jsonb jsonb = JsonbBuilder.create(new JsonbConfig().withPropertyOrderStrategy(PropertyOrderStrategy.ANY));

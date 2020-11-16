@@ -16,12 +16,13 @@ import org.eclipse.yasson.internal.processor.deserializer.ModelDeserializer;
 class ObjectTypeDeserializer implements ModelDeserializer<JsonParser> {
 
     private static final Type LIST = List.class;
-    private static final Type MAP = new HashMap<String, Object>(){}.getClass().getGenericSuperclass();
 
     private final ModelDeserializer<Object> delegate;
+    private final Class<?> mapClass;
 
     public ObjectTypeDeserializer(TypeDeserializerBuilder builder) {
         this.delegate = builder.getDelegate();
+        this.mapClass = builder.getConfigProperties().getDefaultMapImplType();
     }
 
     @Override
@@ -42,7 +43,7 @@ class ObjectTypeDeserializer implements ModelDeserializer<JsonParser> {
             break;
         case START_OBJECT:
             DeserializationContextImpl newContext = new DeserializationContextImpl(context);
-            toSet = newContext.deserialize(MAP, value);
+            toSet = newContext.deserialize(mapClass, value);
             break;
         case START_ARRAY:
             DeserializationContextImpl newContext1 = new DeserializationContextImpl(context);

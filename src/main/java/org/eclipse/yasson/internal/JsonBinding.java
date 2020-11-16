@@ -170,13 +170,13 @@ public class JsonBinding implements YassonJsonb {
 
     @Override
     public <T> T fromJson(JsonParser jsonParser, Class<T> type) throws JsonbException {
-        Unmarshaller unmarshaller = new Unmarshaller(jsonbContext);
+        DeserializationContextImpl unmarshaller = new DeserializationContextImpl(jsonbContext);
         return unmarshaller.deserialize(type, jsonParser);
     }
 
     @Override
     public <T> T fromJson(JsonParser jsonParser, Type runtimeType) throws JsonbException {
-        Unmarshaller unmarshaller = new Unmarshaller(jsonbContext);
+        DeserializationContextImpl unmarshaller = new DeserializationContextImpl(jsonbContext);
         return unmarshaller.deserialize(runtimeType, jsonParser);
     }
 

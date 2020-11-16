@@ -2,15 +2,33 @@ package org.eclipse.yasson.internal.processor.types;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Path;
+import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.Period;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
+import java.util.TimeZone;
+import java.util.UUID;
 import java.util.function.Function;
+
+import javax.xml.datatype.XMLGregorianCalendar;
 
 import jakarta.json.JsonValue;
 import jakarta.json.bind.JsonbException;
@@ -22,6 +40,13 @@ import org.eclipse.yasson.internal.processor.deserializer.ModelDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.NullCheckDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.PositionChecker;
 import org.eclipse.yasson.internal.processor.deserializer.ValueExtractor;
+import org.eclipse.yasson.internal.serializer.DateTypeDeserializer;
+import org.eclipse.yasson.internal.serializer.DateTypeSerializer;
+import org.eclipse.yasson.internal.serializer.SerializerProviderWrapper;
+import org.eclipse.yasson.internal.serializer.SqlDateTypeDeserializer;
+import org.eclipse.yasson.internal.serializer.SqlDateTypeSerializer;
+import org.eclipse.yasson.internal.serializer.SqlTimestampTypeDeserializer;
+import org.eclipse.yasson.internal.serializer.SqlTimestampTypeSerializer;
 
 /**
  * TODO javadoc
@@ -41,23 +66,43 @@ public class TypeDeserializers {
         DESERIALIZERS.put(Boolean.TYPE, BooleanDeserializer::new);
         DESERIALIZERS.put(Byte.class, ByteDeserializer::new);
         DESERIALIZERS.put(Byte.TYPE, ByteDeserializer::new);
+        DESERIALIZERS.put(Calendar.class, CalendarDeserializer::new);
         DESERIALIZERS.put(Character.TYPE, CharDeserializer::new);
         DESERIALIZERS.put(Character.class, CharDeserializer::new);
         DESERIALIZERS.put(Date.class, DateDeserializer::new);
         DESERIALIZERS.put(Double.class, DoubleDeserializer::new);
         DESERIALIZERS.put(Double.TYPE, DoubleDeserializer::new);
+        DESERIALIZERS.put(Duration.class, DurationDeserializer::new);
         DESERIALIZERS.put(Float.class, FloatDeserializer::new);
         DESERIALIZERS.put(Float.TYPE, FloatDeserializer::new);
         DESERIALIZERS.put(Instant.class, InstantDeserializer::new);
         DESERIALIZERS.put(Integer.class, IntegerDeserializer::new);
         DESERIALIZERS.put(Integer.TYPE, IntegerDeserializer::new);
         DESERIALIZERS.put(LocalDate.class, LocalDateDeserializer::new);
+        DESERIALIZERS.put(LocalDateTime.class, LocalDateTimeDeserializer::new);
+        DESERIALIZERS.put(LocalTime.class, LocalTimeDeserializer::new);
         DESERIALIZERS.put(Long.class, LongDeserializer::new);
         DESERIALIZERS.put(Long.TYPE, LongDeserializer::new);
         DESERIALIZERS.put(Number.class, NumberDeserializer::new);
+        DESERIALIZERS.put(OffsetDateTime.class, OffsetDateTimeDeserializer::new);
+        DESERIALIZERS.put(OffsetTime.class, OffsetTimeDeserializer::new);
+        DESERIALIZERS.put(Path.class, PathDeserializer::new);
+        DESERIALIZERS.put(Period.class, PeriodDeserializer::new);
         DESERIALIZERS.put(Short.class, ShortDeserializer::new);
         DESERIALIZERS.put(Short.TYPE, ShortDeserializer::new);
         DESERIALIZERS.put(String.class, StringDeserializer::new);
+        DESERIALIZERS.put(TimeZone.class, TimeZoneDeserializer::new);
+        DESERIALIZERS.put(URI.class, UriDeserializer::new);
+        DESERIALIZERS.put(URL.class, UrlDeserializer::new);
+        DESERIALIZERS.put(UUID.class, UuidDeserializer::new);
+        DESERIALIZERS.put(XMLGregorianCalendar.class, XmlGregorianCalendar::new);
+        DESERIALIZERS.put(ZonedDateTime.class, ZonedDateTimeDeserializer::new);
+        DESERIALIZERS.put(ZoneId.class, ZoneIdDeserializer::new);
+        DESERIALIZERS.put(ZoneOffset.class, ZoneOffsetDeserializer::new);
+        if (isClassAvailable("java.sql.Date")) {
+            DESERIALIZERS.put(java.sql.Date.class, SqlDateDeserializer::new);
+            DESERIALIZERS.put(Timestamp.class, SqlTimestampDeserializer::new);
+        }
 
         ASSIGNABLE.put(JsonValue.class, JsonValueDeserializer::new);
 
@@ -123,6 +168,15 @@ public class TypeDeserializers {
             }
         }
         return null;
+    }
+
+    private static boolean isClassAvailable(String className) {
+        try {
+            Class.forName(className);
+            return true;
+        } catch (ClassNotFoundException | LinkageError e) {
+            return false;
+        }
     }
 
 }
