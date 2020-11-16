@@ -46,6 +46,7 @@ import org.eclipse.yasson.internal.processor.deserializer.NullCheckDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.ObjectDefaultInstanceCreator;
 import org.eclipse.yasson.internal.processor.deserializer.ObjectDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.ObjectInstanceCreator;
+import org.eclipse.yasson.internal.processor.deserializer.OptionalDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.ReflectionUtils;
 import org.eclipse.yasson.internal.processor.deserializer.UserDefinedDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.ValueSetterDeserializer;
@@ -191,6 +192,17 @@ public class ChainModelCreator {
             NullCheckDeserializer nullChecker = new NullCheckDeserializer(arrayInstanceCreator, JustReturn.create(), rawType);
             deserializerChain.put(type, nullChecker);
             return nullChecker;
+        } else if (Optional.class.isAssignableFrom(rawType)) {
+            Type colType = type instanceof ParameterizedType
+                    ? ((ParameterizedType) type).getActualTypeArguments()[0]
+                    : Object.class;
+            ModelDeserializer<JsonParser> typeProcessor = typeProcessor(chain,
+                                                                        colType,
+                                                                        classCustomization,
+                                                                        JustReturn.create());
+            OptionalDeserializer optionalDeserializer = new OptionalDeserializer(typeProcessor, JustReturn.create());
+            deserializerChain.put(type, optionalDeserializer);
+            return optionalDeserializer;
         } else {
             Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(type, classCustomization);
             if (deserializerBinding.isPresent()) {
@@ -203,7 +215,8 @@ public class ChainModelCreator {
                                                                               classCustomization,
                                                                               JustReturn.create());
             if (typeDeserializer != null) {
-                return typeDeserializer; //Do not cache
+                deserializerChain.put(type, typeDeserializer);
+                return typeDeserializer;
             }
             JsonbCreator creator = classCustomization.getCreator();
             boolean hasCreator = creator != null;
