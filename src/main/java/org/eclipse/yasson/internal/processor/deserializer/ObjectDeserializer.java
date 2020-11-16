@@ -1,6 +1,7 @@
 package org.eclipse.yasson.internal.processor.deserializer;
 
 import java.util.Map;
+import java.util.function.Function;
 
 import jakarta.json.bind.JsonbException;
 import jakarta.json.stream.JsonParser;
@@ -12,9 +13,12 @@ import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
 public class ObjectDeserializer implements ModelDeserializer<JsonParser> {
 
     private final Map<String, ModelDeserializer<JsonParser>> propertyDeserializerChains;
+    private final Function<String, String> renamer;
 
-    public ObjectDeserializer(Map<String, ModelDeserializer<JsonParser>> propertyDeserializerChains) {
+    public ObjectDeserializer(Map<String, ModelDeserializer<JsonParser>> propertyDeserializerChains,
+                              Function<String, String> renamer) {
         this.propertyDeserializerChains = propertyDeserializerChains;
+        this.renamer = renamer;
     }
 
     @Override
@@ -25,7 +29,7 @@ public class ObjectDeserializer implements ModelDeserializer<JsonParser> {
             context.setLastValueEvent(next);
             switch (next) {
             case KEY_NAME:
-                key = parser.getString();
+                key = renamer.apply(parser.getString());
                 break;
             case VALUE_NULL:
             case START_OBJECT:
@@ -35,7 +39,12 @@ public class ObjectDeserializer implements ModelDeserializer<JsonParser> {
             case VALUE_FALSE:
             case VALUE_TRUE:
                 if (propertyDeserializerChains.containsKey(key)) {
-                    propertyDeserializerChains.get(key).deserialize(parser, context);
+                    try {
+                        propertyDeserializerChains.get(key).deserialize(parser, context);
+                    } catch (JsonbException e) {
+                        throw new JsonbException("Unable to deserialize property '" + key
+                                                         + "' because of: " + e.getMessage(), e);
+                    }
                 }
                 break;
             case END_ARRAY:

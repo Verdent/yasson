@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jakarta.json.bind.JsonbException;
@@ -23,14 +24,16 @@ public class ObjectInstanceCreator implements ModelDeserializer<JsonParser> {
     private final List<String> creatorParams;
     private final JsonbCreator creator;
     private final Class<?> clazz;
+    private final Function<String, String> renamer;
 
     public ObjectInstanceCreator(Map<String, ModelDeserializer<JsonParser>> propertyDeserializerChains,
                                  JsonbCreator creator,
-                                 Class<?> clazz) {
+                                 Class<?> clazz, Function<String, String> renamer) {
         this.propertyDeserializerChains = propertyDeserializerChains;
         this.creatorParams = Arrays.stream(creator.getParams()).map(CreatorModel::getName).collect(Collectors.toList());
         this.creator = creator;
         this.clazz = clazz;
+        this.renamer = renamer;
     }
 
     @Override
@@ -42,7 +45,7 @@ public class ObjectInstanceCreator implements ModelDeserializer<JsonParser> {
             context.setLastValueEvent(next);
             switch (next) {
             case KEY_NAME:
-                key = parser.getString();
+                key = renamer.apply(parser.getString());
                 break;
             case VALUE_NULL:
             case START_OBJECT:
