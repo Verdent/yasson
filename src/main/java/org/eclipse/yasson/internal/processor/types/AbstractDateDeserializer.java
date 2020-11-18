@@ -17,8 +17,6 @@ import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
 import org.eclipse.yasson.internal.serializer.JsonbDateFormatter;
 
-import static org.eclipse.yasson.internal.serializer.AbstractDateTimeDeserializer.UTC;
-
 /**
  * TODO javadoc
  */

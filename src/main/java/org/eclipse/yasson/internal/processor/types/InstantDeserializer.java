@@ -16,8 +16,6 @@ import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
-import static org.eclipse.yasson.internal.serializer.AbstractDateTimeSerializer.UTC;
-
 /**
  * Deserializer for {@link Instant} type.
  */
