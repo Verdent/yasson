@@ -6,6 +6,8 @@ import java.util.function.Function;
 import jakarta.json.bind.JsonbException;
 import jakarta.json.stream.JsonParser;
 import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
+import org.eclipse.yasson.internal.properties.MessageKeys;
+import org.eclipse.yasson.internal.properties.Messages;
 
 /**
  * TODO javadoc
@@ -14,11 +16,13 @@ public class ObjectDeserializer implements ModelDeserializer<JsonParser> {
 
     private final Map<String, ModelDeserializer<JsonParser>> propertyDeserializerChains;
     private final Function<String, String> renamer;
+    private final Class<?> rawClass;
 
     public ObjectDeserializer(Map<String, ModelDeserializer<JsonParser>> propertyDeserializerChains,
-                              Function<String, String> renamer) {
+                              Function<String, String> renamer, Class<?> rawClass) {
         this.propertyDeserializerChains = propertyDeserializerChains;
         this.renamer = renamer;
+        this.rawClass = rawClass;
     }
 
     @Override
@@ -45,6 +49,10 @@ public class ObjectDeserializer implements ModelDeserializer<JsonParser> {
                         throw new JsonbException("Unable to deserialize property '" + key
                                                          + "' because of: " + e.getMessage(), e);
                     }
+                } else if (context.getJsonbContext().getConfigProperties().getConfigFailOnUnknownProperties()) {
+                    throw new JsonbException(Messages.getMessage(MessageKeys.UNKNOWN_JSON_PROPERTY,
+                                                                 key,
+                                                                 rawClass));
                 }
                 break;
             case END_ARRAY:

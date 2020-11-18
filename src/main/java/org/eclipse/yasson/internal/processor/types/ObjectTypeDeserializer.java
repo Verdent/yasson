@@ -2,7 +2,6 @@ package org.eclipse.yasson.internal.processor.types;
 
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.List;
 
 import jakarta.json.bind.JsonbException;

@@ -24,6 +24,7 @@ class OptionalDoubleDeserializer implements ModelDeserializer<JsonParser> {
         if (context.getLastValueEvent() == JsonParser.Event.VALUE_NULL) {
             return nullValueDelegate.deserialize(OptionalDouble.empty(), context);
         }
-        return OptionalDouble.of((Double) extractor.deserialize(value, context));
+        OptionalDouble optional = OptionalDouble.of((Double) extractor.deserialize(value, context));
+        return nullValueDelegate.deserialize(optional, context);
     }
 }

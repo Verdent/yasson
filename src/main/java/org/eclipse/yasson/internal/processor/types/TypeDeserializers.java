@@ -40,13 +40,6 @@ import org.eclipse.yasson.internal.processor.deserializer.ModelDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.NullCheckDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.PositionChecker;
 import org.eclipse.yasson.internal.processor.deserializer.ValueExtractor;
-import org.eclipse.yasson.internal.serializer.DateTypeDeserializer;
-import org.eclipse.yasson.internal.serializer.DateTypeSerializer;
-import org.eclipse.yasson.internal.serializer.SerializerProviderWrapper;
-import org.eclipse.yasson.internal.serializer.SqlDateTypeDeserializer;
-import org.eclipse.yasson.internal.serializer.SqlDateTypeSerializer;
-import org.eclipse.yasson.internal.serializer.SqlTimestampTypeDeserializer;
-import org.eclipse.yasson.internal.serializer.SqlTimestampTypeSerializer;
 
 /**
  * TODO javadoc
@@ -122,12 +115,13 @@ public class TypeDeserializers {
                                                                           properties,
                                                                           JustReturn.create());
             ValueExtractor valueExtractor = new ValueExtractor(DESERIALIZERS.get(optionalType).apply(builder));
+            PositionChecker positionChecker = new PositionChecker(valueExtractor, clazz, PositionChecker.Checker.VALUES);
             if (OptionalLong.class.equals(clazz)) {
-                return new OptionalLongDeserializer(valueExtractor, delegate);
+                return new OptionalLongDeserializer(positionChecker, delegate);
             } else if (OptionalInt.class.equals(clazz)) {
-                return new OptionalIntDeserializer(valueExtractor, delegate);
+                return new OptionalIntDeserializer(positionChecker, delegate);
             } else if (OptionalDouble.class.equals(clazz)) {
-                return new OptionalDoubleDeserializer(valueExtractor, delegate);
+                return new OptionalDoubleDeserializer(positionChecker, delegate);
             } else {
                 throw new JsonbException("Unsupported Optional type for deserialization: " + clazz);
             }
@@ -136,7 +130,7 @@ public class TypeDeserializers {
         TypeDeserializerBuilder builder = new TypeDeserializerBuilder(clazz, customization, properties, delegate);
         if (DESERIALIZERS.containsKey(clazz)) {
             ValueExtractor valueExtractor = new ValueExtractor(DESERIALIZERS.get(clazz).apply(builder));
-            return new NullCheckDeserializer(new PositionChecker(PositionChecker.Checker.VALUE, valueExtractor, clazz),
+            return new NullCheckDeserializer(new PositionChecker(valueExtractor, clazz, PositionChecker.Checker.VALUES),
                                              delegate,
                                              clazz);
         }
@@ -158,10 +152,13 @@ public class TypeDeserializers {
 
     private static ModelDeserializer<JsonParser> assignableCases(TypeDeserializerBuilder builder) {
         if (Enum.class.isAssignableFrom(builder.getClazz())) {
-            return new ValueExtractor(new EnumDeserializer(builder));
+            return new PositionChecker(new ValueExtractor(new EnumDeserializer(builder)),
+                                       builder.getClazz(),
+                                       PositionChecker.Checker.VALUES);
         } else if (Object.class.equals(builder.getClazz())) {
             return new ObjectTypeDeserializer(builder);
         }
+        //TODO replace to else if?
         for (Class<?> clazz : ASSIGNABLE.keySet()) {
             if (clazz.isAssignableFrom(builder.getClazz())) {
                 return ASSIGNABLE.get(clazz).apply(builder);

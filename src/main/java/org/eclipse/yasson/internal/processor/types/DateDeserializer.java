@@ -3,17 +3,8 @@ package org.eclipse.yasson.internal.processor.types;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.time.temporal.TemporalAccessor;
 import java.util.Date;
 import java.util.Locale;
-import java.util.Optional;
-
-import org.eclipse.yasson.internal.model.customization.Customization;
-import org.eclipse.yasson.internal.processor.deserializer.ModelDeserializer;
-import org.eclipse.yasson.internal.serializer.DeserializerBuilder;
-
-import static java.time.ZoneOffset.UTC;
 
 /**
  * TODO javadoc
