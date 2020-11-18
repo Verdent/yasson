@@ -11,7 +11,7 @@
 
   <properties>
     <jsonb.tck.version>2.0.0-SNAPSHOT</jsonb.tck.version>
-    <yasson.version>2.0.1-SNAPSHOT</yasson.version>
+    <yasson.version>2.0.2-SNAPSHOT</yasson.version>
   </properties>
   
   <!-- TODO: Temporarily enable snapshot repository -->
