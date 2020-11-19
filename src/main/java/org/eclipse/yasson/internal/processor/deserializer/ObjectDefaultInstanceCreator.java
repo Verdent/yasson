@@ -17,20 +17,27 @@ public class ObjectDefaultInstanceCreator implements ModelDeserializer<JsonParse
 
     private final ModelDeserializer<JsonParser> delegate;
     private final Constructor<?> defaultConstructor;
+    private final JsonbException exception;
 
     public ObjectDefaultInstanceCreator(ModelDeserializer<JsonParser> delegate,
                                         Class<?> clazz,
                                         Constructor<?> defaultConstructor) {
         this.delegate = delegate;
+        this.defaultConstructor = defaultConstructor;
         if (clazz.isInterface()) {
-            throw new JsonbException(Messages.getMessage(MessageKeys.INFER_TYPE_FOR_UNMARSHALL, clazz.getName()));
+            this.exception = new JsonbException(Messages.getMessage(MessageKeys.INFER_TYPE_FOR_UNMARSHALL, clazz.getName()));
+        } else if (defaultConstructor == null) {
+            this.exception = new JsonbException(Messages.getMessage(MessageKeys.NO_DEFAULT_CONSTRUCTOR, clazz));
+        } else {
+            this.exception = null;
         }
-        this.defaultConstructor = Objects.requireNonNull(defaultConstructor,
-                                                         () -> Messages.getMessage(MessageKeys.NO_DEFAULT_CONSTRUCTOR, clazz));
     }
 
     @Override
     public Object deserialize(JsonParser value, DeserializationContextImpl context) {
+        if (exception != null) {
+            throw exception;
+        }
         Object instance = ReflectionUtils.createNoArgConstructorInstance(defaultConstructor);
         context.setInstance(instance);
         return delegate.deserialize(value, context);
