@@ -19,6 +19,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.OptionalDouble;
@@ -68,6 +69,7 @@ public class TypeDeserializers {
         DESERIALIZERS.put(Duration.class, DurationDeserializer::new);
         DESERIALIZERS.put(Float.class, FloatDeserializer::new);
         DESERIALIZERS.put(Float.TYPE, FloatDeserializer::new);
+        DESERIALIZERS.put(GregorianCalendar.class, CalendarDeserializer::new);
         DESERIALIZERS.put(Instant.class, InstantDeserializer::new);
         DESERIALIZERS.put(Integer.class, IntegerDeserializer::new);
         DESERIALIZERS.put(Integer.TYPE, IntegerDeserializer::new);
@@ -108,33 +110,38 @@ public class TypeDeserializers {
                                                                     Customization customization,
                                                                     JsonbConfigProperties properties,
                                                                     ModelDeserializer<Object> delegate) {
-        if (OPTIONAL_TYPES.containsKey(clazz)) {
-            Class<?> optionalType = OPTIONAL_TYPES.get(clazz);
-            TypeDeserializerBuilder builder = new TypeDeserializerBuilder(optionalType,
-                                                                          customization,
-                                                                          properties,
-                                                                          JustReturn.create());
-            ValueExtractor valueExtractor = new ValueExtractor(DESERIALIZERS.get(optionalType).apply(builder));
-            PositionChecker positionChecker = new PositionChecker(valueExtractor, clazz, PositionChecker.Checker.VALUES);
-            if (OptionalLong.class.equals(clazz)) {
-                return new OptionalLongDeserializer(positionChecker, delegate);
-            } else if (OptionalInt.class.equals(clazz)) {
-                return new OptionalIntDeserializer(positionChecker, delegate);
-            } else if (OptionalDouble.class.equals(clazz)) {
-                return new OptionalDoubleDeserializer(positionChecker, delegate);
-            } else {
-                throw new JsonbException("Unsupported Optional type for deserialization: " + clazz);
+        Class<?> candidate = clazz;
+        do {
+            if (OPTIONAL_TYPES.containsKey(candidate)) {
+                Class<?> optionalType = OPTIONAL_TYPES.get(candidate);
+                TypeDeserializerBuilder builder = new TypeDeserializerBuilder(optionalType,
+                                                                              customization,
+                                                                              properties,
+                                                                              JustReturn.create());
+                ValueExtractor valueExtractor = new ValueExtractor(DESERIALIZERS.get(optionalType).apply(builder));
+                PositionChecker positionChecker = new PositionChecker(valueExtractor, clazz, PositionChecker.Checker.VALUES);
+                if (OptionalLong.class.equals(candidate)) {
+                    return new OptionalLongDeserializer(positionChecker, delegate);
+                } else if (OptionalInt.class.equals(candidate)) {
+                    return new OptionalIntDeserializer(positionChecker, delegate);
+                } else if (OptionalDouble.class.equals(candidate)) {
+                    return new OptionalDoubleDeserializer(positionChecker, delegate);
+                } else {
+                    throw new JsonbException("Unsupported Optional type for deserialization: " + clazz);
+                }
             }
-        }
+
+            if (DESERIALIZERS.containsKey(candidate)) {
+                TypeDeserializerBuilder builder = new TypeDeserializerBuilder(clazz, customization, properties, delegate);
+                ValueExtractor valueExtractor = new ValueExtractor(DESERIALIZERS.get(candidate).apply(builder));
+                return new NullCheckDeserializer(new PositionChecker(valueExtractor, clazz, PositionChecker.Checker.VALUES),
+                                                 delegate,
+                                                 clazz);
+            }
+            candidate = candidate.getSuperclass();
+        } while (candidate != null);
 
         TypeDeserializerBuilder builder = new TypeDeserializerBuilder(clazz, customization, properties, delegate);
-        if (DESERIALIZERS.containsKey(clazz)) {
-            ValueExtractor valueExtractor = new ValueExtractor(DESERIALIZERS.get(clazz).apply(builder));
-            return new NullCheckDeserializer(new PositionChecker(valueExtractor, clazz, PositionChecker.Checker.VALUES),
-                                             delegate,
-                                             clazz);
-        }
-
         ModelDeserializer<JsonParser> deserializer = assignableCases(builder);
         if (deserializer != null) {
             return new NullCheckDeserializer(deserializer, delegate, clazz);
