@@ -3,9 +3,6 @@ package org.eclipse.yasson.internal.processor;
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import jakarta.json.JsonArray;
@@ -13,9 +10,6 @@ import jakarta.json.JsonObject;
 import jakarta.json.JsonValue;
 import jakarta.json.stream.JsonLocation;
 import jakarta.json.stream.JsonParser;
-
-import static jakarta.json.stream.JsonParser.Event.START_ARRAY;
-import static jakarta.json.stream.JsonParser.Event.START_OBJECT;
 
 /**
  * TODO javadoc
@@ -132,11 +126,15 @@ public class YassonParser implements JsonParser {
 
     @Override
     public Stream<Map.Entry<String, JsonValue>> getObjectStream() {
+        validate();
+        level--;
         return delegate.getObjectStream();
     }
 
     @Override
     public Stream<JsonValue> getValueStream() {
+        validate();
+        level--;
         return delegate.getValueStream();
     }
 
