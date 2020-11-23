@@ -224,7 +224,7 @@ public class ChainModelCreator {
             Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(type, classCustomization);
             if (deserializerBinding.isPresent()) {
                 UserDefinedDeserializer user = new UserDefinedDeserializer(deserializerBinding.get().getJsonbDeserializer(),
-                                                                           JustReturn.create(), type);
+                                                                           JustReturn.create(), type, classCustomization);
                 deserializerChain.put(type, user);
                 return user;
             }
@@ -319,7 +319,10 @@ public class ChainModelCreator {
         Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(resolved,
                                                                                 (ComponentBoundCustomization) customization);
         if (deserializerBinding.isPresent()) {
-            return new UserDefinedDeserializer(deserializerBinding.get().getJsonbDeserializer(), memberDeserializer, resolved);
+            return new UserDefinedDeserializer(deserializerBinding.get().getJsonbDeserializer(),
+                                               memberDeserializer,
+                                               resolved,
+                                               customization);
         }
         Optional<AdapterBinding> adapterBinding = adapterBinding(resolved, (ComponentBoundCustomization) customization);
         if (adapterBinding.isPresent()) {

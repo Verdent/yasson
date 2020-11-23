@@ -3,6 +3,7 @@ package org.eclipse.yasson.internal.processor.deserializer;
 import java.lang.reflect.Array;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -19,17 +20,20 @@ import org.eclipse.yasson.internal.properties.Messages;
  */
 public abstract class ArrayInstanceCreator implements ModelDeserializer<JsonParser> {
 
-    private static final Map<Class<?>, Function<ModelDeserializer<JsonParser>, ArrayInstanceCreator>> CACHE = new HashMap<>();
+    private static final Map<Class<?>, Function<ModelDeserializer<JsonParser>, ArrayInstanceCreator>> CACHE;
 
     static {
-        CACHE.put(boolean[].class, BooleanArrayCreator::new);
-        CACHE.put(byte[].class, ByteArrayCreator::new);
-        CACHE.put(char[].class, CharArrayCreator::new);
-        CACHE.put(double[].class, DoubleArrayCreator::new);
-        CACHE.put(float[].class, FloatArrayCreator::new);
-        CACHE.put(int[].class, IntegerArrayCreator::new);
-        CACHE.put(long[].class, LongArrayCreator::new);
-        CACHE.put(short[].class, ShortArrayCreator::new);
+        Map<Class<?>, Function<ModelDeserializer<JsonParser>, ArrayInstanceCreator>> cache = new HashMap<>();
+        cache.put(boolean[].class, BooleanArrayCreator::new);
+        cache.put(byte[].class, ByteArrayCreator::new);
+        cache.put(char[].class, CharArrayCreator::new);
+        cache.put(double[].class, DoubleArrayCreator::new);
+        cache.put(float[].class, FloatArrayCreator::new);
+        cache.put(int[].class, IntegerArrayCreator::new);
+        cache.put(long[].class, LongArrayCreator::new);
+        cache.put(short[].class, ShortArrayCreator::new);
+
+        CACHE = Collections.unmodifiableMap(cache);
     }
 
     private final ModelDeserializer<JsonParser> delegate;
