@@ -118,7 +118,7 @@ public class ReflectionUtils {
         Type toResolve = type;
         if (type instanceof GenericArrayType) {
             toResolve = ((GenericArrayType) type).getGenericComponentType();
-            Type resolved = resolveItemVariableType(chain, (TypeVariable<?>) toResolve, warn);
+            Type resolved = resolveType(chain, toResolve);
             return new GenericArrayTypeImpl(resolved);
         }
         if (toResolve instanceof WildcardType) {
