@@ -12,11 +12,11 @@
 
 package org.eclipse.yasson;
 
-import java.util.Collection;
+import org.junit.jupiter.api.Test;
 
-import org.junit.jupiter.api.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.eclipse.yasson.Jsonbs.*;
+import static org.eclipse.yasson.Jsonbs.bindingJsonb;
+import static org.eclipse.yasson.Jsonbs.defaultJsonb;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Roman Grigoriadi
@@ -27,7 +27,6 @@ public class SimpleTest {
     public void testSimpleSerialize() {
         final StringWrapper wrapper = new StringWrapper();
         wrapper.setValue("abc");
-        bindingJsonb.toJson(wrapper);
         final String val = bindingJsonb.toJson(wrapper);
         assertEquals("{\"value\":\"abc\"}", val);
     }

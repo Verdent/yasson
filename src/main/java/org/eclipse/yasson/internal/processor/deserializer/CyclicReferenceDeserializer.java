@@ -20,12 +20,10 @@ public class CyclicReferenceDeserializer implements ModelDeserializer<JsonParser
 
     @Override
     public Object deserialize(JsonParser value, DeserializationContextImpl context) {
-        synchronized (type) {
-            if (delegate == null) {
-                Class<?> clazz = ReflectionUtils.getRawType(type);
-                ClassModel classModel = context.getMappingContext().getOrCreateClassModel(clazz);
-                delegate = context.getJsonbContext().getChainModelCreator().deserializerChain(type, classModel);
-            }
+        if (delegate == null) {
+            Class<?> clazz = ReflectionUtils.getRawType(type);
+            ClassModel classModel = context.getMappingContext().getOrCreateClassModel(clazz);
+            delegate = context.getJsonbContext().getChainModelCreator().deserializerChain(type, classModel);
         }
         return delegate.deserialize(value, context);
     }

@@ -10,14 +10,14 @@ import org.eclipse.yasson.internal.properties.Messages;
 /**
  * TODO javadoc
  */
-public class AdapterDeserializer implements ModelDeserializer<Object> {
+class AdapterDeserializer implements ModelDeserializer<Object> {
 
     private final JsonbAdapter<Object, Object> adapter;
     private final AdapterBinding adapterBinding;
     private final ModelDeserializer<Object> delegate;
 
     @SuppressWarnings("unchecked")
-    public AdapterDeserializer(AdapterBinding adapterBinding,
+    AdapterDeserializer(AdapterBinding adapterBinding,
                                ModelDeserializer<Object> delegate) {
         this.adapterBinding = adapterBinding;
         this.adapter = (JsonbAdapter<Object, Object>) adapterBinding.getAdapter();
