@@ -10,15 +10,14 @@ import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
 /**
  * TODO javadoc
  */
-public class ArrayDeserializer implements ModelDeserializer<JsonParser> {
+class ArrayDeserializer implements ModelDeserializer<JsonParser> {
 
     private final ModelDeserializer<JsonParser> delegate;
 
-    public ArrayDeserializer(ModelDeserializer<JsonParser> delegate) {
+    ArrayDeserializer(ModelDeserializer<JsonParser> delegate) {
         this.delegate = delegate;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Object deserialize(JsonParser parser, DeserializationContextImpl context) {
         Collection<Object> collection = new ArrayList<>();

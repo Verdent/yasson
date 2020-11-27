@@ -42,8 +42,6 @@ public class ClassModel {
 
     private final AtomicBoolean isInitialized = new AtomicBoolean(false);
 
-    private final Map<String, ModelSerializer<?>> processors = new LinkedHashMap<>();
-
     private Constructor<?> defaultConstructor;
 
     /**

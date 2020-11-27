@@ -18,7 +18,7 @@ import org.eclipse.yasson.internal.properties.Messages;
 /**
  * TODO javadoc
  */
-public abstract class ArrayInstanceCreator implements ModelDeserializer<JsonParser> {
+abstract class ArrayInstanceCreator implements ModelDeserializer<JsonParser> {
 
     private static final Map<Class<?>, Function<ModelDeserializer<JsonParser>, ArrayInstanceCreator>> CACHE;
 
@@ -42,14 +42,14 @@ public abstract class ArrayInstanceCreator implements ModelDeserializer<JsonPars
         this.delegate = delegate;
     }
 
-    public static ArrayInstanceCreator create(Class<?> arrayType, Class<?> componentClass, ModelDeserializer<JsonParser> delegate) {
+    static ArrayInstanceCreator create(Class<?> arrayType, Class<?> componentClass, ModelDeserializer<JsonParser> delegate) {
         if (CACHE.containsKey(arrayType)) {
             return CACHE.get(arrayType).apply(delegate);
         }
         return new ObjectArrayCreator(delegate, componentClass);
     }
 
-    public static ModelDeserializer<JsonParser> createBase64Deserializer(String strategy,
+    static ModelDeserializer<JsonParser> createBase64Deserializer(String strategy,
                                                                          ModelDeserializer<JsonParser> delegate) {
         return new Base64ByteArray(strategy, delegate);
     }
