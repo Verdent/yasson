@@ -63,7 +63,7 @@ import org.eclipse.yasson.defaultmapping.dates.model.OffsetDateTimePojo;
 import org.eclipse.yasson.defaultmapping.dates.model.OffsetTimePojo;
 import org.eclipse.yasson.defaultmapping.dates.model.ZonedDateTimePojo;
 import org.eclipse.yasson.defaultmapping.generics.model.ScalarValueWrapper;
-import org.eclipse.yasson.internal.processor.types.SqlDateDeserializer;
+import org.eclipse.yasson.internal.processor.deserializer.types.SqlDateDeserializer;
 import org.junit.jupiter.api.Test;
 
 import static org.eclipse.yasson.Jsonbs.bindingJsonb;
