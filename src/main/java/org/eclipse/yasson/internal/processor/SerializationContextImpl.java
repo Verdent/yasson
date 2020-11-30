@@ -18,19 +18,15 @@ import java.util.Objects;
 import java.util.logging.Logger;
 
 import jakarta.json.bind.JsonbException;
-import jakarta.json.bind.serializer.JsonbSerializer;
 import jakarta.json.bind.serializer.SerializationContext;
 import jakarta.json.stream.JsonGenerationException;
 import jakarta.json.stream.JsonGenerator;
 import org.eclipse.yasson.internal.JsonbContext;
 import org.eclipse.yasson.internal.ProcessingContext;
 import org.eclipse.yasson.internal.model.ClassModel;
-import org.eclipse.yasson.internal.model.JsonbPropertyInfo;
+import org.eclipse.yasson.internal.processor.serializer.ModelSerializer;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
-import org.eclipse.yasson.internal.serializer.AbstractValueTypeSerializer;
-import org.eclipse.yasson.internal.serializer.ContainerSerializerProvider;
-import org.eclipse.yasson.internal.serializer.SerializerBuilder;
 
 /**
  * JSONB marshaller. Created each time marshalling operation called.
@@ -40,6 +36,7 @@ public class SerializationContextImpl extends ProcessingContext implements Seria
     private static final Logger LOGGER = Logger.getLogger(SerializationContextImpl.class.getName());
 
     private final Type runtimeType;
+    private String key = null;
 
     /**
      * Creates Marshaller for generation to String.
@@ -63,6 +60,24 @@ public class SerializationContextImpl extends ProcessingContext implements Seria
     }
 
     /**
+     * Set new current property key name.
+     *
+     * @param key key name
+     */
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    /**
+     * Current property key name.
+     *
+     * @return current property key name
+     */
+    public String getKey() {
+        return key;
+    }
+
+    /**
      * Marshals given object to provided Writer or OutputStream.
      *
      * @param object        object to marshall
@@ -71,7 +86,7 @@ public class SerializationContextImpl extends ProcessingContext implements Seria
      */
     public void marshall(Object object, JsonGenerator jsonGenerator, boolean close) {
         try {
-            serializeRoot(object, jsonGenerator);
+            serializeObject(object, jsonGenerator);
         } catch (JsonbException e) {
             LOGGER.severe(e.getMessage());
             throw e;
@@ -118,13 +133,13 @@ public class SerializationContextImpl extends ProcessingContext implements Seria
         Objects.requireNonNull(key);
         Objects.requireNonNull(object);
         generator.writeKey(key);
-        serializeRoot(object, generator);
+        serializeObject(object, generator);
     }
 
     @Override
     public <T> void serialize(T object, JsonGenerator generator) {
         Objects.requireNonNull(object);
-        serializeRoot(object, generator);
+        serializeObject(object, generator);
     }
 
     /**
@@ -135,33 +150,21 @@ public class SerializationContextImpl extends ProcessingContext implements Seria
      * @param generator JSON generator.
      */
     @SuppressWarnings("unchecked")
-    public <T> void serializeRoot(T root, JsonGenerator generator) {
+    public <T> void serializeObject(T root, JsonGenerator generator) {
         if (root == null) {
             getJsonbContext().getConfigProperties().getNullSerializer().serialize(null, generator, this);
             return;
         }
-        final JsonbSerializer<T> rootSerializer = (JsonbSerializer<T>) getRootSerializer(root.getClass());
-        if (getJsonbContext().getConfigProperties().isStrictIJson()
-                && rootSerializer instanceof AbstractValueTypeSerializer) {
-            throw new JsonbException(Messages.getMessage(MessageKeys.IJSON_ENABLED_SINGLE_VALUE));
-        }
+        final ModelSerializer rootSerializer = getRootSerializer(root.getClass());
+        //        if (getJsonbContext().getConfigProperties().isStrictIJson()
+        //                && rootSerializer instanceof AbstractValueTypeSerializer) {
+        //            throw new JsonbException(Messages.getMessage(MessageKeys.IJSON_ENABLED_SINGLE_VALUE));
+        //        }
         rootSerializer.serialize(root, generator, this);
     }
 
-    JsonbSerializer<?> getRootSerializer(Class<?> rootClazz) {
-        final ContainerSerializerProvider serializerProvider = getMappingContext().getSerializerProvider(rootClazz);
-        if (serializerProvider != null) {
-            return serializerProvider
-                    .provideSerializer(new JsonbPropertyInfo()
-                                               .withRuntimeType(runtimeType));
-        }
-        SerializerBuilder serializerBuilder = new SerializerBuilder(getJsonbContext())
-                .withObjectClass(rootClazz)
-                .withType(runtimeType);
-
-        ClassModel classModel = getMappingContext().getOrCreateClassModel(rootClazz);
-        serializerBuilder.withCustomization(classModel.getClassCustomization());
-        return serializerBuilder.build();
+    public ModelSerializer getRootSerializer(Class<?> rootClazz) {
+        return getJsonbContext().getSerializationModelCreator().serializerChain(rootClazz, true);
     }
-    
+
 }
