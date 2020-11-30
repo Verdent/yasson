@@ -483,18 +483,20 @@ public class AnnotationIntrospector {
         Map<AnnotationTarget, JsonbNumberFormat> annotationFromPropertyCategorized = getAnnotationFromPropertyCategorized(
                 JsonbNumberFormat.class,
                 property);
-        if (annotationFromPropertyCategorized.size() == 0) {
-            final Optional<Class<?>> propertyRawTypeOptional = ReflectionUtils.getOptionalRawType(property.getPropertyType());
-            if (propertyRawTypeOptional.isPresent()) {
-                Class<?> rawType = propertyRawTypeOptional.get();
-                if (!Number.class.isAssignableFrom(rawType)) {
-                    return new HashMap<>();
-                }
-            }
-        } else {
-            annotationFromPropertyCategorized.forEach((key, annotation) -> result
-                    .put(key, new JsonbNumberFormatter(annotation.value(), annotation.locale())));
-        }
+//        if (annotationFromPropertyCategorized.size() == 0) {
+//            final Optional<Class<?>> propertyRawTypeOptional = ReflectionUtils.getOptionalRawType(property.getPropertyType());
+//            if (propertyRawTypeOptional.isPresent()) {
+//                Class<?> rawType = propertyRawTypeOptional.get();
+//                if (!Number.class.isAssignableFrom(rawType)) {
+//                    return new HashMap<>();
+//                }
+//            }
+//        } else {
+//            annotationFromPropertyCategorized.forEach((key, annotation) -> result
+//                    .put(key, new JsonbNumberFormatter(annotation.value(), annotation.locale())));
+//        }
+        annotationFromPropertyCategorized.forEach((key, annotation) -> result
+                .put(key, new JsonbNumberFormatter(annotation.value(), annotation.locale())));
 
         JsonbNumberFormat classLevelNumberFormatter = findAnnotation(property.getDeclaringClassElement().getAnnotations(),
                                                                      JsonbNumberFormat.class);

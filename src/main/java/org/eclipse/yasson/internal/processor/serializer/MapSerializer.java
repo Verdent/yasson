@@ -6,8 +6,11 @@ import org.eclipse.yasson.internal.processor.SerializationContextImpl;
 /**
  * TODO javadoc
  */
-public interface ModelSerializer {
+public class MapSerializer implements ModelSerializer {
 
-    void serialize(Object value, JsonGenerator generator, SerializationContextImpl context);
+    @Override
+    public void serialize(Object value, JsonGenerator generator, SerializationContextImpl context) {
+
+    }
 
 }
