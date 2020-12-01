@@ -1,5 +1,6 @@
 package org.eclipse.yasson.internal.processor.serializer;
 
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
@@ -27,7 +28,7 @@ public class SerializationModelCreator {
     }
 
     public ModelSerializer serializerChain(Type type, boolean cache) {
-        return serializerChain(type, null, cache);
+        return serializerChain(type, Customization.empty(), cache);
     }
 
     public ModelSerializer serializerChain(Type type, Customization propertyCustomization, boolean cache) {
@@ -67,7 +68,11 @@ public class SerializationModelCreator {
             }
             return typeSerializer;
         } else if (Collection.class.isAssignableFrom(rawType)) {
-            return createCollectionSerializer(chain, type, propertyCustomization, cache);
+            return createCollectionSerializer(chain, type, propertyCustomization);
+        } else if (Map.class.isAssignableFrom(rawType)) {
+            return createMapSerializer(chain, type, propertyCustomization);
+        } else if (rawType.isArray()) {
+            return createArraySerializer(chain, rawType, propertyCustomization);
         }
         return createObjectSerializer(chain, type, classModel);
     }
@@ -91,27 +96,53 @@ public class SerializationModelCreator {
 
     private ModelSerializer createCollectionSerializer(LinkedList<Type> chain,
                                                        Type type,
-                                                       Customization customization,
-                                                       boolean cache) {
+                                                       Customization customization) {
         Type colType = type instanceof ParameterizedType
                 ? ((ParameterizedType) type).getActualTypeArguments()[0]
                 : Object.class;
-//        ClassModel colCM = jsonbContext.getMappingContext().getOrCreateClassModel(ReflectionUtils.getRawType(colType));
         ModelSerializer typeSerializer = memberSerializer(chain, colType, customization, false);
-        CollectionSerializer colSerializer = new CollectionSerializer(typeSerializer);
-//        if (cache) {
-//            serializerChain.put(type, colSerializer);
-//        }
-        return colSerializer;
+        CollectionSerializer collectionSerializer = new CollectionSerializer(typeSerializer);
+        return new NullSerializer(collectionSerializer, jsonbContext);
+    }
+
+    private ModelSerializer createMapSerializer(LinkedList<Type> chain, Type type, Customization propertyCustomization) {
+        Type keyType = type instanceof ParameterizedType
+                ? ((ParameterizedType) type).getActualTypeArguments()[0]
+                : Object.class;
+        Type valueType = type instanceof ParameterizedType
+                ? ((ParameterizedType) type).getActualTypeArguments()[1]
+                : Object.class;
+        Type resolvedKey = ReflectionUtils.resolveType(chain, keyType);
+        Class<?> rawClass = ReflectionUtils.getRawType(resolvedKey);
+        ModelSerializer keySerializer = memberSerializer(chain, keyType, Customization.empty(), true);
+        ModelSerializer valueSerializer = memberSerializer(chain, valueType, propertyCustomization, true);
+        MapSerializer mapSerializer = MapSerializer.create(rawClass, keySerializer, valueSerializer);
+        return new NullSerializer(mapSerializer, jsonbContext);
+    }
+
+    private ModelSerializer createArraySerializer(LinkedList<Type> chain,
+                                                  Class<?> raw,
+                                                  Customization propertyCustomization) {
+        Class<?> arrayComponent = raw.getComponentType();
+        ModelSerializer modelSerializer = memberSerializer(chain, arrayComponent, propertyCustomization, false);
+        ArraySerializer arraySerializer = ArraySerializer.create(raw, modelSerializer);
+        return new NullSerializer(arraySerializer, jsonbContext);
     }
 
     private ModelSerializer memberSerializer(LinkedList<Type> chain, Type type, Customization customization, boolean cache) {
         Type resolved = ReflectionUtils.resolveType(chain, type);
         Class<?> rawType = ReflectionUtils.getRawType(resolved);
-        ModelSerializer typeSerializer = TypeSerializers
-                .getTypeSerializer(rawType, customization, jsonbContext);
+        ModelSerializer typeSerializer = TypeSerializers.getTypeSerializer(rawType, customization, jsonbContext);
         if (typeSerializer == null) {
-            typeSerializer = serializerChain(chain, resolved, customization, cache);
+            //Final classes dont have any child classes. It is safe to assume that there will be instance of that specific class.
+            if (Modifier.isFinal(rawType.getModifiers())
+                    || Collection.class.isAssignableFrom(rawType)
+                    || Map.class.isAssignableFrom(rawType)) {
+                typeSerializer = serializerChain(chain, resolved, customization, cache);
+            } else {
+                //Needs to be dynamically resolved with special cache since possible inheritance problem.
+                typeSerializer = TypeSerializers.getTypeSerializer(Object.class, customization, jsonbContext);
+            }
         }
         return typeSerializer;
     }
