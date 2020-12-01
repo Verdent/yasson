@@ -50,17 +50,17 @@ public class TypeSerializers {
         Class<?> current = clazz;
         TypeSerializerBuilder builder = new TypeSerializerBuilder(current, customization, jsonbContext);
         if (Object.class.equals(current)) {
-            return new NullSerializer(SERIALIZERS.get(current).apply(builder), jsonbContext);
+            return new NullSerializer(SERIALIZERS.get(current).apply(builder), customization);
         }
         do {
             if (SERIALIZERS.containsKey(current)) {
-                return new NullSerializer(SERIALIZERS.get(current).apply(builder), jsonbContext);
+                return new NullSerializer(SERIALIZERS.get(current).apply(builder), customization);
             }
             current = current.getSuperclass();
         } while (!Object.class.equals(current) && current != null);
 
         if (Enum.class.isAssignableFrom(clazz)) {
-            return new EnumSerializer(builder);
+            return new NullSerializer(new EnumSerializer(builder), customization);
         }
 
         return null;
