@@ -48,17 +48,20 @@ public class TypeSerializers {
 
     public static ModelSerializer getTypeSerializer(Class<?> clazz, Customization customization, JsonbContext jsonbContext) {
         Class<?> current = clazz;
+        TypeSerializerBuilder builder = new TypeSerializerBuilder(current, customization, jsonbContext);
         if (Object.class.equals(current)) {
-            TypeSerializerBuilder builder = new TypeSerializerBuilder(current, customization, jsonbContext);
             return new NullSerializer(SERIALIZERS.get(current).apply(builder), jsonbContext);
         }
         do {
             if (SERIALIZERS.containsKey(current)) {
-                TypeSerializerBuilder builder = new TypeSerializerBuilder(current, customization, jsonbContext);
                 return new NullSerializer(SERIALIZERS.get(current).apply(builder), jsonbContext);
             }
             current = current.getSuperclass();
         } while (!Object.class.equals(current) && current != null);
+
+        if (Enum.class.isAssignableFrom(clazz)) {
+            return new EnumSerializer(builder);
+        }
 
         return null;
     }
