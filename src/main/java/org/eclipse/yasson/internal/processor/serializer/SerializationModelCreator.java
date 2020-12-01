@@ -82,14 +82,16 @@ public class SerializationModelCreator {
                                                    ClassModel classModel) {
         LinkedList<ModelSerializer> propertySerializers = new LinkedList<>();
         for (PropertyModel model : classModel.getSortedProperties()) {
-            ModelSerializer memberModel = memberSerializer(chain,
-                                                           model.getPropertySerializationType(),
-                                                           model.getCustomization(),
-                                                           true);
-            propertySerializers.add(new ValueGetterSerializer(model.getWriteName(), model.getGetValueHandle(), memberModel));
+            if (model.isWritable()) {
+                ModelSerializer memberModel = memberSerializer(chain,
+                                                               model.getPropertySerializationType(),
+                                                               model.getCustomization(),
+                                                               true);
+                propertySerializers.add(new ValueGetterSerializer(model.getWriteName(), model.getGetValueHandle(), memberModel));
+            }
         }
         ObjectSerializer objectSerializer = new ObjectSerializer(propertySerializers);
-        NullSerializer nullSerializer = new NullSerializer(objectSerializer, jsonbContext);
+        NullSerializer nullSerializer = new NullSerializer(objectSerializer, classModel.getClassCustomization());
         serializerChain.put(type, nullSerializer);
         return nullSerializer;
     }
@@ -102,7 +104,7 @@ public class SerializationModelCreator {
                 : Object.class;
         ModelSerializer typeSerializer = memberSerializer(chain, colType, customization, false);
         CollectionSerializer collectionSerializer = new CollectionSerializer(typeSerializer);
-        return new NullSerializer(collectionSerializer, jsonbContext);
+        return new NullSerializer(collectionSerializer, customization);
     }
 
     private ModelSerializer createMapSerializer(LinkedList<Type> chain, Type type, Customization propertyCustomization) {
@@ -117,7 +119,7 @@ public class SerializationModelCreator {
         ModelSerializer keySerializer = memberSerializer(chain, keyType, Customization.empty(), true);
         ModelSerializer valueSerializer = memberSerializer(chain, valueType, propertyCustomization, true);
         MapSerializer mapSerializer = MapSerializer.create(rawClass, keySerializer, valueSerializer);
-        return new NullSerializer(mapSerializer, jsonbContext);
+        return new NullSerializer(mapSerializer, propertyCustomization);
     }
 
     private ModelSerializer createArraySerializer(LinkedList<Type> chain,
@@ -126,7 +128,7 @@ public class SerializationModelCreator {
         Class<?> arrayComponent = raw.getComponentType();
         ModelSerializer modelSerializer = memberSerializer(chain, arrayComponent, propertyCustomization, false);
         ArraySerializer arraySerializer = ArraySerializer.create(raw, modelSerializer);
-        return new NullSerializer(arraySerializer, jsonbContext);
+        return new NullSerializer(arraySerializer, propertyCustomization);
     }
 
     private ModelSerializer memberSerializer(LinkedList<Type> chain, Type type, Customization customization, boolean cache) {
