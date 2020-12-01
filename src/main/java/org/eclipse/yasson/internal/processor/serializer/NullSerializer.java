@@ -2,6 +2,7 @@ package org.eclipse.yasson.internal.processor.serializer;
 
 import jakarta.json.stream.JsonGenerator;
 import org.eclipse.yasson.internal.JsonbContext;
+import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.processor.SerializationContextImpl;
 
 /**
@@ -12,9 +13,9 @@ public class NullSerializer implements ModelSerializer {
     private final ModelSerializer delegate;
     private final ModelSerializer nullSerializer;
 
-    public NullSerializer(ModelSerializer delegate, JsonbContext jsonbContext) {
+    public NullSerializer(ModelSerializer delegate, Customization customization) {
         this.delegate = delegate;
-        if (jsonbContext.getConfigProperties().getConfigNullable()) {
+        if (customization.isNillable()) {
             nullSerializer = new NullWritingEnabled();
         } else {
             nullSerializer = new NullWritingDisabled();
