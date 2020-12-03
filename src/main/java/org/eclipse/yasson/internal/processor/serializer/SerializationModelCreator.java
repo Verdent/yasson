@@ -6,11 +6,16 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.eclipse.yasson.internal.ComponentMatcher;
 import org.eclipse.yasson.internal.JsonbContext;
+import org.eclipse.yasson.internal.components.DeserializerBinding;
+import org.eclipse.yasson.internal.components.SerializerBinding;
 import org.eclipse.yasson.internal.model.ClassModel;
 import org.eclipse.yasson.internal.model.PropertyModel;
+import org.eclipse.yasson.internal.model.customization.ComponentBoundCustomization;
 import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.processor.deserializer.ReflectionUtils;
 import org.eclipse.yasson.internal.processor.serializer.types.TypeSerializers;
@@ -60,8 +65,7 @@ public class SerializationModelCreator {
         }
         Class<?> rawType = ReflectionUtils.getRawType(type);
         ClassModel classModel = jsonbContext.getMappingContext().getOrCreateClassModel(rawType);
-        ModelSerializer typeSerializer = TypeSerializers
-                .getTypeSerializer(ReflectionUtils.getRawType(type), propertyCustomization, jsonbContext);
+        ModelSerializer typeSerializer = TypeSerializers.getTypeSerializer(rawType, propertyCustomization, jsonbContext);
         if (typeSerializer != null) {
             if (cache) {
                 serializerChain.put(type, typeSerializer);
@@ -134,10 +138,11 @@ public class SerializationModelCreator {
     private ModelSerializer memberSerializer(LinkedList<Type> chain, Type type, Customization customization, boolean cache) {
         Type resolved = ReflectionUtils.resolveType(chain, type);
         Class<?> rawType = ReflectionUtils.getRawType(resolved);
-        ModelSerializer typeSerializer = TypeSerializers.getTypeSerializer(rawType, customization, jsonbContext);
+        //Final classes dont have any child classes. It is safe to assume that there will be instance of that specific class.
+        boolean isFinal = Modifier.isFinal(rawType.getModifiers());
+        ModelSerializer typeSerializer = isFinal ? TypeSerializers.getTypeSerializer(rawType, customization, jsonbContext) : null;
         if (typeSerializer == null) {
-            //Final classes dont have any child classes. It is safe to assume that there will be instance of that specific class.
-            if (Modifier.isFinal(rawType.getModifiers())
+            if (isFinal
                     || Collection.class.isAssignableFrom(rawType)
                     || Map.class.isAssignableFrom(rawType)) {
                 typeSerializer = serializerChain(chain, resolved, customization, cache);
@@ -147,6 +152,11 @@ public class SerializationModelCreator {
             }
         }
         return typeSerializer;
+    }
+
+    private Optional<SerializerBinding<?>> userSerializer(Type type, ComponentBoundCustomization classCustomization) {
+        final ComponentMatcher componentMatcher = jsonbContext.getComponentMatcher();
+        return componentMatcher.getSerializerBinding(type, classCustomization);
     }
 
 }

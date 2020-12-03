@@ -2,6 +2,9 @@ package org.eclipse.yasson.internal.processor.serializer.types;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.Instant;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -25,14 +28,17 @@ public class TypeSerializers {
         SERIALIZERS.put(BigInteger.class, BigIntegerSerializer::new);
         SERIALIZERS.put(Boolean.class, BooleanSerializer::new);
         SERIALIZERS.put(Boolean.TYPE, BooleanSerializer::new);
+        SERIALIZERS.put(Calendar.class, CalendarSerializer::new);
         SERIALIZERS.put(Character.class, CharSerializer::new);
         SERIALIZERS.put(Character.TYPE, CharSerializer::new);
+        SERIALIZERS.put(Date.class, DateSerializer::new);
         SERIALIZERS.put(Double.class, DoubleSerializer::new);
         SERIALIZERS.put(Double.TYPE, DoubleSerializer::new);
         SERIALIZERS.put(Float.class, FloatSerializer::new);
         SERIALIZERS.put(Float.TYPE, FloatSerializer::new);
         SERIALIZERS.put(Integer.class, IntegerSerializer::new);
         SERIALIZERS.put(Integer.TYPE, IntegerSerializer::new);
+        SERIALIZERS.put(Instant.class, InstantSerializer::new);
         SERIALIZERS.put(Long.class, LongSerializer::new);
         SERIALIZERS.put(Long.TYPE, LongSerializer::new);
         SERIALIZERS.put(Number.class, NumberSerializer::new);
