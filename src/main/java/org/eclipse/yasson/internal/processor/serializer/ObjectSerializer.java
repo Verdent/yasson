@@ -18,8 +18,11 @@ class ObjectSerializer implements ModelSerializer {
 
     @Override
     public void serialize(Object value, JsonGenerator generator, SerializationContextImpl context) {
+        boolean previous = context.isContainerWithNulls();
+        context.setContainerWithNulls(false);
         generator.writeStartObject();
         propertySerializers.forEach(modelSerializer -> modelSerializer.serialize(value, generator, context));
         generator.writeEnd();
+        context.setContainerWithNulls(previous);
     }
 }

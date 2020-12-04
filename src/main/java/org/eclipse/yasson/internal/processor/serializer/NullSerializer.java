@@ -48,6 +48,13 @@ public class NullSerializer implements ModelSerializer {
 
         @Override
         public void serialize(Object value, JsonGenerator generator, SerializationContextImpl context) {
+            if (context.isContainerWithNulls()) {
+                if (context.getKey() == null) {
+                    generator.writeNull();
+                } else {
+                    generator.writeNull(context.getKey());
+                }
+            }
             //Do nothing
         }
 

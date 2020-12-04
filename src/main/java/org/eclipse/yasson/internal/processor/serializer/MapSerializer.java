@@ -64,7 +64,7 @@ abstract class MapSerializer implements ModelSerializer {
                         || Enum.class.isAssignableFrom(keyClass)) {
                     continue;
                 }
-                //No other checks needed. Map is not suitable for normal "String" map.
+                //No other checks needed. Map is not suitable for normal key:value map. Wrapping object needs to be used.
                 objectMap.serialize(value, generator, context);
                 return;
             }
@@ -83,7 +83,7 @@ abstract class MapSerializer implements ModelSerializer {
 
         private static final BiConsumer<Object, JsonGenerator> DYNAMIC =
                 (value, generator) -> {
-                    if (Enum.class.isAssignableFrom(value.getClass())) {
+                    if (value != null && Enum.class.isAssignableFrom(value.getClass())) {
                         ENUM.accept(value, generator);
                     } else {
                         OTHER.accept(value, generator);
