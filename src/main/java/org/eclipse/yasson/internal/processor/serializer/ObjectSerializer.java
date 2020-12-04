@@ -1,18 +1,23 @@
 package org.eclipse.yasson.internal.processor.serializer;
 
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 
+import jakarta.json.bind.JsonbException;
 import jakarta.json.stream.JsonGenerator;
 import org.eclipse.yasson.internal.processor.SerializationContextImpl;
+import org.eclipse.yasson.internal.properties.MessageKeys;
+import org.eclipse.yasson.internal.properties.Messages;
 
 /**
  * TODO javadoc
  */
 class ObjectSerializer implements ModelSerializer {
 
-    private final LinkedList<ModelSerializer> propertySerializers;
+    private final LinkedHashMap<String, ModelSerializer> propertySerializers;
 
-    ObjectSerializer(LinkedList<ModelSerializer> propertySerializers) {
+
+    ObjectSerializer(LinkedHashMap<String, ModelSerializer> propertySerializers) {
         this.propertySerializers = propertySerializers;
     }
 
@@ -21,7 +26,14 @@ class ObjectSerializer implements ModelSerializer {
         boolean previous = context.isContainerWithNulls();
         context.setContainerWithNulls(false);
         generator.writeStartObject();
-        propertySerializers.forEach(modelSerializer -> modelSerializer.serialize(value, generator, context));
+        propertySerializers.forEach((key, serializer) -> {
+            try {
+                serializer.serialize(value, generator, context);
+            } catch (Exception e) {
+                throw new JsonbException(Messages.getMessage(MessageKeys.SERIALIZE_PROPERTY_ERROR, key,
+                                                             value.getClass().getCanonicalName()), e);
+            }
+        });
         generator.writeEnd();
         context.setContainerWithNulls(previous);
     }

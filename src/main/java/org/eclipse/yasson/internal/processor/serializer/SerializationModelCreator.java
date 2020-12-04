@@ -1,14 +1,17 @@
 package org.eclipse.yasson.internal.processor.serializer;
 
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import jakarta.json.stream.JsonParser;
 import org.eclipse.yasson.internal.ComponentMatcher;
 import org.eclipse.yasson.internal.JsonbContext;
 import org.eclipse.yasson.internal.components.DeserializerBinding;
@@ -17,6 +20,8 @@ import org.eclipse.yasson.internal.model.ClassModel;
 import org.eclipse.yasson.internal.model.PropertyModel;
 import org.eclipse.yasson.internal.model.customization.ComponentBoundCustomization;
 import org.eclipse.yasson.internal.model.customization.Customization;
+import org.eclipse.yasson.internal.processor.deserializer.JustReturn;
+import org.eclipse.yasson.internal.processor.deserializer.ModelDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.ReflectionUtils;
 import org.eclipse.yasson.internal.processor.serializer.types.TypeSerializers;
 
@@ -84,9 +89,9 @@ public class SerializationModelCreator {
         ClassModel classModel = jsonbContext.getMappingContext().getOrCreateClassModel(rawType);
         ModelSerializer typeSerializer = TypeSerializers.getTypeSerializer(rawType, propertyCustomization, jsonbContext);
         if (typeSerializer != null) {
-//            if (cache) {
-//                serializerChain.put(type, typeSerializer);
-//            }
+            //            if (cache) {
+            //                serializerChain.put(type, typeSerializer);
+            //            }
             return typeSerializer;
         } else if (Collection.class.isAssignableFrom(rawType)) {
             return createCollectionSerializer(chain, type, propertyCustomization);
@@ -94,6 +99,8 @@ public class SerializationModelCreator {
             return createMapSerializer(chain, type, propertyCustomization);
         } else if (rawType.isArray()) {
             return createArraySerializer(chain, rawType, propertyCustomization);
+        } else if (type instanceof GenericArrayType) {
+            return createGenericArraySerializer(chain, type, propertyCustomization);
         } else if (Optional.class.equals(rawType)) {
             return createOptionalSerializer(chain, type, propertyCustomization);
         }
@@ -103,14 +110,15 @@ public class SerializationModelCreator {
     private ModelSerializer createObjectSerializer(LinkedList<Type> chain,
                                                    Type type,
                                                    ClassModel classModel) {
-        LinkedList<ModelSerializer> propertySerializers = new LinkedList<>();
+        LinkedHashMap<String, ModelSerializer> propertySerializers = new LinkedHashMap<>();
         for (PropertyModel model : classModel.getSortedProperties()) {
             if (model.isReadable()) {
+                String name = model.getWriteName();
                 ModelSerializer memberModel = memberSerializer(chain,
                                                                model.getPropertySerializationType(),
                                                                model.getCustomization(),
                                                                true);
-                propertySerializers.add(new ValueGetterSerializer(model.getWriteName(), model.getGetValueHandle(), memberModel));
+                propertySerializers.put(name, new ValueGetterSerializer(name, model.getGetValueHandle(), memberModel));
             }
         }
         ObjectSerializer objectSerializer = new ObjectSerializer(propertySerializers);
@@ -156,6 +164,18 @@ public class SerializationModelCreator {
                                                   Customization propertyCustomization) {
         Class<?> arrayComponent = raw.getComponentType();
         ModelSerializer modelSerializer = memberSerializer(chain, arrayComponent, propertyCustomization, false);
+        ArraySerializer arraySerializer = ArraySerializer.create(raw, modelSerializer);
+        KeyWriter keyWriter = new KeyWriter(arraySerializer);
+        NullVisibilitySwitcher nullVisibilitySwitcher = new NullVisibilitySwitcher(true, keyWriter);
+        return new NullSerializer(nullVisibilitySwitcher, propertyCustomization);
+    }
+
+    private ModelSerializer createGenericArraySerializer(LinkedList<Type> chain,
+                                                         Type type,
+                                                         Customization propertyCustomization) {
+        Class<?> raw = ReflectionUtils.getRawType(type);
+        Class<?> component = ReflectionUtils.getRawType(((GenericArrayType) type).getGenericComponentType());
+        ModelSerializer modelSerializer = memberSerializer(chain, component, propertyCustomization, false);
         ArraySerializer arraySerializer = ArraySerializer.create(raw, modelSerializer);
         KeyWriter keyWriter = new KeyWriter(arraySerializer);
         NullVisibilitySwitcher nullVisibilitySwitcher = new NullVisibilitySwitcher(true, keyWriter);

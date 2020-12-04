@@ -137,6 +137,7 @@ public class ChainModelCreator {
             Type colType = type instanceof ParameterizedType
                     ? ((ParameterizedType) type).getActualTypeArguments()[0]
                     : Object.class;
+            colType = ReflectionUtils.resolveType(chain, colType);
             ClassModel colClassModel = jsonbContext.getMappingContext()
                     .getOrCreateClassModel(ReflectionUtils.getRawType(colType));
             ModelDeserializer<JsonParser> typeProcessor = typeProcessor(chain,
