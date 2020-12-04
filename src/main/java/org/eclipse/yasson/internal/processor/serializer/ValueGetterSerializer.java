@@ -23,15 +23,13 @@ class ValueGetterSerializer  implements ModelSerializer {
 
     @Override
     public void serialize(Object value, JsonGenerator generator, SerializationContextImpl context) {
+        Object object;
         try {
-            Object object = valueGetter.invoke(value);
-            if (object != null) {
-                generator.writeKey(propertyName);
-            }
+            object = valueGetter.invoke(value);
             context.setKey(propertyName);
-            delegate.serialize(object, generator, context);
         } catch (Throwable e) {
             throw new JsonbException("Error getting value on: " + value, e);
         }
+        delegate.serialize(object, generator, context);
     }
 }

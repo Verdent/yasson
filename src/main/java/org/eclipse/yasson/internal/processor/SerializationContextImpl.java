@@ -23,7 +23,6 @@ import jakarta.json.stream.JsonGenerationException;
 import jakarta.json.stream.JsonGenerator;
 import org.eclipse.yasson.internal.JsonbContext;
 import org.eclipse.yasson.internal.ProcessingContext;
-import org.eclipse.yasson.internal.model.ClassModel;
 import org.eclipse.yasson.internal.processor.serializer.ModelSerializer;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
@@ -37,6 +36,7 @@ public class SerializationContextImpl extends ProcessingContext implements Seria
 
     private final Type runtimeType;
     private String key = null;
+    private boolean containerWithNulls = true;
 
     /**
      * Creates Marshaller for generation to String.
@@ -55,8 +55,7 @@ public class SerializationContextImpl extends ProcessingContext implements Seria
      * @param jsonbContext Current context.
      */
     public SerializationContextImpl(JsonbContext jsonbContext) {
-        super(jsonbContext);
-        this.runtimeType = null;
+        this(jsonbContext, null);
     }
 
     /**
@@ -75,6 +74,25 @@ public class SerializationContextImpl extends ProcessingContext implements Seria
      */
     public String getKey() {
         return key;
+    }
+
+    /**
+     * Value from this property is only used in {@link org.eclipse.yasson.internal.processor.serializer.NullSerializer}.
+     * It should not be used anywhere else.
+     *
+     * @return if container supports nulls
+     */
+    public boolean isContainerWithNulls() {
+        return containerWithNulls;
+    }
+
+    /**
+     * Set if container supports null values.
+     *
+     * @param writeNulls should write nulls in container
+     */
+    public void setContainerWithNulls(boolean writeNulls) {
+        this.containerWithNulls = writeNulls;
     }
 
     /**
@@ -155,7 +173,8 @@ public class SerializationContextImpl extends ProcessingContext implements Seria
             getJsonbContext().getConfigProperties().getNullSerializer().serialize(null, generator, this);
             return;
         }
-        final ModelSerializer rootSerializer = getRootSerializer(root.getClass());
+        Type type = runtimeType == null ? root.getClass() : runtimeType;
+        final ModelSerializer rootSerializer = getRootSerializer(type);
         //        if (getJsonbContext().getConfigProperties().isStrictIJson()
         //                && rootSerializer instanceof AbstractValueTypeSerializer) {
         //            throw new JsonbException(Messages.getMessage(MessageKeys.IJSON_ENABLED_SINGLE_VALUE));
@@ -163,8 +182,8 @@ public class SerializationContextImpl extends ProcessingContext implements Seria
         rootSerializer.serialize(root, generator, this);
     }
 
-    public ModelSerializer getRootSerializer(Class<?> rootClazz) {
-        return getJsonbContext().getSerializationModelCreator().serializerChain(rootClazz, true);
+    public ModelSerializer getRootSerializer(Type type) {
+        return getJsonbContext().getSerializationModelCreator().serializerChain(type, true);
     }
 
 }
