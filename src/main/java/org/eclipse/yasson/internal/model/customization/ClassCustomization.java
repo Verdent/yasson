@@ -23,6 +23,8 @@ import org.eclipse.yasson.internal.serializer.JsonbNumberFormatter;
  */
 public class ClassCustomization extends CustomizationBase {
 
+    private static final ClassCustomization EMPTY = new ClassCustomization(new ClassCustomizationBuilder());
+
     private final JsonbCreator creator;
 
     private String[] propertyOrder;
@@ -115,6 +117,10 @@ public class ClassCustomization extends CustomizationBase {
     @Override
     public JsonbDateFormatter getDeserializeDateFormatter() {
         return dateTimeFormatter;
+    }
+
+    public static ClassCustomization empty() {
+        return EMPTY;
     }
 
 }
