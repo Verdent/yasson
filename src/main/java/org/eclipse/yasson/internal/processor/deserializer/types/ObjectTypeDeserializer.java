@@ -37,6 +37,7 @@ class ObjectTypeDeserializer implements ModelDeserializer<JsonParser> {
         case VALUE_NUMBER:
             toSet = new BigDecimal(value.getString());
             break;
+        case KEY_NAME:
         case VALUE_STRING:
             toSet = value.getString();
             break;

@@ -25,6 +25,7 @@ public class MapDeserializer implements ModelDeserializer<JsonParser> {
     public Object deserialize(JsonParser parser, DeserializationContextImpl context) {
         Map<Object, Object> map = (Map<Object, Object>) context.getInstance();
         Object key = null;
+        Object keyValue = null;
         String keyName = null;
         Mode mode = Mode.NONE;
         State state = State.NEXT;
@@ -34,6 +35,9 @@ public class MapDeserializer implements ModelDeserializer<JsonParser> {
             switch (next) {
             case KEY_NAME:
                 mode = mode == Mode.NONE ? Mode.NORMAL : mode;
+                if (mode == Mode.NORMAL) {
+                    keyValue = deserializeValue(parser, context, keyDelegate);
+                }
                 keyName = parser.getString();
                 break;
             case START_OBJECT:
@@ -61,7 +65,7 @@ public class MapDeserializer implements ModelDeserializer<JsonParser> {
                     }
                 } else {
                     Object value = deserializeValue(parser, context, valueDelegate);
-                    map.put(keyName, value);
+                    map.put(keyValue, value);
                 }
                 break;
             case END_OBJECT:
