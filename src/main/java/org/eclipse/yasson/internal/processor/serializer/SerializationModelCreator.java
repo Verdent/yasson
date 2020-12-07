@@ -11,17 +11,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-import jakarta.json.stream.JsonParser;
 import org.eclipse.yasson.internal.ComponentMatcher;
 import org.eclipse.yasson.internal.JsonbContext;
-import org.eclipse.yasson.internal.components.DeserializerBinding;
 import org.eclipse.yasson.internal.components.SerializerBinding;
 import org.eclipse.yasson.internal.model.ClassModel;
 import org.eclipse.yasson.internal.model.PropertyModel;
 import org.eclipse.yasson.internal.model.customization.ComponentBoundCustomization;
 import org.eclipse.yasson.internal.model.customization.Customization;
-import org.eclipse.yasson.internal.processor.deserializer.JustReturn;
-import org.eclipse.yasson.internal.processor.deserializer.ModelDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.ReflectionUtils;
 import org.eclipse.yasson.internal.processor.serializer.types.TypeSerializers;
 
@@ -164,7 +160,7 @@ public class SerializationModelCreator {
                                                   Customization propertyCustomization) {
         Class<?> arrayComponent = raw.getComponentType();
         ModelSerializer modelSerializer = memberSerializer(chain, arrayComponent, propertyCustomization, false);
-        ArraySerializer arraySerializer = ArraySerializer.create(raw, modelSerializer);
+        ModelSerializer arraySerializer = ArraySerializer.create(raw, jsonbContext, modelSerializer);
         KeyWriter keyWriter = new KeyWriter(arraySerializer);
         NullVisibilitySwitcher nullVisibilitySwitcher = new NullVisibilitySwitcher(true, keyWriter);
         return new NullSerializer(nullVisibilitySwitcher, propertyCustomization);
@@ -176,7 +172,7 @@ public class SerializationModelCreator {
         Class<?> raw = ReflectionUtils.getRawType(type);
         Class<?> component = ReflectionUtils.getRawType(((GenericArrayType) type).getGenericComponentType());
         ModelSerializer modelSerializer = memberSerializer(chain, component, propertyCustomization, false);
-        ArraySerializer arraySerializer = ArraySerializer.create(raw, modelSerializer);
+        ModelSerializer arraySerializer = ArraySerializer.create(raw, jsonbContext, modelSerializer);
         KeyWriter keyWriter = new KeyWriter(arraySerializer);
         NullVisibilitySwitcher nullVisibilitySwitcher = new NullVisibilitySwitcher(true, keyWriter);
         return new NullSerializer(nullVisibilitySwitcher, propertyCustomization);

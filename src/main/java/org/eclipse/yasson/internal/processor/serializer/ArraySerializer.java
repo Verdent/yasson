@@ -1,12 +1,18 @@
 package org.eclipse.yasson.internal.processor.serializer;
 
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import jakarta.json.bind.JsonbException;
+import jakarta.json.bind.config.BinaryDataStrategy;
 import jakarta.json.stream.JsonGenerator;
+import org.eclipse.yasson.internal.JsonbContext;
 import org.eclipse.yasson.internal.processor.SerializationContextImpl;
+import org.eclipse.yasson.internal.properties.MessageKeys;
+import org.eclipse.yasson.internal.properties.Messages;
 
 /**
  * TODO javadoc
@@ -34,7 +40,13 @@ abstract class ArraySerializer implements ModelSerializer {
         this.valueSerializer = valueSerializer;
     }
 
-    public static ArraySerializer create(Class<?> arrayType, ModelSerializer modelSerializer) {
+    public static ModelSerializer create(Class<?> arrayType,
+                                         JsonbContext jsonbContext,
+                                         ModelSerializer modelSerializer) {
+        String binaryDataStrategy = jsonbContext.getConfigProperties().getBinaryDataStrategy();
+        if (byte[].class.equals(arrayType) && !binaryDataStrategy.equals(BinaryDataStrategy.BYTE)) {
+            return new Base64ByteArraySerializer(binaryDataStrategy);
+        }
         if (ARRAY_SERIALIZERS.containsKey(arrayType)) {
             return ARRAY_SERIALIZERS.get(arrayType).apply(modelSerializer);
         }
@@ -68,6 +80,32 @@ abstract class ArraySerializer implements ModelSerializer {
             }
         }
 
+    }
+
+    private static final class Base64ByteArraySerializer implements ModelSerializer {
+
+        private final Base64.Encoder encoder;
+
+        Base64ByteArraySerializer(String strategy) {
+            this.encoder = getEncoder(strategy);
+        }
+
+        @Override
+        public void serialize(Object value, JsonGenerator generator, SerializationContextImpl context) {
+            byte[] array = (byte[]) value;
+            generator.write(encoder.encodeToString(array));
+        }
+
+        private Base64.Encoder getEncoder(String strategy) {
+            switch (strategy) {
+            case BinaryDataStrategy.BASE_64:
+                return Base64.getEncoder();
+            case BinaryDataStrategy.BASE_64_URL:
+                return Base64.getUrlEncoder();
+            default:
+                throw new JsonbException(Messages.getMessage(MessageKeys.INTERNAL_ERROR, "Invalid strategy: " + strategy));
+            }
+        }
     }
 
     private static final class ShortArraySerializer extends ArraySerializer {
