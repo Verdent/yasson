@@ -71,7 +71,7 @@ public class MappingContext {
             newClassModels.push(classToParse);
         }
         if (clazz == Object.class) {
-            return classes.computeIfAbsent(clazz, (c) -> new ClassModel(c, null, null, null));
+            return classes.computeIfAbsent(clazz, (c) -> new ClassModel(c, ClassCustomization.empty(), null, null));
         }
 
         ClassModel parentClassModel = null;

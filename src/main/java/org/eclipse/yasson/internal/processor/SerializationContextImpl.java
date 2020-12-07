@@ -14,7 +14,9 @@
 package org.eclipse.yasson.internal.processor;
 
 import java.lang.reflect.Type;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import jakarta.json.bind.JsonbException;
@@ -33,6 +35,12 @@ import org.eclipse.yasson.internal.properties.Messages;
 public class SerializationContextImpl extends ProcessingContext implements SerializationContext {
 
     private static final Logger LOGGER = Logger.getLogger(SerializationContextImpl.class.getName());
+
+    /**
+     * Used to avoid StackOverflowError, when adapted / serialized object
+     * contains contains instance of its type inside it or when object has recursive reference.
+     */
+    private final Set<Object> currentlyProcessedObjects = new HashSet<>();
 
     private final Type runtimeType;
     private String key = null;
@@ -173,6 +181,7 @@ public class SerializationContextImpl extends ProcessingContext implements Seria
             getJsonbContext().getConfigProperties().getNullSerializer().serialize(null, generator, this);
             return;
         }
+        addProcessedObject(root);
         Type type = runtimeType == null ? root.getClass() : runtimeType;
         final ModelSerializer rootSerializer = getRootSerializer(type);
         //        if (getJsonbContext().getConfigProperties().isStrictIJson()
@@ -185,5 +194,26 @@ public class SerializationContextImpl extends ProcessingContext implements Seria
     public ModelSerializer getRootSerializer(Type type) {
         return getJsonbContext().getSerializationModelCreator().serializerChain(type, true);
     }
+
+    /**
+     * Adds currently processed object to the {@link Set}.
+     *
+     * @param object processed object
+     * @return if object was added
+     */
+    public boolean addProcessedObject(Object object) {
+        return this.currentlyProcessedObjects.add(object);
+    }
+
+    /**
+     * Removes processed object from the {@link Set}.
+     *
+     * @param object processed object
+     * @return if object was removed
+     */
+    public boolean removeProcessedObject(Object object) {
+        return currentlyProcessedObjects.remove(object);
+    }
+
 
 }
