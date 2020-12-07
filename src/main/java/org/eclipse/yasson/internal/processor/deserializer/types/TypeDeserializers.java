@@ -111,7 +111,8 @@ public class TypeDeserializers {
     public static ModelDeserializer<JsonParser> getTypeDeserializer(Class<?> clazz,
                                                                     Customization customization,
                                                                     JsonbConfigProperties properties,
-                                                                    ModelDeserializer<Object> delegate) {
+                                                                    ModelDeserializer<Object> delegate,
+                                                                    PositionChecker.Checker checker) {
         if (OPTIONAL_TYPES.containsKey(clazz)) {
             Class<?> optionalType = OPTIONAL_TYPES.get(clazz);
             TypeDeserializerBuilder builder = new TypeDeserializerBuilder(optionalType,
@@ -119,7 +120,7 @@ public class TypeDeserializers {
                                                                           properties,
                                                                           JustReturn.create());
             ValueExtractor valueExtractor = new ValueExtractor(DESERIALIZERS.get(optionalType).apply(builder));
-            PositionChecker positionChecker = new PositionChecker(valueExtractor, clazz, PositionChecker.Checker.VALUES);
+            PositionChecker positionChecker = new PositionChecker(valueExtractor, clazz, checker);
             if (OptionalLong.class.equals(clazz)) {
                 return new OptionalLongDeserializer(positionChecker, delegate);
             } else if (OptionalInt.class.equals(clazz)) {
@@ -134,12 +135,12 @@ public class TypeDeserializers {
         TypeDeserializerBuilder builder = new TypeDeserializerBuilder(clazz, customization, properties, delegate);
         if (DESERIALIZERS.containsKey(clazz)) {
             ValueExtractor valueExtractor = new ValueExtractor(DESERIALIZERS.get(clazz).apply(builder));
-            return new NullCheckDeserializer(new PositionChecker(valueExtractor, clazz, PositionChecker.Checker.VALUES),
+            return new NullCheckDeserializer(new PositionChecker(valueExtractor, clazz, checker),
                                              delegate,
                                              clazz);
         }
 
-        ModelDeserializer<JsonParser> deserializer = assignableCases(builder);
+        ModelDeserializer<JsonParser> deserializer = assignableCases(builder, checker);
         if (deserializer != null) {
             return new NullCheckDeserializer(deserializer, delegate, clazz);
         }
@@ -154,11 +155,12 @@ public class TypeDeserializers {
         //                .orElse(null);
     }
 
-    private static ModelDeserializer<JsonParser> assignableCases(TypeDeserializerBuilder builder) {
+    private static ModelDeserializer<JsonParser> assignableCases(TypeDeserializerBuilder builder,
+                                                                 PositionChecker.Checker checker) {
         if (Enum.class.isAssignableFrom(builder.getClazz())) {
             return new PositionChecker(new ValueExtractor(new EnumDeserializer(builder)),
                                        builder.getClazz(),
-                                       PositionChecker.Checker.VALUES);
+                                       checker);
         } else if (Object.class.equals(builder.getClazz())) {
             return new ObjectTypeDeserializer(builder);
         }
