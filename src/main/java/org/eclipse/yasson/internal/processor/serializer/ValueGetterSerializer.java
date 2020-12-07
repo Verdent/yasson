@@ -5,6 +5,8 @@ import java.lang.invoke.MethodHandle;
 import jakarta.json.bind.JsonbException;
 import jakarta.json.stream.JsonGenerator;
 import org.eclipse.yasson.internal.processor.SerializationContextImpl;
+import org.eclipse.yasson.internal.properties.MessageKeys;
+import org.eclipse.yasson.internal.properties.Messages;
 
 /**
  * TODO javadoc
@@ -30,6 +32,10 @@ class ValueGetterSerializer  implements ModelSerializer {
         } catch (Throwable e) {
             throw new JsonbException("Error getting value on: " + value, e);
         }
+        if (!context.addProcessedObject(object)) {
+            throw new JsonbException(Messages.getMessage(MessageKeys.RECURSIVE_REFERENCE, object.getClass()));
+        }
         delegate.serialize(object, generator, context);
+        context.removeProcessedObject(object);
     }
 }

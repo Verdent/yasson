@@ -23,8 +23,6 @@ class ObjectSerializer implements ModelSerializer {
 
     @Override
     public void serialize(Object value, JsonGenerator generator, SerializationContextImpl context) {
-        boolean previous = context.isContainerWithNulls();
-        context.setContainerWithNulls(false);
         generator.writeStartObject();
         propertySerializers.forEach((key, serializer) -> {
             try {
@@ -35,6 +33,5 @@ class ObjectSerializer implements ModelSerializer {
             }
         });
         generator.writeEnd();
-        context.setContainerWithNulls(previous);
     }
 }
