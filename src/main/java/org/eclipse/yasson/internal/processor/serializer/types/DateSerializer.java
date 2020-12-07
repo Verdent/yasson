@@ -6,10 +6,12 @@ import java.time.temporal.TemporalAccessor;
 import java.util.Date;
 import java.util.Locale;
 
+import org.eclipse.yasson.internal.serializer.JsonbDateFormatter;
+
 /**
  * TODO javadoc
  */
-class DateSerializer extends AbstractDateSerializer<Date> {
+class DateSerializer<T extends Date> extends AbstractDateSerializer<T> {
 
     private static final DateTimeFormatter DEFAULT_DATE_FORMATTER = DateTimeFormatter.ISO_DATE_TIME.withZone(UTC);
 
@@ -23,20 +25,23 @@ class DateSerializer extends AbstractDateSerializer<Date> {
     }
 
     @Override
-    protected TemporalAccessor toTemporalAccessor(Date value) {
-        return toInstant(value);
+    protected String formatDefault(Date value, Locale locale) {
+        return DEFAULT_DATE_FORMATTER.withLocale(locale).format(toInstant(value));
     }
 
     @Override
-    protected DateTimeFormatter defaultFormatter(Date value, Locale locale) {
-        return DEFAULT_DATE_FORMATTER.withLocale(locale);
+    protected String formatWithFormatter(Date value, DateTimeFormatter formatter) {
+        return getZonedFormatter(formatter).format(toTemporalAccessor(value));
     }
 
     @Override
-    protected DateTimeFormatter updateFormatter(DateTimeFormatter formatter) {
-        return formatter.getZone() != null
-                ? formatter
-                : formatter.withZone(UTC);
+    protected String formatStrictIJson(Date value) {
+        return JsonbDateFormatter.IJSON_DATE_FORMATTER.withZone(UTC).format(toTemporalAccessor(value));
+    }
+
+    @Override
+    protected TemporalAccessor toTemporalAccessor(Date object) {
+        return toInstant(object);
     }
 
 }
