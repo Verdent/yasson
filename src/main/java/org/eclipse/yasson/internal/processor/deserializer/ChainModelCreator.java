@@ -33,27 +33,6 @@ import org.eclipse.yasson.internal.model.customization.ComponentBoundCustomizati
 import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.model.customization.PropertyCustomization;
 import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
-import org.eclipse.yasson.internal.processor.deserializer.AdapterDeserializer;
-import org.eclipse.yasson.internal.processor.deserializer.ArrayDeserializer;
-import org.eclipse.yasson.internal.processor.deserializer.ArrayInstanceCreator;
-import org.eclipse.yasson.internal.processor.deserializer.CollectionDeserializer;
-import org.eclipse.yasson.internal.processor.deserializer.CollectionInstanceCreator;
-import org.eclipse.yasson.internal.processor.deserializer.ContextSwitcher;
-import org.eclipse.yasson.internal.processor.deserializer.CyclicReferenceDeserializer;
-import org.eclipse.yasson.internal.processor.deserializer.DelayedDeserializer;
-import org.eclipse.yasson.internal.processor.deserializer.JustReturn;
-import org.eclipse.yasson.internal.processor.deserializer.MapDeserializer;
-import org.eclipse.yasson.internal.processor.deserializer.MapInstanceCreator;
-import org.eclipse.yasson.internal.processor.deserializer.ModelDeserializer;
-import org.eclipse.yasson.internal.processor.deserializer.NullCheckDeserializer;
-import org.eclipse.yasson.internal.processor.deserializer.ObjectDefaultInstanceCreator;
-import org.eclipse.yasson.internal.processor.deserializer.ObjectDeserializer;
-import org.eclipse.yasson.internal.processor.deserializer.ObjectInstanceCreator;
-import org.eclipse.yasson.internal.processor.deserializer.OptionalDeserializer;
-import org.eclipse.yasson.internal.processor.deserializer.PositionChecker;
-import org.eclipse.yasson.internal.processor.deserializer.ReflectionUtils;
-import org.eclipse.yasson.internal.processor.deserializer.UserDefinedDeserializer;
-import org.eclipse.yasson.internal.processor.deserializer.ValueSetterDeserializer;
 import org.eclipse.yasson.internal.processor.deserializer.types.TypeDeserializers;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
@@ -162,7 +141,8 @@ public class ChainModelCreator {
             ModelDeserializer<JsonParser> keyProcessor = typeProcessor(chain,
                                                                        keyType,
                                                                        classCustomization,
-                                                                       JustReturn.create());
+                                                                       JustReturn.create(),
+                                                                       PositionChecker.Checker.KEY);
             ModelDeserializer<JsonParser> valueProcessor = typeProcessor(chain,
                                                                          valueType,
                                                                          classCustomization,
@@ -318,6 +298,14 @@ public class ChainModelCreator {
                                                         Type type,
                                                         Customization customization,
                                                         ModelDeserializer<Object> memberDeserializer) {
+        return typeProcessor(chain, type, customization, memberDeserializer, PositionChecker.Checker.VALUES);
+    }
+
+    private ModelDeserializer<JsonParser> typeProcessor(LinkedList<Type> chain,
+                                                        Type type,
+                                                        Customization customization,
+                                                        ModelDeserializer<Object> memberDeserializer,
+                                                        PositionChecker.Checker checker) {
         Type resolved = ReflectionUtils.resolveType(chain, type);
         Class<?> rawType = ReflectionUtils.getRawType(resolved);
         Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(resolved,
@@ -336,7 +324,7 @@ public class ChainModelCreator {
 
             ModelDeserializer<JsonParser> typeDeserializer = typeDeserializer(ReflectionUtils.getRawType(adapter.getToType()),
                                                                               customization,
-                                                                              JustReturn.create());
+                                                                              JustReturn.create(), checker);
             if (typeDeserializer == null) {
                 typeDeserializer = deserializerChain(adapter.getToType(), targetModel);
             }
@@ -349,7 +337,7 @@ public class ChainModelCreator {
                 return adapterDeserializer.deserialize(fromJson, context);
             };
         }
-        ModelDeserializer<JsonParser> typeDeserializer = typeDeserializer(rawType, customization, memberDeserializer);
+        ModelDeserializer<JsonParser> typeDeserializer = typeDeserializer(rawType, customization, memberDeserializer, checker);
         if (typeDeserializer == null) {
             Class<?> implClass = resolveImplClass(rawType, customization);
             return createNewChain(chain, memberDeserializer, implClass, resolved);
@@ -369,7 +357,14 @@ public class ChainModelCreator {
     private ModelDeserializer<JsonParser> typeDeserializer(Class<?> rawType,
                                                            Customization customization,
                                                            ModelDeserializer<Object> delegate) {
-        return TypeDeserializers.getTypeDeserializer(rawType, customization, jsonbContext.getConfigProperties(), delegate);
+        return typeDeserializer(rawType, customization, delegate, PositionChecker.Checker.VALUES);
+    }
+
+    private ModelDeserializer<JsonParser> typeDeserializer(Class<?> rawType,
+                                                           Customization customization,
+                                                           ModelDeserializer<Object> delegate,
+                                                           PositionChecker.Checker checker) {
+        return TypeDeserializers.getTypeDeserializer(rawType, customization, jsonbContext.getConfigProperties(), delegate, checker);
     }
 
     private Class<?> resolveImplClass(Class<?> rawType, Customization customization) {

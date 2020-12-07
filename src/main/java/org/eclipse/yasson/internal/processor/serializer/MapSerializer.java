@@ -41,6 +41,7 @@ abstract class MapSerializer implements ModelSerializer {
 
         private final StringKeyMapSerializer stringMap;
         private final ObjectKeyMapSerializer objectMap;
+        private MapSerializer serializer;
 
         public DynamicMapSerializer(ModelSerializer keySerializer,
                                     ModelSerializer valueSerializer) {
@@ -52,23 +53,27 @@ abstract class MapSerializer implements ModelSerializer {
         @SuppressWarnings("unchecked")
         @Override
         public void serialize(Object value, JsonGenerator generator, SerializationContextImpl context) {
-            //We have to be sure that Map with Object as a key contains only supported values for key:value format map.
-            Map<Object, Object> map = (Map<Object, Object>) value;
-            for (Object key : map.keySet()) {
-                if (key == null) {
-                    continue;
+            if (serializer == null) {
+                //We have to be sure that Map with Object as a key contains only supported values for key:value format map.
+                Map<Object, Object> map = (Map<Object, Object>) value;
+                boolean suitable = true;
+                for (Object key : map.keySet()) {
+                    if (key == null) {
+                        continue;
+                    }
+                    Class<?> keyClass = key.getClass();
+                    if (String.class.equals(keyClass)
+                            || Number.class.isAssignableFrom(keyClass)
+                            || Enum.class.isAssignableFrom(keyClass)) {
+                        continue;
+                    }
+                    //No other checks needed. Map is not suitable for normal key:value map. Wrapping object needs to be used.
+                    suitable = false;
+                    break;
                 }
-                Class<?> keyClass = key.getClass();
-                if (String.class.equals(keyClass)
-                        || Number.class.isAssignableFrom(keyClass)
-                        || Enum.class.isAssignableFrom(keyClass)) {
-                    continue;
-                }
-                //No other checks needed. Map is not suitable for normal key:value map. Wrapping object needs to be used.
-                objectMap.serialize(value, generator, context);
-                return;
+                serializer = suitable ? stringMap : objectMap;
             }
-            stringMap.serialize(value, generator, context);
+            serializer.serialize(value, generator, context);
         }
 
     }

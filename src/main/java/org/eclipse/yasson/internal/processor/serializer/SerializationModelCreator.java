@@ -85,7 +85,6 @@ public class SerializationModelCreator {
             return serializerChain.get(type);
         }
         Class<?> rawType = ReflectionUtils.getRawType(type);
-        ClassModel classModel = jsonbContext.getMappingContext().getOrCreateClassModel(rawType);
         ModelSerializer typeSerializer = null;
         if (!Object.class.equals(rawType)) {
             typeSerializer = TypeSerializers.getTypeSerializer(rawType, propertyCustomization, jsonbContext);
@@ -95,7 +94,9 @@ public class SerializationModelCreator {
                 throw new JsonbException(Messages.getMessage(MessageKeys.IJSON_ENABLED_SINGLE_VALUE));
             }
             return typeSerializer;
-        } else if (Collection.class.isAssignableFrom(rawType)) {
+        }
+        ClassModel classModel = jsonbContext.getMappingContext().getOrCreateClassModel(rawType);
+        if (Collection.class.isAssignableFrom(rawType)) {
             return createCollectionSerializer(chain, type, propertyCustomization);
         } else if (Map.class.isAssignableFrom(rawType)) {
             return createMapSerializer(chain, type, propertyCustomization);
@@ -194,12 +195,10 @@ public class SerializationModelCreator {
     private ModelSerializer memberSerializer(LinkedList<Type> chain, Type type, Customization customization) {
         Type resolved = ReflectionUtils.resolveType(chain, type);
         Class<?> rawType = ReflectionUtils.getRawType(resolved);
-        //Final classes dont have any child classes. It is safe to assume that there will be instance of that specific class.
-        boolean isFinal = Modifier.isFinal(rawType.getModifiers());
-        ModelSerializer typeSerializer = isFinal
-                ? TypeSerializers.getTypeSerializer(chain, rawType, customization, jsonbContext)
-                : null;
+        ModelSerializer typeSerializer = TypeSerializers.getTypeSerializer(chain, rawType, customization, jsonbContext);
         if (typeSerializer == null) {
+            //Final classes dont have any child classes. It is safe to assume that there will be instance of that specific class.
+            boolean isFinal = Modifier.isFinal(rawType.getModifiers());
             if (isFinal
                     || Collection.class.isAssignableFrom(rawType)
                     || Map.class.isAssignableFrom(rawType)) {

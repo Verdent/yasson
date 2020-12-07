@@ -37,7 +37,7 @@ abstract class AbstractNumberDeserializer<T extends Number> extends TypeDeserial
                 try {
                     return parseNumberValue(value);
                 } catch (NumberFormatException e) {
-                    throw new JsonbException(Messages.getMessage(MessageKeys.DESERIALIZE_VALUE_ERROR, getType()));
+                    throw new JsonbException(Messages.getMessage(MessageKeys.DESERIALIZE_VALUE_ERROR, getType()), e);
                 }
             };
         }
@@ -54,7 +54,7 @@ abstract class AbstractNumberDeserializer<T extends Number> extends TypeDeserial
                 String updated = valueChanger.apply(value);
                 return parseNumberValue(String.valueOf(format.parse(updated)));
             } catch (ParseException e) {
-                throw new JsonbException(Messages.getMessage(MessageKeys.PARSING_NUMBER, value, numberFormat.getFormat()));
+                throw new JsonbException(Messages.getMessage(MessageKeys.PARSING_NUMBER, value, numberFormat.getFormat()), e);
             }
         };
     }
