@@ -1,7 +1,5 @@
 package org.eclipse.yasson.internal.processor.serializer;
 
-import java.lang.invoke.MethodHandle;
-
 import jakarta.json.bind.JsonbException;
 import jakarta.json.stream.JsonGenerator;
 import org.eclipse.yasson.internal.processor.SerializationContextImpl;
@@ -11,24 +9,21 @@ import org.eclipse.yasson.internal.properties.Messages;
 /**
  * TODO javadoc
  */
-class ValueGetterSerializer  implements ModelSerializer {
+class RecursionChecker implements ModelSerializer {
 
-    private final MethodHandle valueGetter;
     private final ModelSerializer delegate;
 
-    ValueGetterSerializer(MethodHandle valueGetter, ModelSerializer delegate) {
-        this.valueGetter = valueGetter;
+    public RecursionChecker(ModelSerializer delegate) {
         this.delegate = delegate;
     }
 
     @Override
     public void serialize(Object value, JsonGenerator generator, SerializationContextImpl context) {
-        Object object;
-        try {
-            object = valueGetter.invoke(value);
-        } catch (Throwable e) {
-            throw new JsonbException("Error getting value on: " + value, e);
+        if (!context.addProcessedObject(value)) {
+            throw new JsonbException(Messages.getMessage(MessageKeys.RECURSIVE_REFERENCE, value.getClass()));
         }
-        delegate.serialize(object, generator, context);
+        delegate.serialize(value, generator, context);
+        context.removeProcessedObject(value);
     }
+
 }

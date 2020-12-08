@@ -39,6 +39,7 @@ import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.processor.serializer.KeyWriter;
 import org.eclipse.yasson.internal.processor.serializer.ModelSerializer;
 import org.eclipse.yasson.internal.processor.serializer.NullSerializer;
+import org.eclipse.yasson.internal.processor.serializer.SerializationModelCreator;
 import org.eclipse.yasson.internal.serializer.DateTypeDeserializer;
 import org.eclipse.yasson.internal.serializer.SerializerProviderWrapper;
 import org.eclipse.yasson.internal.serializer.SqlDateTypeDeserializer;
@@ -142,14 +143,14 @@ public class TypeSerializers {
         }
 
         if (Enum.class.isAssignableFrom(clazz)) {
-            return new NullSerializer(new KeyWriter(new EnumSerializer(builder)), customization);
+            return SerializationModelCreator.wrapInCommonSet(new EnumSerializer(builder), customization);
         } else if (JsonValue.class.isAssignableFrom(clazz)) {
-            return new NullSerializer(new KeyWriter(new JsonValueSerializer(builder)), customization);
+            return SerializationModelCreator.wrapInCommonSet(new JsonValueSerializer(builder), customization);
         }
 
         do {
             if (SERIALIZERS.containsKey(current)) {
-                return new NullSerializer(new KeyWriter(SERIALIZERS.get(current).apply(builder)), customization);
+                return SerializationModelCreator.wrapInCommonSet(SERIALIZERS.get(current).apply(builder), customization);
             }
             current = current.getSuperclass();
         } while (!Object.class.equals(current) && current != null);

@@ -26,6 +26,7 @@ class ObjectSerializer implements ModelSerializer {
         generator.writeStartObject();
         propertySerializers.forEach((key, serializer) -> {
             try {
+                context.setKey(key);
                 serializer.serialize(value, generator, context);
             } catch (Exception e) {
                 throw new JsonbException(Messages.getMessage(MessageKeys.SERIALIZE_PROPERTY_ERROR, key,

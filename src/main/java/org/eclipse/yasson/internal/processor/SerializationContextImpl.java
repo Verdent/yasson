@@ -158,7 +158,7 @@ public class SerializationContextImpl extends ProcessingContext implements Seria
     public <T> void serialize(String key, T object, JsonGenerator generator) {
         Objects.requireNonNull(key);
         Objects.requireNonNull(object);
-        generator.writeKey(key);
+        setKey(key);
         serializeObject(object, generator);
     }
 
@@ -181,7 +181,6 @@ public class SerializationContextImpl extends ProcessingContext implements Seria
             getJsonbContext().getConfigProperties().getNullSerializer().serialize(null, generator, this);
             return;
         }
-        addProcessedObject(root);
         Type type = runtimeType == null ? root.getClass() : runtimeType;
         final ModelSerializer rootSerializer = getRootSerializer(type);
         //        if (getJsonbContext().getConfigProperties().isStrictIJson()

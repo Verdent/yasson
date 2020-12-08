@@ -10,13 +10,16 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 import jakarta.json.bind.JsonbException;
 import org.eclipse.yasson.internal.ComponentMatcher;
 import org.eclipse.yasson.internal.JsonbContext;
+import org.eclipse.yasson.internal.components.AdapterBinding;
 import org.eclipse.yasson.internal.components.SerializerBinding;
 import org.eclipse.yasson.internal.model.ClassModel;
 import org.eclipse.yasson.internal.model.PropertyModel;
+import org.eclipse.yasson.internal.model.customization.ClassCustomization;
 import org.eclipse.yasson.internal.model.customization.ComponentBoundCustomization;
 import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.processor.deserializer.ReflectionUtils;
@@ -36,8 +39,18 @@ public class SerializationModelCreator {
         this.jsonbContext = jsonbContext;
     }
 
+    public static ModelSerializer wrapInCommonSet(ModelSerializer modelSerializer, Customization customization) {
+        return Stream.of(modelSerializer)
+                .map(KeyWriter::new)
+                .map(serializer -> new NullSerializer(serializer, customization))
+                .findFirst()
+                .get();
+    }
+
     public ModelSerializer serializerChain(Type type, boolean rootValue) {
-        return serializerChain(type, Customization.empty(), rootValue);
+        Class<?> rawType = ReflectionUtils.getRawType(type);
+        ClassModel classModel = jsonbContext.getMappingContext().getOrCreateClassModel(rawType);
+        return serializerChain(type, classModel.getClassCustomization(), rootValue);
     }
 
     public ModelSerializer serializerChain(Type type, Customization propertyCustomization, boolean rootValue) {
@@ -85,6 +98,12 @@ public class SerializationModelCreator {
             return serializerChain.get(type);
         }
         Class<?> rawType = ReflectionUtils.getRawType(type);
+        Optional<ModelSerializer> serializerBinding = userSerializer(type,
+                                                                     (ComponentBoundCustomization) propertyCustomization);
+        if (serializerBinding.isPresent()) {
+            return serializerBinding.get();
+        }
+
         ModelSerializer typeSerializer = null;
         if (!Object.class.equals(rawType)) {
             typeSerializer = TypeSerializers.getTypeSerializer(rawType, propertyCustomization, jsonbContext);
@@ -120,11 +139,12 @@ public class SerializationModelCreator {
                 ModelSerializer memberModel = memberSerializer(chain,
                                                                model.getPropertySerializationType(),
                                                                model.getCustomization());
-                propertySerializers.put(name, new ValueGetterSerializer(name, model.getGetValueHandle(), memberModel));
+                propertySerializers.put(name, new ValueGetterSerializer(model.getGetValueHandle(), memberModel));
             }
         }
         ObjectSerializer objectSerializer = new ObjectSerializer(propertySerializers);
-        KeyWriter keyWriter = new KeyWriter(objectSerializer);
+        RecursionChecker recursionChecker = new RecursionChecker(objectSerializer);
+        KeyWriter keyWriter = new KeyWriter(recursionChecker);
         NullVisibilitySwitcher nullVisibilitySwitcher = new NullVisibilitySwitcher(false, keyWriter);
         NullSerializer nullSerializer = new NullSerializer(nullVisibilitySwitcher, classModel.getClassCustomization());
         serializerChain.put(type, nullSerializer);
@@ -153,7 +173,7 @@ public class SerializationModelCreator {
                 : Object.class;
         Type resolvedKey = ReflectionUtils.resolveType(chain, keyType);
         Class<?> rawClass = ReflectionUtils.getRawType(resolvedKey);
-        ModelSerializer keySerializer = memberSerializer(chain, keyType, Customization.empty());
+        ModelSerializer keySerializer = memberSerializer(chain, keyType, ClassCustomization.empty());
         ModelSerializer valueSerializer = memberSerializer(chain, valueType, propertyCustomization);
         MapSerializer mapSerializer = MapSerializer.create(rawClass, keySerializer, valueSerializer);
         KeyWriter keyWriter = new KeyWriter(mapSerializer);
@@ -195,6 +215,12 @@ public class SerializationModelCreator {
     private ModelSerializer memberSerializer(LinkedList<Type> chain, Type type, Customization customization) {
         Type resolved = ReflectionUtils.resolveType(chain, type);
         Class<?> rawType = ReflectionUtils.getRawType(resolved);
+
+        Optional<ModelSerializer> serializerBinding = userSerializer(resolved,
+                                                                     (ComponentBoundCustomization) customization);
+        if (serializerBinding.isPresent()) {
+            return serializerBinding.get();
+        }
         ModelSerializer typeSerializer = TypeSerializers.getTypeSerializer(chain, rawType, customization, jsonbContext);
         if (typeSerializer == null) {
             //Final classes dont have any child classes. It is safe to assume that there will be instance of that specific class.
@@ -217,9 +243,13 @@ public class SerializationModelCreator {
         return typeSerializer;
     }
 
-    private Optional<SerializerBinding<?>> userSerializer(Type type, ComponentBoundCustomization classCustomization) {
+    private Optional<ModelSerializer> userSerializer(Type type, ComponentBoundCustomization classCustomization) {
         final ComponentMatcher componentMatcher = jsonbContext.getComponentMatcher();
-        return componentMatcher.getSerializerBinding(type, classCustomization);
+        return componentMatcher.getSerializerBinding(type, classCustomization)
+                .map(SerializerBinding::getJsonbSerializer)
+                .map(UserDefinedSerializer::new)
+                .map(RecursionChecker::new)
+                .map(serializer -> SerializationModelCreator.wrapInCommonSet(serializer, (Customization) classCustomization));
     }
 
 }
