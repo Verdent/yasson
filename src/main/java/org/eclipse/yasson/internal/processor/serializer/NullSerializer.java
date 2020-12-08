@@ -55,6 +55,7 @@ public class NullSerializer implements ModelSerializer {
                     generator.writeNull(context.getKey());
                 }
             }
+            context.setKey(null);
             //Do nothing
         }
 

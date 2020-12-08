@@ -13,6 +13,7 @@ import org.eclipse.yasson.internal.JsonbContext;
 import org.eclipse.yasson.internal.ProcessingContext;
 import org.eclipse.yasson.internal.ReflectionUtils;
 import org.eclipse.yasson.internal.model.ClassModel;
+import org.eclipse.yasson.internal.model.customization.ClassCustomization;
 import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.processor.deserializer.ModelDeserializer;
 import org.eclipse.yasson.internal.properties.MessageKeys;
@@ -27,7 +28,7 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
 
     private final List<Runnable> delayedSetters = new ArrayList<>();
     private JsonParser.Event lastValueEvent;
-    private Customization customization = Customization.empty();
+    private Customization customization = ClassCustomization.empty();
 
     /**
      * Parent instance for marshaller and unmarshaller.

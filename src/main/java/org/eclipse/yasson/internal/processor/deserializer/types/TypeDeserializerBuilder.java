@@ -3,6 +3,7 @@ package org.eclipse.yasson.internal.processor.deserializer.types;
 import java.util.Objects;
 
 import org.eclipse.yasson.internal.JsonbConfigProperties;
+import org.eclipse.yasson.internal.model.customization.ClassCustomization;
 import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.processor.deserializer.ModelDeserializer;
 
@@ -21,7 +22,7 @@ class TypeDeserializerBuilder {
                             JsonbConfigProperties configProperties,
                             ModelDeserializer<Object> delegate) {
         this.clazz = Objects.requireNonNull(clazz);
-        this.customization = customization == null ? Customization.empty() : customization;
+        this.customization = customization == null ? ClassCustomization.empty() : customization;
         this.configProperties = configProperties;
         this.delegate = Objects.requireNonNull(delegate);
     }
