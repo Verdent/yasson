@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.json.stream.JsonGenerator;
 import org.eclipse.yasson.internal.model.customization.Customization;
@@ -25,7 +26,7 @@ class ObjectTypeSerializer extends TypeSerializer<Object> {
     ObjectTypeSerializer(TypeSerializerBuilder serializerBuilder) {
         super(serializerBuilder);
         this.customization = serializerBuilder.getCustomization();
-        this.cache = new HashMap<>();
+        this.cache = new ConcurrentHashMap<>();
         this.chain = new LinkedList<>(serializerBuilder.getChain());
     }
 
