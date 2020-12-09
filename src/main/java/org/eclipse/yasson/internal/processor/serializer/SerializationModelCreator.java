@@ -103,6 +103,21 @@ public class SerializationModelCreator {
         if (serializerBinding.isPresent()) {
             return serializerBinding.get();
         }
+        Optional<AdapterBinding> maybeAdapter = adapterBinding(type, (ComponentBoundCustomization) propertyCustomization);
+        if (maybeAdapter.isPresent()) {
+            AdapterBinding adapterBinding = maybeAdapter.get();
+            Type toType = adapterBinding.getToType();
+            Class<?> rawToType = ReflectionUtils.getRawType(toType);
+            ModelSerializer typeSerializer = TypeSerializers.getTypeSerializer(rawToType, propertyCustomization, jsonbContext);
+            if (typeSerializer == null) {
+                typeSerializer = serializerChain(toType, rootValue);
+            }
+            AdapterSerializer adapterSerializer = new AdapterSerializer(adapterBinding, typeSerializer);
+            RecursionChecker recursionChecker = new RecursionChecker(adapterSerializer);
+            NullSerializer nullSerializer = new NullSerializer(recursionChecker, propertyCustomization);
+            serializerChain.put(type, nullSerializer);
+            return nullSerializer;
+        }
 
         ModelSerializer typeSerializer = null;
         if (!Object.class.equals(rawType)) {
@@ -221,6 +236,18 @@ public class SerializationModelCreator {
         if (serializerBinding.isPresent()) {
             return serializerBinding.get();
         }
+        Optional<AdapterBinding> maybeAdapter = adapterBinding(resolved, (ComponentBoundCustomization) customization);
+        if (maybeAdapter.isPresent()) {
+            AdapterBinding adapterBinding = maybeAdapter.get();
+            Type toType = adapterBinding.getToType();
+            Class<?> rawToType = ReflectionUtils.getRawType(toType);
+            ModelSerializer typeSerializer = TypeSerializers.getTypeSerializer(rawToType, customization, jsonbContext);
+            if (typeSerializer == null) {
+                typeSerializer = serializerChain(toType, false);
+            }
+            AdapterSerializer adapterSerializer = new AdapterSerializer(adapterBinding, typeSerializer);
+            return new NullSerializer(adapterSerializer, customization);
+        }
         ModelSerializer typeSerializer = TypeSerializers.getTypeSerializer(chain, rawType, customization, jsonbContext);
         if (typeSerializer == null) {
             //Final classes dont have any child classes. It is safe to assume that there will be instance of that specific class.
@@ -250,6 +277,10 @@ public class SerializationModelCreator {
                 .map(UserDefinedSerializer::new)
                 .map(RecursionChecker::new)
                 .map(serializer -> SerializationModelCreator.wrapInCommonSet(serializer, (Customization) classCustomization));
+    }
+
+    private Optional<AdapterBinding> adapterBinding(Type type, ComponentBoundCustomization classCustomization) {
+        return jsonbContext.getComponentMatcher().getSerializeAdapterBinding(type, classCustomization);
     }
 
 }
