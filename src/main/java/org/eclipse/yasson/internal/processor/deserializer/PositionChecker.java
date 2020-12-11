@@ -70,7 +70,6 @@ public class PositionChecker implements ModelDeserializer<JsonParser> {
 
     public enum Checker {
 
-        KEY(Event.KEY_NAME),
         VALUES(Event.VALUE_FALSE,
                Event.VALUE_TRUE,
                Event.VALUE_STRING,
@@ -85,6 +84,9 @@ public class PositionChecker implements ModelDeserializer<JsonParser> {
             this.events = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(events)));
         }
 
+        public Set<Event> getEvents() {
+            return events;
+        }
     }
 
 }
