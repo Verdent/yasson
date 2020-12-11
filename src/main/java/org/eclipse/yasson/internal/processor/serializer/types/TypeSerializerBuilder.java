@@ -15,15 +15,18 @@ class TypeSerializerBuilder {
     private final Class<?> clazz;
     private final Customization customization;
     private final JsonbContext jsonbContext;
+    private final boolean key;
 
     TypeSerializerBuilder(List<Type> chain,
                           Class<?> clazz,
                           Customization customization,
-                          JsonbContext jsonbContext) {
+                          JsonbContext jsonbContext,
+                          boolean key) {
         this.chain = chain;
         this.clazz = clazz;
         this.customization = customization;
         this.jsonbContext = jsonbContext;
+        this.key = key;
     }
 
     public List<Type> getChain() {
@@ -40,5 +43,9 @@ class TypeSerializerBuilder {
 
     public JsonbContext getJsonbContext() {
         return jsonbContext;
+    }
+
+    public boolean isKey() {
+        return key;
     }
 }

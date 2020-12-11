@@ -23,6 +23,8 @@ abstract class TypeSerializer<T> implements ModelSerializer {
 
     abstract void serializeValue(T value, JsonGenerator generator, SerializationContextImpl context);
 
+    abstract void serializeKey(T key, JsonGenerator generator, SerializationContextImpl context);
+
     protected Class<?> getClazz() {
         return clazz;
     }

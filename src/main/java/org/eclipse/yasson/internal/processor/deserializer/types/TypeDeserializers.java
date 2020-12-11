@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 import java.util.UUID;
@@ -113,6 +114,15 @@ public class TypeDeserializers {
                                                                     JsonbConfigProperties properties,
                                                                     ModelDeserializer<Object> delegate,
                                                                     PositionChecker.Checker checker) {
+        return getTypeDeserializer(clazz, customization, properties, delegate, checker.getEvents());
+    }
+
+    public static ModelDeserializer<JsonParser> getTypeDeserializer(Class<?> clazz,
+                                                                    Customization customization,
+                                                                    JsonbConfigProperties properties,
+                                                                    ModelDeserializer<Object> delegate,
+                                                                    Set<JsonParser.Event> events) {
+        JsonParser.Event[] eventArray = events.toArray(new JsonParser.Event[0]);
         if (OPTIONAL_TYPES.containsKey(clazz)) {
             Class<?> optionalType = OPTIONAL_TYPES.get(clazz);
             TypeDeserializerBuilder builder = new TypeDeserializerBuilder(optionalType,
@@ -120,7 +130,7 @@ public class TypeDeserializers {
                                                                           properties,
                                                                           JustReturn.create());
             ValueExtractor valueExtractor = new ValueExtractor(DESERIALIZERS.get(optionalType).apply(builder));
-            PositionChecker positionChecker = new PositionChecker(valueExtractor, clazz, checker);
+            PositionChecker positionChecker = new PositionChecker(valueExtractor, clazz, eventArray);
             if (OptionalLong.class.equals(clazz)) {
                 return new OptionalLongDeserializer(positionChecker, delegate);
             } else if (OptionalInt.class.equals(clazz)) {
@@ -135,12 +145,12 @@ public class TypeDeserializers {
         TypeDeserializerBuilder builder = new TypeDeserializerBuilder(clazz, customization, properties, delegate);
         if (DESERIALIZERS.containsKey(clazz)) {
             ValueExtractor valueExtractor = new ValueExtractor(DESERIALIZERS.get(clazz).apply(builder));
-            return new NullCheckDeserializer(new PositionChecker(valueExtractor, clazz, checker),
+            return new NullCheckDeserializer(new PositionChecker(valueExtractor, clazz, eventArray),
                                              delegate,
                                              clazz);
         }
 
-        ModelDeserializer<JsonParser> deserializer = assignableCases(builder, checker);
+        ModelDeserializer<JsonParser> deserializer = assignableCases(builder, eventArray);
         if (deserializer != null) {
             return new NullCheckDeserializer(deserializer, delegate, clazz);
         }
@@ -156,7 +166,7 @@ public class TypeDeserializers {
     }
 
     private static ModelDeserializer<JsonParser> assignableCases(TypeDeserializerBuilder builder,
-                                                                 PositionChecker.Checker checker) {
+                                                                 JsonParser.Event[] checker) {
         if (Enum.class.isAssignableFrom(builder.getClazz())) {
             return new PositionChecker(new ValueExtractor(new EnumDeserializer(builder)),
                                        builder.getClazz(),
