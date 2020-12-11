@@ -6,11 +6,13 @@ import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -44,6 +46,13 @@ import static jakarta.json.stream.JsonParser.*;
  * TODO javadoc
  */
 public class ChainModelCreator {
+
+    private static final Set<JsonParser.Event> MAP_KEY_EVENTS = new HashSet<>();
+
+    static {
+        MAP_KEY_EVENTS.add(Event.KEY_NAME);
+        MAP_KEY_EVENTS.addAll(PositionChecker.Checker.VALUES.getEvents());
+    }
 
     private final Map<Type, ModelDeserializer<JsonParser>> deserializerChain = new ConcurrentHashMap<>();
 
@@ -138,11 +147,12 @@ public class ChainModelCreator {
                     : Object.class;
             //            ClassModel colTypeModel = jsonbContext.getMappingContext().getOrCreateClassModel(ReflectionUtils
             //            .getRawType(colType));
+
             ModelDeserializer<JsonParser> keyProcessor = typeProcessor(chain,
                                                                        keyType,
                                                                        classCustomization,
                                                                        JustReturn.create(),
-                                                                       PositionChecker.Checker.KEY);
+                                                                       MAP_KEY_EVENTS);
             ModelDeserializer<JsonParser> valueProcessor = typeProcessor(chain,
                                                                          valueType,
                                                                          classCustomization,
@@ -298,14 +308,14 @@ public class ChainModelCreator {
                                                         Type type,
                                                         Customization customization,
                                                         ModelDeserializer<Object> memberDeserializer) {
-        return typeProcessor(chain, type, customization, memberDeserializer, PositionChecker.Checker.VALUES);
+        return typeProcessor(chain, type, customization, memberDeserializer, PositionChecker.Checker.VALUES.getEvents());
     }
 
     private ModelDeserializer<JsonParser> typeProcessor(LinkedList<Type> chain,
                                                         Type type,
                                                         Customization customization,
                                                         ModelDeserializer<Object> memberDeserializer,
-                                                        PositionChecker.Checker checker) {
+                                                        Set<Event> events) {
         Type resolved = ReflectionUtils.resolveType(chain, type);
         Class<?> rawType = ReflectionUtils.getRawType(resolved);
         Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(resolved,
@@ -324,7 +334,7 @@ public class ChainModelCreator {
 
             ModelDeserializer<JsonParser> typeDeserializer = typeDeserializer(ReflectionUtils.getRawType(adapter.getToType()),
                                                                               customization,
-                                                                              JustReturn.create(), checker);
+                                                                              JustReturn.create(), events);
             if (typeDeserializer == null) {
                 typeDeserializer = deserializerChain(adapter.getToType(), targetModel);
             }
@@ -337,7 +347,7 @@ public class ChainModelCreator {
                 return adapterDeserializer.deserialize(fromJson, context);
             };
         }
-        ModelDeserializer<JsonParser> typeDeserializer = typeDeserializer(rawType, customization, memberDeserializer, checker);
+        ModelDeserializer<JsonParser> typeDeserializer = typeDeserializer(rawType, customization, memberDeserializer, events);
         if (typeDeserializer == null) {
             Class<?> implClass = resolveImplClass(rawType, customization);
             return createNewChain(chain, memberDeserializer, implClass, resolved);
@@ -357,14 +367,15 @@ public class ChainModelCreator {
     private ModelDeserializer<JsonParser> typeDeserializer(Class<?> rawType,
                                                            Customization customization,
                                                            ModelDeserializer<Object> delegate) {
-        return typeDeserializer(rawType, customization, delegate, PositionChecker.Checker.VALUES);
+        return typeDeserializer(rawType, customization, delegate, PositionChecker.Checker.VALUES.getEvents());
     }
 
     private ModelDeserializer<JsonParser> typeDeserializer(Class<?> rawType,
                                                            Customization customization,
                                                            ModelDeserializer<Object> delegate,
-                                                           PositionChecker.Checker checker) {
-        return TypeDeserializers.getTypeDeserializer(rawType, customization, jsonbContext.getConfigProperties(), delegate, checker);
+                                                           Set<JsonParser.Event> events) {
+        return TypeDeserializers
+                .getTypeDeserializer(rawType, customization, jsonbContext.getConfigProperties(), delegate, events);
     }
 
     private Class<?> resolveImplClass(Class<?> rawType, Customization customization) {

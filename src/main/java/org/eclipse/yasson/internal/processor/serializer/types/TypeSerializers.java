@@ -36,16 +36,9 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import jakarta.json.JsonValue;
 import org.eclipse.yasson.internal.JsonbContext;
 import org.eclipse.yasson.internal.model.customization.Customization;
-import org.eclipse.yasson.internal.processor.serializer.KeyWriter;
 import org.eclipse.yasson.internal.processor.serializer.ModelSerializer;
 import org.eclipse.yasson.internal.processor.serializer.NullSerializer;
 import org.eclipse.yasson.internal.processor.serializer.SerializationModelCreator;
-import org.eclipse.yasson.internal.serializer.DateTypeDeserializer;
-import org.eclipse.yasson.internal.serializer.SerializerProviderWrapper;
-import org.eclipse.yasson.internal.serializer.SqlDateTypeDeserializer;
-import org.eclipse.yasson.internal.serializer.SqlDateTypeSerializer;
-import org.eclipse.yasson.internal.serializer.SqlTimestampTypeDeserializer;
-import org.eclipse.yasson.internal.serializer.SqlTimestampTypeSerializer;
 
 /**
  * TODO javadoc
@@ -126,7 +119,7 @@ public class TypeSerializers {
                                                     JsonbContext jsonbContext) {
         List<Type> chainClone = new LinkedList<>(chain);
         Class<?> current = clazz;
-        TypeSerializerBuilder builder = new TypeSerializerBuilder(chainClone, current, customization, jsonbContext);
+        TypeSerializerBuilder builder = new TypeSerializerBuilder(chainClone, current, customization, jsonbContext, key);
         if (Object.class.equals(current)) {
             return new NullSerializer(SERIALIZERS.get(current).apply(builder), customization);
         }
