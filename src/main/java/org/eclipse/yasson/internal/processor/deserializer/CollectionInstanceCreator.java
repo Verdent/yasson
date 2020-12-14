@@ -21,7 +21,7 @@ import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
 /**
  * TODO javadoc
  */
-public class CollectionInstanceCreator implements ModelDeserializer<JsonParser> {
+class CollectionInstanceCreator implements ModelDeserializer<JsonParser> {
 
     private final CollectionDeserializer delegate;
     private final Type type;

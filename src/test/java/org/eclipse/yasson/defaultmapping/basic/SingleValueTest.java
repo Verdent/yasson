@@ -75,7 +75,7 @@ public class SingleValueTest {
         assertEquals("1", bindingJsonb.toJson(1));
 
         // null
-        //assertEquals("null", jsonb.toJson(null));
+        assertEquals("null", bindingJsonb.toJson(null));
     }
 
     @Test

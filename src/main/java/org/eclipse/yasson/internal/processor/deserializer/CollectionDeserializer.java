@@ -9,7 +9,7 @@ import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
 /**
  * TODO javadoc
  */
-public class CollectionDeserializer implements ModelDeserializer<JsonParser> {
+class CollectionDeserializer implements ModelDeserializer<JsonParser> {
 
     private final ModelDeserializer<JsonParser> delegate;
 
