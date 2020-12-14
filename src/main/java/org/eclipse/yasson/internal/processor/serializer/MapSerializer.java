@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 
 import jakarta.json.stream.JsonGenerator;
 import org.eclipse.yasson.internal.processor.SerializationContextImpl;
+import org.eclipse.yasson.internal.processor.serializer.types.TypeSerializers;
 
 /**
  * TODO javadoc
@@ -29,8 +30,8 @@ abstract class MapSerializer implements ModelSerializer {
     }
 
     public static MapSerializer create(Class<?> keyClass, ModelSerializer keySerializer, ModelSerializer valueSerializer) {
-        if (String.class.equals(keyClass) || Number.class.isAssignableFrom(keyClass) || Enum.class.isAssignableFrom(keyClass)) {
-            return new StringKeyMapSerializer(keyClass, keySerializer, valueSerializer);
+        if (TypeSerializers.isSupportedMapKey(keyClass)) {
+            return new StringKeyMapSerializer(keySerializer, valueSerializer);
         } else if (Object.class.equals(keyClass)) {
             return new DynamicMapSerializer(keySerializer, valueSerializer);
         }
@@ -46,7 +47,7 @@ abstract class MapSerializer implements ModelSerializer {
         public DynamicMapSerializer(ModelSerializer keySerializer,
                                     ModelSerializer valueSerializer) {
             super(keySerializer, valueSerializer);
-            stringMap = new StringKeyMapSerializer(Object.class, keySerializer, valueSerializer);
+            stringMap = new StringKeyMapSerializer(keySerializer, valueSerializer);
             objectMap = new ObjectKeyMapSerializer(keySerializer, valueSerializer);
         }
 
@@ -62,9 +63,7 @@ abstract class MapSerializer implements ModelSerializer {
                         continue;
                     }
                     Class<?> keyClass = key.getClass();
-                    if (String.class.equals(keyClass)
-                            || Number.class.isAssignableFrom(keyClass)
-                            || Enum.class.isAssignableFrom(keyClass)) {
+                    if (TypeSerializers.isSupportedMapKey(keyClass)) {
                         continue;
                     }
                     //No other checks needed. Map is not suitable for normal key:value map. Wrapping object needs to be used.
@@ -80,34 +79,9 @@ abstract class MapSerializer implements ModelSerializer {
 
     private static final class StringKeyMapSerializer extends MapSerializer {
 
-        private static final BiConsumer<Object, JsonGenerator> ENUM =
-                (value, generator) -> generator.writeKey(((Enum<?>) value).name());
-
-        private static final BiConsumer<Object, JsonGenerator> OTHER =
-                (value, generator) -> generator.writeKey(String.valueOf(value));
-
-        private static final BiConsumer<Object, JsonGenerator> DYNAMIC =
-                (value, generator) -> {
-                    if (value != null && Enum.class.isAssignableFrom(value.getClass())) {
-                        ENUM.accept(value, generator);
-                    } else {
-                        OTHER.accept(value, generator);
-                    }
-                };
-
-        private final BiConsumer<Object, JsonGenerator> keyWriter;
-
-        public StringKeyMapSerializer(Class<?> clazz,
-                                      ModelSerializer keySerializer,
+        public StringKeyMapSerializer(ModelSerializer keySerializer,
                                       ModelSerializer valueSerializer) {
             super(keySerializer, valueSerializer);
-            if (Enum.class.isAssignableFrom(clazz)) {
-                keyWriter = ENUM;
-            } else if (Object.class.equals(clazz)) {
-                keyWriter = DYNAMIC;
-            } else {
-                keyWriter = OTHER;
-            }
         }
 
         @SuppressWarnings("unchecked")
@@ -116,7 +90,7 @@ abstract class MapSerializer implements ModelSerializer {
             Map<Object, Object> map = (Map<Object, Object>) value;
             generator.writeStartObject();
             map.forEach((key, val) -> {
-                keyWriter.accept(key, generator);
+                getKeySerializer().serialize(key, generator, context);
                 getValueSerializer().serialize(val, generator, context);
             });
             generator.writeEnd();
