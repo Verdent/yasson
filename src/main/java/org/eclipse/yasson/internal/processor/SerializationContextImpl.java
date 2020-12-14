@@ -45,6 +45,7 @@ public class SerializationContextImpl extends ProcessingContext implements Seria
     private final Type runtimeType;
     private String key = null;
     private boolean containerWithNulls = true;
+    private boolean root = true;
 
     /**
      * Creates Marshaller for generation to String.
@@ -82,6 +83,24 @@ public class SerializationContextImpl extends ProcessingContext implements Seria
      */
     public String getKey() {
         return key;
+    }
+
+    /**
+     * Serialized value is a root value.
+     *
+     * @return is root value
+     */
+    public boolean isRoot() {
+        return root;
+    }
+
+    /**
+     * Set whether serialized value is root value.
+     *
+     * @param root is root value
+     */
+    public void setRoot(boolean root) {
+        this.root = root;
     }
 
     /**

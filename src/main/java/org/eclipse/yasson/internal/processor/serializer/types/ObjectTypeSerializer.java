@@ -22,22 +22,37 @@ class ObjectTypeSerializer extends TypeSerializer<Object> {
 
     private final Map<Class<?>, ModelSerializer> cache;
     private final List<Type> chain;
+    private final boolean isKey;
 
     ObjectTypeSerializer(TypeSerializerBuilder serializerBuilder) {
         super(serializerBuilder);
         this.customization = serializerBuilder.getCustomization();
         this.cache = new ConcurrentHashMap<>();
         this.chain = new LinkedList<>(serializerBuilder.getChain());
+        this.isKey = serializerBuilder.isKey();
     }
 
     @Override
     void serializeValue(Object value, JsonGenerator generator, SerializationContextImpl context) {
         //Dynamically resolved type during runtime. Cached in SerializationModelCreator.
-        Class<?> clazz = value.getClass();
-        cache.computeIfAbsent(clazz, aClass -> {
-            SerializationModelCreator serializationModelCreator = context.getJsonbContext().getSerializationModelCreator();
-            return serializationModelCreator.serializerChainRuntime(new LinkedList<>(chain), clazz, customization, false);
-        }).serialize(value, generator, context);
+        findSerializer(value, generator, context);
     }
 
+    @Override
+    void serializeKey(Object key, JsonGenerator generator, SerializationContextImpl context) {
+        if (key == null) {
+            super.serializeKey(null, generator, context);
+            return;
+        }
+        //Dynamically resolved type during runtime. Cached in SerializationModelCreator.
+        findSerializer(key, generator, context);
+    }
+
+    private void findSerializer(Object key, JsonGenerator generator, SerializationContextImpl context) {
+        Class<?> clazz = key.getClass();
+        cache.computeIfAbsent(clazz, aClass -> {
+            SerializationModelCreator serializationModelCreator = context.getJsonbContext().getSerializationModelCreator();
+            return serializationModelCreator.serializerChainRuntime(new LinkedList<>(chain), clazz, customization, false, isKey);
+        }).serialize(key, generator, context);
+    }
 }
