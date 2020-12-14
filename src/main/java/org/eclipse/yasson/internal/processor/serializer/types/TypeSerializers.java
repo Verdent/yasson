@@ -21,19 +21,24 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.function.Function;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
+import jakarta.json.JsonNumber;
+import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
+import jakarta.json.bind.JsonbException;
 import org.eclipse.yasson.internal.JsonbContext;
 import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.processor.serializer.ModelSerializer;
@@ -46,6 +51,7 @@ import org.eclipse.yasson.internal.processor.serializer.SerializationModelCreato
 public class TypeSerializers {
 
     private static final Map<Class<?>, Function<TypeSerializerBuilder, ModelSerializer>> SERIALIZERS;
+    private static final Set<Class<?>> SUPPORTED_MAP_KEYS;
 
     private static final Map<Class<?>, Class<?>> OPTIONALS;
 
@@ -103,52 +109,81 @@ public class TypeSerializers {
         optionals.put(OptionalInt.class, Integer.class);
         optionals.put(OptionalLong.class, Long.class);
         OPTIONALS = Collections.unmodifiableMap(optionals);
+
+        Set<Class<?>> mapKeys = new HashSet<>(SERIALIZERS.keySet());
+        mapKeys.addAll(optionals.keySet());
+        mapKeys.add(JsonNumber.class);
+        mapKeys.add(JsonString.class);
+        mapKeys.remove(Object.class);
+        SUPPORTED_MAP_KEYS = Collections.unmodifiableSet(mapKeys);
+
     }
 
     private TypeSerializers() {
         throw new IllegalStateException("Util class cannot be instantiated");
     }
 
+    public static boolean isSupportedMapKey(Class<?> clazz) {
+        return Enum.class.isAssignableFrom(clazz) || SUPPORTED_MAP_KEYS.contains(clazz);
+    }
+
     public static ModelSerializer getTypeSerializer(Class<?> clazz, Customization customization, JsonbContext jsonbContext) {
-        return getTypeSerializer(Collections.emptyList(), clazz, customization, jsonbContext);
+        return getTypeSerializer(Collections.emptyList(), clazz, customization, jsonbContext, false);
     }
 
     public static ModelSerializer getTypeSerializer(List<Type> chain,
                                                     Class<?> clazz,
                                                     Customization customization,
-                                                    JsonbContext jsonbContext) {
-        List<Type> chainClone = new LinkedList<>(chain);
+                                                    JsonbContext jsonbContext,
+                                                    boolean key) {
         Class<?> current = clazz;
-        TypeSerializerBuilder builder = new TypeSerializerBuilder(chainClone, current, customization, jsonbContext, key);
+        List<Type> chainClone = new LinkedList<>(chain);
+        TypeSerializerBuilder builder = new TypeSerializerBuilder(chainClone, clazz, customization, jsonbContext, key);
+        ModelSerializer typeSerializer = null;
         if (Object.class.equals(current)) {
-            return new NullSerializer(SERIALIZERS.get(current).apply(builder), customization);
+            if (key) {
+                return SERIALIZERS.get(current).apply(builder);
+            }
+            return new NullSerializer(SERIALIZERS.get(current).apply(builder),
+                                      customization,
+                                      jsonbContext.getConfigProperties().getNullSerializer());
         }
         if (OPTIONALS.containsKey(current)) {
             Class<?> optionalInner = OPTIONALS.get(current);
-            ModelSerializer serializer = getTypeSerializer(optionalInner, customization, jsonbContext);
+            ModelSerializer serializer = getTypeSerializer(chainClone, optionalInner, customization, jsonbContext, key);
             if (OptionalInt.class.equals(current)) {
                 return new OptionalIntSerializer(serializer);
             } else if (OptionalLong.class.equals(current)) {
                 return new OptionalLongSerializer(serializer);
             } else if (OptionalDouble.class.equals(current)) {
                 return new OptionalDoubleSerializer(serializer);
+            } else {
+                throw new JsonbException("Unsupported Optional type for serialization: " + clazz);
             }
         }
 
         if (Enum.class.isAssignableFrom(clazz)) {
-            return SerializationModelCreator.wrapInCommonSet(new EnumSerializer(builder), customization);
+            typeSerializer = new EnumSerializer(builder);
         } else if (JsonValue.class.isAssignableFrom(clazz)) {
-            return SerializationModelCreator.wrapInCommonSet(new JsonValueSerializer(builder), customization);
+            typeSerializer = new JsonValueSerializer(builder);
+        }
+        if (typeSerializer == null) {
+            do {
+                if (SERIALIZERS.containsKey(current)) {
+                    typeSerializer = SERIALIZERS.get(current).apply(builder);
+                    break;
+                }
+                current = current.getSuperclass();
+            } while (!Object.class.equals(current) && current != null);
         }
 
-        do {
-            if (SERIALIZERS.containsKey(current)) {
-                return SerializationModelCreator.wrapInCommonSet(SERIALIZERS.get(current).apply(builder), customization);
-            }
-            current = current.getSuperclass();
-        } while (!Object.class.equals(current) && current != null);
-
-        return null;
+        if (key) {
+            //We do not want any other special serializers around our type serializer if it will be used as a key
+            return typeSerializer;
+        }
+        return typeSerializer == null
+                ? null
+                : SerializationModelCreator.wrapInCommonSet(typeSerializer, customization, jsonbContext);
     }
 
     private static boolean isClassAvailable(String className) {

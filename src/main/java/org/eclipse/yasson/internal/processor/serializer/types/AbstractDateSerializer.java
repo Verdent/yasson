@@ -1,20 +1,18 @@
 package org.eclipse.yasson.internal.processor.serializer.types;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.function.Function;
 
 import jakarta.json.bind.annotation.JsonbDateFormat;
 import jakarta.json.stream.JsonGenerator;
 import org.eclipse.yasson.internal.JsonbConfigProperties;
 import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.processor.SerializationContextImpl;
-import org.eclipse.yasson.internal.processor.serializer.ModelSerializer;
 import org.eclipse.yasson.internal.serializer.JsonbDateFormatter;
 
 /**
@@ -24,34 +22,33 @@ abstract class AbstractDateSerializer<T> extends TypeSerializer<T> {
 
     static final ZoneId UTC = ZoneId.of("UTC");
 
-    private final ModelSerializer actualSerializer;
+    private final Function<T, String> valueSerializer;
 
     AbstractDateSerializer(TypeSerializerBuilder serializerBuilder) {
         super(serializerBuilder);
-        actualSerializer = actualSerializer(serializerBuilder);
+        valueSerializer = valueSerializer(serializerBuilder);
     }
 
-    @SuppressWarnings("unchecked")
-    private ModelSerializer actualSerializer(TypeSerializerBuilder serializerBuilder) {
+    private Function<T, String> valueSerializer(TypeSerializerBuilder serializerBuilder) {
         Customization customization = serializerBuilder.getCustomization();
         JsonbConfigProperties properties = serializerBuilder.getJsonbContext().getConfigProperties();
         final JsonbDateFormatter formatter = getJsonbDateFormatter(properties, customization);
         if (JsonbDateFormat.TIME_IN_MILLIS.equals(formatter.getFormat())) {
-            return (value, generator, context) -> generator.write(String.valueOf(toInstant((T) value).toEpochMilli()));
+            return value -> String.valueOf(toInstant(value).toEpochMilli());
         } else if (formatter.getDateTimeFormatter() != null) {
             DateTimeFormatter dateTimeFormatter = formatter.getDateTimeFormatter();
-            return (value, generator, context) -> generator.write(formatWithFormatter((T) value, dateTimeFormatter));
+            return value -> formatWithFormatter(value, dateTimeFormatter);
         } else {
             DateTimeFormatter configDateTimeFormatter = properties.getConfigDateFormatter().getDateTimeFormatter();
             if (configDateTimeFormatter != null) {
-                return (value, generator, context) -> generator.write(formatWithFormatter((T) value, configDateTimeFormatter));
+                return value -> formatWithFormatter(value, configDateTimeFormatter);
             }
         }
         if (properties.isStrictIJson()) {
-            return (value, generator, context) -> generator.write(formatStrictIJson((T) value));
+            return this::formatStrictIJson;
         }
         Locale locale = properties.getLocale(formatter.getLocale());
-        return (value, generator, context) -> generator.write(formatDefault((T) value, locale));
+        return value -> formatDefault(value, locale);
     }
 
     private JsonbDateFormatter getJsonbDateFormatter(JsonbConfigProperties properties, Customization customization) {
@@ -67,8 +64,8 @@ abstract class AbstractDateSerializer<T> extends TypeSerializer<T> {
      * @param value date object
      * @return converted {@link TemporalAccessor}
      */
-    protected TemporalAccessor toTemporalAccessor(T object) {
-        return (TemporalAccessor) object;
+    protected TemporalAccessor toTemporalAccessor(T value) {
+        return (TemporalAccessor) value;
     }
 
     /**
@@ -125,6 +122,11 @@ abstract class AbstractDateSerializer<T> extends TypeSerializer<T> {
 
     @Override
     void serializeValue(T value, JsonGenerator generator, SerializationContextImpl context) {
-        actualSerializer.serialize(value, generator, context);
+        generator.write(valueSerializer.apply(value));
+    }
+
+    @Override
+    void serializeKey(T key, JsonGenerator generator, SerializationContextImpl context) {
+        generator.writeKey(valueSerializer.apply(key));
     }
 }
