@@ -17,13 +17,14 @@ public class NullSerializer implements ModelSerializer {
 
     public NullSerializer(ModelSerializer delegate,
                           Customization customization,
-                          JsonbSerializer<?> userDefinedNullSerializer) {
+                          JsonbContext jsonbContext) {
         this.delegate = delegate;
         if (customization.isNillable()) {
             nullSerializer = new NullWritingEnabled();
         } else {
             nullSerializer = new NullWritingDisabled();
         }
+        JsonbSerializer<?> userDefinedNullSerializer = jsonbContext.getConfigProperties().getNullSerializer();
         if (userDefinedNullSerializer != null) {
             rootNullSerializer = (value, generator, context) -> userDefinedNullSerializer.serialize(null, generator, context);
         } else {
@@ -40,6 +41,7 @@ public class NullSerializer implements ModelSerializer {
             } else {
                 nullSerializer.serialize(null, generator, context);
             }
+            context.setKey(null);
         } else {
             context.setRoot(false);
             delegate.serialize(value, generator, context);
