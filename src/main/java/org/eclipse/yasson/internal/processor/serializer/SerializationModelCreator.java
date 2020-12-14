@@ -44,9 +44,7 @@ public class SerializationModelCreator {
                                                   JsonbContext jsonbContext) {
         return Stream.of(modelSerializer)
                 .map(KeyWriter::new)
-                .map(serializer -> new NullSerializer(serializer,
-                                                      customization,
-                                                      jsonbContext.getConfigProperties().getNullSerializer()))
+                .map(serializer -> new NullSerializer(serializer, customization, jsonbContext))
                 .findFirst()
                 .get();
     }
@@ -121,9 +119,7 @@ public class SerializationModelCreator {
             }
             AdapterSerializer adapterSerializer = new AdapterSerializer(adapterBinding, typeSerializer);
             RecursionChecker recursionChecker = new RecursionChecker(adapterSerializer);
-            NullSerializer nullSerializer = new NullSerializer(recursionChecker,
-                                                               propertyCustomization,
-                                                               jsonbContext.getConfigProperties().getNullSerializer());
+            NullSerializer nullSerializer = new NullSerializer(recursionChecker, propertyCustomization, jsonbContext);
             serializerChain.put(type, nullSerializer);
             return nullSerializer;
         }
@@ -172,7 +168,7 @@ public class SerializationModelCreator {
         KeyWriter keyWriter = new KeyWriter(recursionChecker);
         NullVisibilitySwitcher nullVisibilitySwitcher = new NullVisibilitySwitcher(false, keyWriter);
         NullSerializer nullSerializer = new NullSerializer(nullVisibilitySwitcher, classModel.getClassCustomization(),
-                                                           jsonbContext.getConfigProperties().getNullSerializer());
+                                                           jsonbContext);
         serializerChain.put(type, nullSerializer);
         return nullSerializer;
     }
@@ -187,7 +183,7 @@ public class SerializationModelCreator {
         CollectionSerializer collectionSerializer = new CollectionSerializer(typeSerializer);
         KeyWriter keyWriter = new KeyWriter(collectionSerializer);
         NullVisibilitySwitcher nullVisibilitySwitcher = new NullVisibilitySwitcher(true, keyWriter);
-        return new NullSerializer(nullVisibilitySwitcher, customization, jsonbContext.getConfigProperties().getNullSerializer());
+        return new NullSerializer(nullVisibilitySwitcher, customization, jsonbContext);
     }
 
     private ModelSerializer createMapSerializer(LinkedList<Type> chain, Type type, Customization propertyCustomization) {
@@ -204,9 +200,7 @@ public class SerializationModelCreator {
         MapSerializer mapSerializer = MapSerializer.create(rawClass, keySerializer, valueSerializer);
         KeyWriter keyWriter = new KeyWriter(mapSerializer);
         NullVisibilitySwitcher nullVisibilitySwitcher = new NullVisibilitySwitcher(true, keyWriter);
-        return new NullSerializer(nullVisibilitySwitcher,
-                                  propertyCustomization,
-                                  jsonbContext.getConfigProperties().getNullSerializer());
+        return new NullSerializer(nullVisibilitySwitcher, propertyCustomization, jsonbContext);
     }
 
     private ModelSerializer createArraySerializer(LinkedList<Type> chain,
@@ -217,9 +211,7 @@ public class SerializationModelCreator {
         ModelSerializer arraySerializer = ArraySerializer.create(raw, jsonbContext, modelSerializer);
         KeyWriter keyWriter = new KeyWriter(arraySerializer);
         NullVisibilitySwitcher nullVisibilitySwitcher = new NullVisibilitySwitcher(true, keyWriter);
-        return new NullSerializer(nullVisibilitySwitcher,
-                                  propertyCustomization,
-                                  jsonbContext.getConfigProperties().getNullSerializer());
+        return new NullSerializer(nullVisibilitySwitcher, propertyCustomization, jsonbContext);
     }
 
     private ModelSerializer createGenericArraySerializer(LinkedList<Type> chain,
@@ -231,9 +223,7 @@ public class SerializationModelCreator {
         ModelSerializer arraySerializer = ArraySerializer.create(raw, jsonbContext, modelSerializer);
         KeyWriter keyWriter = new KeyWriter(arraySerializer);
         NullVisibilitySwitcher nullVisibilitySwitcher = new NullVisibilitySwitcher(true, keyWriter);
-        return new NullSerializer(nullVisibilitySwitcher,
-                                  propertyCustomization,
-                                  jsonbContext.getConfigProperties().getNullSerializer());
+        return new NullSerializer(nullVisibilitySwitcher, propertyCustomization, jsonbContext);
     }
 
     private ModelSerializer createOptionalSerializer(LinkedList<Type> chain,
@@ -266,7 +256,7 @@ public class SerializationModelCreator {
                 typeSerializer = serializerChain(toType, false);
             }
             AdapterSerializer adapterSerializer = new AdapterSerializer(adapterBinding, typeSerializer);
-            return new NullSerializer(adapterSerializer, customization, jsonbContext.getConfigProperties().getNullSerializer());
+            return new NullSerializer(adapterSerializer, customization, jsonbContext);
         }
         ModelSerializer typeSerializer = TypeSerializers.getTypeSerializer(chain, rawType, customization, jsonbContext, key);
         if (typeSerializer == null) {

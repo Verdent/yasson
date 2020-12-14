@@ -144,9 +144,7 @@ public class TypeSerializers {
             if (key) {
                 return SERIALIZERS.get(current).apply(builder);
             }
-            return new NullSerializer(SERIALIZERS.get(current).apply(builder),
-                                      customization,
-                                      jsonbContext.getConfigProperties().getNullSerializer());
+            return new NullSerializer(SERIALIZERS.get(current).apply(builder), customization, jsonbContext);
         }
         if (OPTIONALS.containsKey(current)) {
             Class<?> optionalInner = OPTIONALS.get(current);
