@@ -24,26 +24,19 @@ import java.security.PrivilegedAction;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Predicate;
 
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.config.PropertyNamingStrategy;
 import jakarta.json.bind.config.PropertyVisibilityStrategy;
-import jakarta.json.bind.serializer.JsonbSerializer;
 import org.eclipse.yasson.internal.AnnotationIntrospector;
 import org.eclipse.yasson.internal.JsonbContext;
-import org.eclipse.yasson.internal.ReflectionUtils;
 import org.eclipse.yasson.internal.components.AdapterBinding;
 import org.eclipse.yasson.internal.components.SerializerBinding;
 import org.eclipse.yasson.internal.model.customization.PropertyCustomization;
 import org.eclipse.yasson.internal.model.customization.PropertyCustomizationBuilder;
-import org.eclipse.yasson.internal.serializer.AdaptedObjectSerializer;
-import org.eclipse.yasson.internal.serializer.DefaultSerializers;
 import org.eclipse.yasson.internal.serializer.JsonbDateFormatter;
 import org.eclipse.yasson.internal.serializer.JsonbNumberFormatter;
-import org.eclipse.yasson.internal.serializer.SerializerProviderWrapper;
-import org.eclipse.yasson.internal.serializer.UserSerializerSerializer;
 
 /**
  * A model for class property.
@@ -84,8 +77,6 @@ public final class PropertyModel implements Comparable<PropertyModel> {
      * Customization of this property.
      */
     private final PropertyCustomization customization;
-
-    private final JsonbSerializer<?> propertySerializer;
 
     private final MethodHandle getValueHandle;
 
@@ -140,7 +131,6 @@ public final class PropertyModel implements Comparable<PropertyModel> {
         PropertyVisibilityStrategy strategy = classModel.getClassCustomization().getPropertyVisibilityStrategy();
         this.getValueHandle = createReadHandle(field, getter, isMethodVisible(getter, strategy), strategy);
         this.setValueHandle = createWriteHandle(field, setter, isMethodVisible(setter, strategy), strategy);
-        this.propertySerializer = resolveCachedSerializer();
     }
 
     /**
@@ -172,34 +162,6 @@ public final class PropertyModel implements Comparable<PropertyModel> {
                                                jsonbContext.getConfigProperties().getPropertyNamingStrategy());
         this.writeName = calculateReadWriteName(customization.getJsonWriteName(), propertyName,
                                                 jsonbContext.getConfigProperties().getPropertyNamingStrategy());
-        this.propertySerializer = resolveCachedSerializer();
-    }
-
-    /**
-     * Try to cache serializer for this bean property. Only if type cannot be changed during runtime.
-     *
-     * @return serializer instance to be cached
-     */
-    @SuppressWarnings("unchecked")
-    private JsonbSerializer<?> resolveCachedSerializer() {
-        Type serializationType = getPropertySerializationType();
-        if (!ReflectionUtils.isResolvedType(serializationType)) {
-            return null;
-        }
-        if (customization.getSerializeAdapterBinding() != null) {
-            return new AdaptedObjectSerializer<>(classModel, customization.getSerializeAdapterBinding());
-        }
-        if (customization.getSerializerBinding() != null) {
-            return new UserSerializerSerializer<>(classModel, customization.getSerializerBinding().getJsonbSerializer());
-        }
-
-        final Class<?> propertyRawType = ReflectionUtils.getRawType(serializationType);
-        final Optional<SerializerProviderWrapper> valueSerializerProvider = DefaultSerializers.findValueSerializerProvider(propertyRawType);
-        if (valueSerializerProvider.isPresent()) {
-            return valueSerializerProvider.get().getSerializerProvider().provideSerializer(customization);
-        }
-
-        return null;
     }
 
     /**
@@ -479,15 +441,6 @@ public final class PropertyModel implements Comparable<PropertyModel> {
 
     public String getWriteName() {
         return writeName;
-    }
-
-    /**
-     * Gets serializer.
-     *
-     * @return Serializer.
-     */
-    public JsonbSerializer<?> getPropertySerializer() {
-        return propertySerializer;
     }
 
     /**

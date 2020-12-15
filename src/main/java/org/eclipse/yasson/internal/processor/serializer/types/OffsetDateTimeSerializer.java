@@ -17,9 +17,6 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
-import org.eclipse.yasson.internal.model.customization.Customization;
-import org.eclipse.yasson.internal.serializer.AbstractDateTimeSerializer;
-
 /**
  * Serializer for {@link OffsetDateTime} type.
  */

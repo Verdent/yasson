@@ -8,14 +8,13 @@ import java.util.logging.Logger;
 
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
-import org.eclipse.yasson.internal.serializer.OffsetDateTimeTypeDeserializer;
 
 /**
  * TODO javadoc
  */
 class OffsetDateTimeDeserializer extends AbstractDateDeserializer<OffsetDateTime> {
 
-    private static final Logger LOGGER = Logger.getLogger(OffsetDateTimeTypeDeserializer.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(OffsetDateTimeDeserializer.class.getName());
 
     OffsetDateTimeDeserializer(TypeDeserializerBuilder builder) {
         super(builder);

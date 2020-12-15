@@ -40,7 +40,7 @@ import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
 
 import static jakarta.json.bind.JsonbConfig.PROPERTY_NAMING_STRATEGY;
-import static jakarta.json.stream.JsonParser.*;
+import static jakarta.json.stream.JsonParser.Event;
 
 /**
  * TODO javadoc
