@@ -21,8 +21,7 @@ import java.util.function.Function;
 import org.eclipse.yasson.internal.model.ClassModel;
 import org.eclipse.yasson.internal.model.JsonbAnnotatedElement;
 import org.eclipse.yasson.internal.model.customization.ClassCustomization;
-import org.eclipse.yasson.internal.serializer.ContainerSerializerProvider;
-import org.eclipse.yasson.internal.serializer.DefaultSerializers;
+import org.eclipse.yasson.internal.processor.serializer.types.TypeSerializers;
 
 /**
  * JSONB mappingContext. Created once per {@link jakarta.json.bind.Jsonb} instance. Represents a global scope.
@@ -34,8 +33,6 @@ public class MappingContext {
     private final JsonbContext jsonbContext;
 
     private final ConcurrentHashMap<Class<?>, ClassModel> classes = new ConcurrentHashMap<>();
-
-    private final ConcurrentHashMap<Class<?>, ContainerSerializerProvider> serializers = new ConcurrentHashMap<>();
 
     private final ClassParser classParser;
 
@@ -110,23 +107,4 @@ public class MappingContext {
         return classes.get(clazz);
     }
 
-    /**
-     * Gets serializer provider for given class.
-     *
-     * @param clazz Class to get serializer provider for.
-     * @return Serializer provider.
-     */
-    public ContainerSerializerProvider getSerializerProvider(Class<?> clazz) {
-        return serializers.get(clazz);
-    }
-
-    /**
-     * Adds given serializer provider for given class.
-     *
-     * @param clazz              Class to add serializer provider for.
-     * @param serializerProvider Serializer provider to add.
-     */
-    public void addSerializerProvider(Class<?> clazz, ContainerSerializerProvider serializerProvider) {
-        serializers.putIfAbsent(clazz, serializerProvider);
-    }
 }

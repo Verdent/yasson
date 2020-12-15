@@ -20,9 +20,6 @@ import java.util.Locale;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
-import org.eclipse.yasson.internal.model.customization.Customization;
-import org.eclipse.yasson.internal.serializer.AbstractDateTimeSerializer;
-
 /**
  * Serializer for {@link XMLGregorianCalendar} type.
  */
