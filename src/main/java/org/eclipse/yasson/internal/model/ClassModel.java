@@ -113,7 +113,8 @@ public class ClassModel {
     }
 
     /**
-     * Check if name is equal according to property strategy. In case of {@link CaseInsensitiveStrategy} ignore case.
+     * Check if name is equal according to property strategy.
+     * In case of {@link StrategiesProvider#CASE_INSENSITIVE_STRATEGY} ignore case.
      * User can provide own strategy implementation, cast to custom interface is not an option.
      *
      * @return True if names are equal.

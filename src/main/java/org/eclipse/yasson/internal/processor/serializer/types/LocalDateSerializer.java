@@ -18,8 +18,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
-import org.eclipse.yasson.internal.model.customization.Customization;
-import org.eclipse.yasson.internal.serializer.AbstractDateTimeSerializer;
 import org.eclipse.yasson.internal.serializer.JsonbDateFormatter;
 
 /**

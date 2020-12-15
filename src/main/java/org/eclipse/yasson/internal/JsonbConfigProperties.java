@@ -45,7 +45,6 @@ import org.eclipse.yasson.internal.model.customization.StrategiesProvider;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
 import org.eclipse.yasson.internal.serializer.JsonbDateFormatter;
-import org.eclipse.yasson.internal.serializer.NullSerializer;
 
 /**
  * Resolved properties from JSONB config.
@@ -79,7 +78,7 @@ public class JsonbConfigProperties {
     private final Class<?> defaultMapImplType;
 
     private final JsonbSerializer<Object> nullSerializer;
-    
+
     private final Set<Class<?>> eagerInitClasses;
 
     /**
@@ -133,7 +132,7 @@ public class JsonbConfigProperties {
         Object result = property.get();
         if (!(result instanceof Map)) {
             throw new JsonbException(Messages.getMessage(MessageKeys.JSONB_CONFIG_PROPERTY_INVALID_TYPE,
-                    YassonConfig.USER_TYPE_MAPPING,
+                                                         YassonConfig.USER_TYPE_MAPPING,
                                                          Map.class.getSimpleName()));
         }
         return (Map<Class<?>, Class<?>>) result;
@@ -240,18 +239,16 @@ public class JsonbConfigProperties {
 
     @SuppressWarnings("unchecked")
     private JsonbSerializer<Object> initNullSerializer() {
-        Optional<Object> property = jsonbConfig.getProperty(YassonConfig.NULL_ROOT_SERIALIZER);
-        if (!property.isPresent()) {
-            return new NullSerializer();
-        }
-        Object nullSerializer = property.get();
-        if (!(nullSerializer instanceof JsonbSerializer)) {
-            throw new JsonbException("YassonConfig.NULL_ROOT_SERIALIZER must be instance of " + JsonbSerializer.class
-                                             + "<Object>");
-        }
-        return (JsonbSerializer<Object>) nullSerializer;
+        return jsonbConfig.getProperty(YassonConfig.NULL_ROOT_SERIALIZER)
+                .map(o -> {
+                    if (!(o instanceof JsonbSerializer)) {
+                        throw new JsonbException("YassonConfig.NULL_ROOT_SERIALIZER must be instance of " + JsonbSerializer.class
+                                                         + "<Object>");
+                    }
+                    return (JsonbSerializer<Object>) o;
+                }).orElse(null);
     }
-    
+
     private Set<Class<?>> initEagerInitClasses() {
         Optional<Object> property = jsonbConfig.getProperty(YassonConfig.EAGER_PARSE_CLASSES);
         if (!property.isPresent()) {
@@ -261,7 +258,7 @@ public class JsonbConfigProperties {
         if (!(eagerInitClasses instanceof Class<?>[])) {
             throw new JsonbException("YassonConfig.EAGER_PARSE_CLASSES must be instance of Class<?>[]");
         }
-        return new HashSet<Class<?>>(Arrays.asList((Class<?>[]) eagerInitClasses));
+        return new HashSet<>(Arrays.asList((Class<?>[]) eagerInitClasses));
     }
 
     /**
@@ -424,7 +421,7 @@ public class JsonbConfigProperties {
     public JsonbSerializer<Object> getNullSerializer() {
         return nullSerializer;
     }
-    
+
     public Set<Class<?>> getEagerInitClasses() {
         return eagerInitClasses;
     }

@@ -15,10 +15,7 @@ package org.eclipse.yasson.internal.processor.serializer.types;
 import java.util.TimeZone;
 
 import jakarta.json.stream.JsonGenerator;
-import org.eclipse.yasson.internal.Marshaller;
-import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.processor.SerializationContextImpl;
-import org.eclipse.yasson.internal.serializer.AbstractValueTypeSerializer;
 
 /**
  * Serializer for {@link TimeZone} type.

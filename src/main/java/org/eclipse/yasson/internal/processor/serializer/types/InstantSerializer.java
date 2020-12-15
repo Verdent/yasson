@@ -2,7 +2,6 @@ package org.eclipse.yasson.internal.processor.serializer.types;
 
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAccessor;
 import java.util.Locale;
 
 import org.eclipse.yasson.internal.serializer.JsonbDateFormatter;

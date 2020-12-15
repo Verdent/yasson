@@ -32,7 +32,6 @@ import jakarta.json.bind.JsonbException;
 import org.eclipse.yasson.internal.VariableTypeInheritanceSearch;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
-import org.eclipse.yasson.internal.serializer.AbstractItem;
 import org.eclipse.yasson.internal.serializer.ResolvedParameterizedType;
 
 /**

@@ -8,14 +8,13 @@ import java.util.logging.Logger;
 
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
-import org.eclipse.yasson.internal.serializer.ZonedDateTimeTypeDeserializer;
 
 /**
  * TODO javadoc
  */
 class ZonedDateTimeDeserializer extends AbstractDateDeserializer<ZonedDateTime> {
 
-    private static final Logger LOGGER = Logger.getLogger(ZonedDateTimeTypeDeserializer.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ZonedDateTimeDeserializer.class.getName());
 
     ZonedDateTimeDeserializer(TypeDeserializerBuilder builder) {
         super(builder);

@@ -15,6 +15,7 @@ package org.eclipse.yasson.internal;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -350,8 +351,9 @@ public class ComponentMatcher {
         if (adapterTypeArg instanceof ParameterizedType) {
             return ReflectionUtils.resolveTypeArguments((ParameterizedType) adapterTypeArg, adapterType);
         } else if (adapterTypeArg instanceof TypeVariable) {
-            return ReflectionUtils
-                    .resolveItemVariableType(new RuntimeTypeHolder(null, adapterType), (TypeVariable<?>) adapterTypeArg, true);
+            LinkedList<Type> chain = new LinkedList<>();
+            chain.add(adapterType);
+            return ReflectionUtils.resolveItemVariableType(chain, (TypeVariable<?>) adapterTypeArg, true);
         } else {
             return adapterTypeArg;
         }

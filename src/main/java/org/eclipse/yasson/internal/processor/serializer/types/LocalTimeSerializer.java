@@ -18,10 +18,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
 import jakarta.json.bind.JsonbException;
-import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
-import org.eclipse.yasson.internal.serializer.AbstractDateTimeSerializer;
 
 /**
  * Serializer for {@link LocalTime} type.

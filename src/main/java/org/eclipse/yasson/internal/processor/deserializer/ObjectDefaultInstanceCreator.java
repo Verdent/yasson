@@ -1,7 +1,6 @@
 package org.eclipse.yasson.internal.processor.deserializer;
 
 import java.lang.reflect.Constructor;
-import java.util.Objects;
 
 import jakarta.json.bind.JsonbException;
 import jakarta.json.stream.JsonParser;

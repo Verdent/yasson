@@ -17,9 +17,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
 
-import org.eclipse.yasson.internal.model.customization.Customization;
-import org.eclipse.yasson.internal.serializer.DateTypeSerializer;
-
 /**
  * Common serializer for {@link Date} and {@link java.sql.Date} types.
  */

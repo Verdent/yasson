@@ -5,8 +5,6 @@ import java.lang.invoke.MethodHandle;
 import jakarta.json.bind.JsonbException;
 import jakarta.json.stream.JsonGenerator;
 import org.eclipse.yasson.internal.processor.SerializationContextImpl;
-import org.eclipse.yasson.internal.properties.MessageKeys;
-import org.eclipse.yasson.internal.properties.Messages;
 
 /**
  * TODO javadoc

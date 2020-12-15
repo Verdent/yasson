@@ -1,7 +1,6 @@
 package org.eclipse.yasson.internal.processor.serializer;
 
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 
 import jakarta.json.bind.JsonbException;
 import jakarta.json.stream.JsonGenerator;
