@@ -18,7 +18,6 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -26,7 +25,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
@@ -46,6 +44,8 @@ import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.processor.serializer.ModelSerializer;
 import org.eclipse.yasson.internal.processor.serializer.NullSerializer;
 import org.eclipse.yasson.internal.processor.serializer.SerializationModelCreator;
+
+import static org.eclipse.yasson.internal.processor.BuiltInTypes.isClassAvailable;
 
 /**
  * TODO javadoc
@@ -184,25 +184,6 @@ public class TypeSerializers {
         return typeSerializer == null
                 ? null
                 : SerializationModelCreator.wrapInCommonSet(typeSerializer, customization, jsonbContext);
-    }
-
-    private static boolean isClassAvailable(String className) {
-        try {
-            Class.forName(className);
-            return true;
-        } catch (ClassNotFoundException | LinkageError e) {
-            return false;
-        }
-    }
-
-    public static boolean isKnownType(Class<?> clazz) {
-        boolean knownContainerValueType = Collection.class.isAssignableFrom(clazz)
-                || Map.class.isAssignableFrom(clazz)
-                || JsonValue.class.isAssignableFrom(clazz)
-                || Optional.class.isAssignableFrom(clazz)
-                || clazz.isArray();
-
-        return knownContainerValueType || findValueSerializerProvider(clazz).isPresent();
     }
 
 }
