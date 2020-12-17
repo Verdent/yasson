@@ -93,7 +93,7 @@ public class ReflectionUtils {
 
     /**
      * Get a raw type of any type.
-     * If type is a {@link TypeVariable} recursively search {@link AbstractItem} for resolution of typevar.
+     * If type is a {@link TypeVariable} recursively search type chain for resolution of typevar.
      * If type is a {@link WildcardType} find most specific upper / lower bound, which can be used. If most specific
      * bound is a {@link TypeVariable}, perform typevar resolution.
      *
@@ -113,7 +113,7 @@ public class ReflectionUtils {
 
     /**
      * Resolve a type by chain.
-     * If type is a {@link TypeVariable} recursively search {@link AbstractItem} for resolution of typevar.
+     * If type is a {@link TypeVariable} recursively search type chain for resolution of typevar.
      * If type is a {@link WildcardType} find most specific upper / lower bound, which can be used. If most specific
      * bound is a {@link TypeVariable}, perform typevar resolution.
      *
