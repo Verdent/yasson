@@ -15,7 +15,6 @@ package org.eclipse.yasson.internal.model;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -27,7 +26,6 @@ import jakarta.json.bind.config.PropertyNamingStrategy;
 import org.eclipse.yasson.internal.ReflectionUtils;
 import org.eclipse.yasson.internal.model.customization.ClassCustomization;
 import org.eclipse.yasson.internal.model.customization.StrategiesProvider;
-import org.eclipse.yasson.internal.processor.serializer.ModelSerializer;
 
 /**
  * A model for Java class.

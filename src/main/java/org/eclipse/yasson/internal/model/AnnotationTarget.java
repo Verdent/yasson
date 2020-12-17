@@ -12,10 +12,12 @@
 
 package org.eclipse.yasson.internal.model;
 
+import org.eclipse.yasson.internal.JsonbNumberFormatter;
+
 /**
  * Represents the place in which a JSON annotation is applied. Some business functionalities are different based on whether
  * annotation (e.g.
- * {@link jakarta.json.bind.annotation.JsonbTransient}, {@link org.eclipse.yasson.internal.serializer.JsonbNumberFormatter}, etc
+ * {@link jakarta.json.bind.annotation.JsonbTransient}, {@link JsonbNumberFormatter}, etc
  * .) is being applied on
  * getter method, setter method or directly on the property.
  */

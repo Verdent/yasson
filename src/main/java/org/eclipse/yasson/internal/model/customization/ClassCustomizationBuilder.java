@@ -15,8 +15,8 @@ package org.eclipse.yasson.internal.model.customization;
 import jakarta.json.bind.config.PropertyVisibilityStrategy;
 
 import org.eclipse.yasson.internal.model.JsonbCreator;
-import org.eclipse.yasson.internal.serializer.JsonbDateFormatter;
-import org.eclipse.yasson.internal.serializer.JsonbNumberFormatter;
+import org.eclipse.yasson.internal.JsonbDateFormatter;
+import org.eclipse.yasson.internal.JsonbNumberFormatter;
 
 /**
  * The customization builder that would be used to build an instance of {@link ClassCustomization} to ensure its immutability.
