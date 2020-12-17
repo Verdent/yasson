@@ -196,16 +196,8 @@ public class SerializationContextImpl extends ProcessingContext implements Seria
      */
     @SuppressWarnings("unchecked")
     public <T> void serializeObject(T root, JsonGenerator generator) {
-        if (root == null) {
-            getJsonbContext().getConfigProperties().getNullSerializer().serialize(null, generator, this);
-            return;
-        }
-        Type type = runtimeType == null ? root.getClass() : runtimeType;
+        Type type = runtimeType == null ? (root == null ? Object.class : root.getClass()) : runtimeType;
         final ModelSerializer rootSerializer = getRootSerializer(type);
-        //        if (getJsonbContext().getConfigProperties().isStrictIJson()
-        //                && rootSerializer instanceof AbstractValueTypeSerializer) {
-        //            throw new JsonbException(Messages.getMessage(MessageKeys.IJSON_ENABLED_SINGLE_VALUE));
-        //        }
         rootSerializer.serialize(root, generator, this);
     }
 

@@ -21,6 +21,7 @@ import java.util.function.Function;
 import org.eclipse.yasson.internal.model.ClassModel;
 import org.eclipse.yasson.internal.model.JsonbAnnotatedElement;
 import org.eclipse.yasson.internal.model.customization.ClassCustomization;
+import org.eclipse.yasson.internal.processor.BuiltInTypes;
 import org.eclipse.yasson.internal.processor.serializer.types.TypeSerializers;
 
 /**
@@ -90,7 +91,7 @@ public class MappingContext {
                                                       customization,
                                                       parentClassModel,
                                                       jsonbContext.getConfigProperties().getPropertyNamingStrategy());
-            if (!DefaultSerializers.isKnownType(aClass)) {
+            if (!BuiltInTypes.isKnowType(aClass)) {
                 classParser.parseProperties(newClassModel, clsElement);
             }
             return newClassModel;
