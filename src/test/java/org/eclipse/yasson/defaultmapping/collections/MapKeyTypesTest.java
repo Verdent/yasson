@@ -39,13 +39,13 @@ public class MapKeyTypesTest {
     public void zonedDateTimeMapKey() {
         ZonedDateTime zonedDateTime = ZonedDateTime.of(2020, 9, 14,
                                                        9, 33, 12, 0,
-                                                       ZoneId.systemDefault());
+                                                       ZoneId.of("UTC"));
         ZonedDateTime zonedDateTime2 = ZonedDateTime.of(2019, 8, 13,
                                                         8, 32, 11, 1234,
-                                                        ZoneId.systemDefault());
-        String expected = "{\"2020-09-14T09:33:12+02:00[Europe/Prague]\":{\"firstName\":\"FirstName1\","
+                                                        ZoneId.of("UTC"));
+        String expected = "{\"2020-09-14T09:33:12Z[UTC]\":{\"firstName\":\"FirstName1\","
                 + "\"sureName\":\"SureName1\"},"
-                + "\"2019-08-13T08:32:11.000001234+02:00[Europe/Prague]\":{\"firstName\":\"FirstName2\","
+                + "\"2019-08-13T08:32:11.000001234Z[UTC]\":{\"firstName\":\"FirstName2\","
                 + "\"sureName\":\"SureName2\"}}";
         Map<ZonedDateTime, Person> map = new HashMap<>();
         Person person = new Person();

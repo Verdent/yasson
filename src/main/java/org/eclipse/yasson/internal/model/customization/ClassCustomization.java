@@ -15,8 +15,8 @@ package org.eclipse.yasson.internal.model.customization;
 import jakarta.json.bind.config.PropertyVisibilityStrategy;
 
 import org.eclipse.yasson.internal.model.JsonbCreator;
-import org.eclipse.yasson.internal.serializer.JsonbDateFormatter;
-import org.eclipse.yasson.internal.serializer.JsonbNumberFormatter;
+import org.eclipse.yasson.internal.JsonbDateFormatter;
+import org.eclipse.yasson.internal.JsonbNumberFormatter;
 
 /**
  * Customization, which could be applied on a class or package level.

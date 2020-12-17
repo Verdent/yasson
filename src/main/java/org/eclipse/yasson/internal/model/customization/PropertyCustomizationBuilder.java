@@ -13,8 +13,8 @@
 package org.eclipse.yasson.internal.model.customization;
 
 import org.eclipse.yasson.internal.components.AdapterBinding;
-import org.eclipse.yasson.internal.serializer.JsonbDateFormatter;
-import org.eclipse.yasson.internal.serializer.JsonbNumberFormatter;
+import org.eclipse.yasson.internal.JsonbDateFormatter;
+import org.eclipse.yasson.internal.JsonbNumberFormatter;
 
 /**
  * The property customization builder that would be used to build an instance of {@link PropertyCustomization} to ensure its

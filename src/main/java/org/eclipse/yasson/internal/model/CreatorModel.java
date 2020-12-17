@@ -19,8 +19,8 @@ import org.eclipse.yasson.internal.AnnotationIntrospector;
 import org.eclipse.yasson.internal.JsonbContext;
 import org.eclipse.yasson.internal.model.customization.ClassCustomizationBuilder;
 import org.eclipse.yasson.internal.model.customization.CreatorCustomization;
-import org.eclipse.yasson.internal.serializer.JsonbDateFormatter;
-import org.eclipse.yasson.internal.serializer.JsonbNumberFormatter;
+import org.eclipse.yasson.internal.JsonbDateFormatter;
+import org.eclipse.yasson.internal.JsonbNumberFormatter;
 
 /**
  * Parameter for creator constructor / method model.

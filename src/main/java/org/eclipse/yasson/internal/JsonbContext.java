@@ -25,8 +25,8 @@ import jakarta.json.bind.JsonbConfig;
 import jakarta.json.spi.JsonProvider;
 
 import org.eclipse.yasson.internal.components.JsonbComponentInstanceCreatorFactory;
-import org.eclipse.yasson.internal.processor.deserializer.ChainModelCreator;
-import org.eclipse.yasson.internal.processor.serializer.SerializationModelCreator;
+import org.eclipse.yasson.internal.deserializer.ChainModelCreator;
+import org.eclipse.yasson.internal.serializer.SerializationModelCreator;
 import org.eclipse.yasson.spi.JsonbComponentInstanceCreator;
 
 /**

@@ -12,8 +12,8 @@
 
 package org.eclipse.yasson.internal.model.customization;
 
-import org.eclipse.yasson.internal.serializer.JsonbDateFormatter;
-import org.eclipse.yasson.internal.serializer.JsonbNumberFormatter;
+import org.eclipse.yasson.internal.JsonbDateFormatter;
+import org.eclipse.yasson.internal.JsonbNumberFormatter;
 
 /**
  * Customization configuration for class or field.

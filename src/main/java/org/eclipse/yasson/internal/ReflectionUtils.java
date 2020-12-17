@@ -31,7 +31,6 @@ import java.util.logging.Logger;
 import jakarta.json.bind.JsonbException;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
-import org.eclipse.yasson.internal.serializer.ResolvedParameterizedType;
 
 /**
  * Utility class for resolution of generics during unmarshalling.
@@ -402,7 +401,6 @@ public class ReflectionUtils {
         private GenericArrayTypeImpl(Type ct) {
             genericComponentType = ct;
         }
-
 
         /**
          * Returns a {@code Type} object representing the component type

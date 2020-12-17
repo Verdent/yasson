@@ -1,0 +1,21 @@
+package org.eclipse.yasson.internal.serializer.types;
+
+import java.time.ZoneOffset;
+
+import jakarta.json.stream.JsonGenerator;
+import org.eclipse.yasson.internal.SerializationContextImpl;
+
+/**
+ * TODO javadoc
+ */
+class ZoneOffsetSerializer extends TypeSerializer<ZoneOffset> {
+
+    ZoneOffsetSerializer(TypeSerializerBuilder serializerBuilder) {
+        super(serializerBuilder);
+    }
+
+    @Override
+    void serializeValue(ZoneOffset value, JsonGenerator generator, SerializationContextImpl context) {
+        generator.write(value.getId());
+    }
+}

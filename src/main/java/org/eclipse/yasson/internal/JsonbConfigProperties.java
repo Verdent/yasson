@@ -44,7 +44,6 @@ import org.eclipse.yasson.internal.model.customization.PropertyOrdering;
 import org.eclipse.yasson.internal.model.customization.StrategiesProvider;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
-import org.eclipse.yasson.internal.serializer.JsonbDateFormatter;
 
 /**
  * Resolved properties from JSONB config.
