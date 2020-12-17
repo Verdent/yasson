@@ -35,8 +35,8 @@ import org.eclipse.yasson.internal.components.AdapterBinding;
 import org.eclipse.yasson.internal.components.SerializerBinding;
 import org.eclipse.yasson.internal.model.customization.PropertyCustomization;
 import org.eclipse.yasson.internal.model.customization.PropertyCustomizationBuilder;
-import org.eclipse.yasson.internal.serializer.JsonbDateFormatter;
-import org.eclipse.yasson.internal.serializer.JsonbNumberFormatter;
+import org.eclipse.yasson.internal.JsonbDateFormatter;
+import org.eclipse.yasson.internal.JsonbNumberFormatter;
 
 /**
  * A model for class property.

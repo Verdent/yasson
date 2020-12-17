@@ -71,12 +71,8 @@ import org.eclipse.yasson.internal.model.JsonbCreator;
 import org.eclipse.yasson.internal.model.Property;
 import org.eclipse.yasson.internal.model.customization.ClassCustomization;
 import org.eclipse.yasson.internal.model.customization.ClassCustomizationBuilder;
-import org.eclipse.yasson.internal.processor.BuiltInTypes;
-import org.eclipse.yasson.internal.processor.serializer.types.TypeSerializers;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
-import org.eclipse.yasson.internal.serializer.JsonbDateFormatter;
-import org.eclipse.yasson.internal.serializer.JsonbNumberFormatter;
 
 /**
  * Introspects configuration on classes and their properties by reading annotations.

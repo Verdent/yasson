@@ -35,8 +35,6 @@ import jakarta.json.stream.JsonParser;
 import org.eclipse.yasson.YassonJsonb;
 import org.eclipse.yasson.internal.jsonstructure.JsonGeneratorToStructureAdapter;
 import org.eclipse.yasson.internal.jsonstructure.JsonStructureToParserAdapter;
-import org.eclipse.yasson.internal.processor.DeserializationContextImpl;
-import org.eclipse.yasson.internal.processor.SerializationContextImpl;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
 
