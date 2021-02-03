@@ -103,7 +103,7 @@ public class BuiltInTypes {
         }
     }
 
-    public static boolean isKnowType(Class<?> clazz) {
+    public static boolean isKnownType(Class<?> clazz) {
         boolean knownContainerValueType = Collection.class.isAssignableFrom(clazz)
                 || Map.class.isAssignableFrom(clazz)
                 || JsonValue.class.isAssignableFrom(clazz)

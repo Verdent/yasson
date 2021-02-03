@@ -759,7 +759,7 @@ public class AnnotationIntrospector {
     public JsonbAnnotatedElement<Class<?>> collectAnnotations(Class<?> clazz) {
         JsonbAnnotatedElement<Class<?>> classElement = new JsonbAnnotatedElement<>(clazz);
         
-        if (BuiltInTypes.isKnowType(clazz)) {
+        if (BuiltInTypes.isKnownType(clazz)) {
             return classElement;
         }
 
