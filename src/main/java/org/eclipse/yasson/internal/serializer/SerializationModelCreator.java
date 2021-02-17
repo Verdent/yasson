@@ -33,7 +33,8 @@ import org.eclipse.yasson.internal.properties.Messages;
  */
 public class SerializationModelCreator {
 
-    private final Map<Type, ModelSerializer> serializerChain = new ConcurrentHashMap<>();
+    private final Map<Type, ModelSerializer> explicitChain = new ConcurrentHashMap<>();
+    private final Map<Type, ModelSerializer> dynamicChain = new ConcurrentHashMap<>();
     private final JsonbContext jsonbContext;
 
     public SerializationModelCreator(JsonbContext jsonbContext) {
@@ -54,7 +55,7 @@ public class SerializationModelCreator {
         Class<?> rawType = ReflectionUtils.getRawType(type);
         ClassModel classModel = jsonbContext.getMappingContext().getOrCreateClassModel(rawType);
         LinkedList<Type> chain = new LinkedList<>();
-        return serializerChain(chain, type, classModel.getClassCustomization(), rootValue, false, false);
+        return serializerChain(chain, type, classModel.getClassCustomization(), rootValue, false);
     }
 
     public ModelSerializer serializerChainRuntime(LinkedList<Type> chain,
@@ -79,8 +80,7 @@ public class SerializationModelCreator {
                                             Type type,
                                             Customization propertyCustomization,
                                             boolean rootValue,
-                                            boolean isKey,
-                                            boolean runtime) {
+                                            boolean isKey) {
         if (chain.contains(type)) {
             return new CyclicReferenceSerializer(type);
         }
@@ -97,8 +97,8 @@ public class SerializationModelCreator {
                                                     Customization propertyCustomization,
                                                     boolean rootValue,
                                                     boolean isKey) {
-        if (serializerChain.containsKey(type)) {
-            return serializerChain.get(type);
+        if (explicitChain.containsKey(type)) {
+            return explicitChain.get(type);
         }
         Class<?> rawType = ReflectionUtils.getRawType(type);
         Optional<ModelSerializer> serializerBinding = userSerializer(type,
@@ -118,7 +118,7 @@ public class SerializationModelCreator {
             AdapterSerializer adapterSerializer = new AdapterSerializer(adapterBinding, typeSerializer);
             RecursionChecker recursionChecker = new RecursionChecker(adapterSerializer);
             NullSerializer nullSerializer = new NullSerializer(recursionChecker, propertyCustomization, jsonbContext);
-            serializerChain.put(type, nullSerializer);
+            explicitChain.put(type, nullSerializer);
             return nullSerializer;
         }
 
@@ -167,7 +167,7 @@ public class SerializationModelCreator {
         NullVisibilitySwitcher nullVisibilitySwitcher = new NullVisibilitySwitcher(false, keyWriter);
         NullSerializer nullSerializer = new NullSerializer(nullVisibilitySwitcher, classModel.getClassCustomization(),
                                                            jsonbContext);
-        serializerChain.put(type, nullSerializer);
+        explicitChain.put(type, nullSerializer);
         return nullSerializer;
     }
 
@@ -266,15 +266,19 @@ public class SerializationModelCreator {
             if (isFinal
                     || Collection.class.isAssignableFrom(rawType)
                     || Map.class.isAssignableFrom(rawType)) {
-                return serializerChain(chain, resolved, customization, false, key, false);
+                return serializerChain(chain, resolved, customization, false, key);
             } else {
-                if (serializerChain.containsKey(resolved)) {
-                    return serializerChain.get(resolved);
+                if (dynamicChain.containsKey(resolved)) {
+                    return dynamicChain.get(resolved);
                 }
                 boolean isAbstract = Modifier.isAbstract(rawType.getModifiers());
                 ModelSerializer specificTypeSerializer = null;
                 if (!isAbstract && !rawType.equals(Object.class)) {
-                    specificTypeSerializer = serializerChain(chain, resolved, customization, false, key, false);
+                    if (explicitChain.containsKey(resolved)) {
+                        specificTypeSerializer = explicitChain.get(resolved);
+                    } else {
+                        specificTypeSerializer = serializerChain(chain, resolved, customization, false, key);
+                    }
                 }
                 //Needs to be dynamically resolved with special cache since possible inheritance problem.
                 if (resolved instanceof Class) {
@@ -292,7 +296,7 @@ public class SerializationModelCreator {
                     typeSerializer = new NullSerializer(typeSerializer, customization, jsonbContext);
                 }
 
-                serializerChain.put(type, typeSerializer);
+                dynamicChain.put(type, typeSerializer);
             }
         }
         if (!key && typeSerializer instanceof ObjectTypeSerializer) {
