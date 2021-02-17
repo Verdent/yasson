@@ -67,22 +67,28 @@ public class ChainModelCreator {
 
     public ModelDeserializer<JsonParser> deserializerChain(Type type, ClassModel classModel) {
         LinkedList<Type> chain = new LinkedList<>();
-        return deserializerChain(chain, type, classModel);
+        return deserializerChain(chain, type, classModel.getClassCustomization(), classModel);
     }
 
-    private ModelDeserializer<JsonParser> deserializerChain(LinkedList<Type> chain, Type type, ClassModel classModel) {
+    private ModelDeserializer<JsonParser> deserializerChain(LinkedList<Type> chain,
+                                                            Type type,
+                                                            Customization propertyCustomization,
+                                                            ClassModel classModel) {
         if (chain.contains(type)) {
             return new CyclicReferenceDeserializer(type);
         }
         try {
             chain.add(type);
-            return deserializerChainInternal(chain, type, classModel);
+            return deserializerChainInternal(chain, type, propertyCustomization, classModel);
         } finally {
             chain.removeLast();
         }
     }
 
-    private ModelDeserializer<JsonParser> deserializerChainInternal(LinkedList<Type> chain, Type type, ClassModel classModel) {
+    private ModelDeserializer<JsonParser> deserializerChainInternal(LinkedList<Type> chain,
+                                                                    Type type,
+                                                                    Customization propertyCustomization,
+                                                                    ClassModel classModel) {
         Class<?> rawType = classModel.getType();
         if (deserializerChain.containsKey(type)) {
             return deserializerChain.get(type);
@@ -93,8 +99,7 @@ public class ChainModelCreator {
             deserializerChain.put(type, deserializer);
             return deserializer;
         }
-        ClassCustomization classCustomization = classModel.getClassCustomization();
-        Optional<AdapterBinding> adapterBinding = adapterBinding(type, classCustomization);
+        Optional<AdapterBinding> adapterBinding = adapterBinding(type, (ComponentBoundCustomization) propertyCustomization);
         if (adapterBinding.isPresent()) {
             AdapterBinding adapter = adapterBinding.get();
             Class<?> toType = ReflectionUtils.getRawType(adapter.getToType());
@@ -115,7 +120,7 @@ public class ChainModelCreator {
             return adapterDeser;
         }
         ModelDeserializer<JsonParser> typeDeserializer = typeDeserializer(rawType,
-                                                                          classCustomization,
+                                                                          propertyCustomization,
                                                                           JustReturn.create());
         if (typeDeserializer != null) {
             deserializerChain.put(type, typeDeserializer);
@@ -151,12 +156,12 @@ public class ChainModelCreator {
 
             ModelDeserializer<JsonParser> keyProcessor = typeProcessor(chain,
                                                                        keyType,
-                                                                       classCustomization,
+                                                                       ClassCustomization.empty(),
                                                                        JustReturn.create(),
                                                                        MAP_KEY_EVENTS);
             ModelDeserializer<JsonParser> valueProcessor = typeProcessor(chain,
                                                                          valueType,
-                                                                         classCustomization,
+                                                                         propertyCustomization,
                                                                          JustReturn.create());
 
             MapDeserializer mapDeserializer = new MapDeserializer(keyProcessor, valueProcessor);
@@ -173,7 +178,7 @@ public class ChainModelCreator {
                 String strategy = configProperties.getBinaryDataStrategy();
                 ModelDeserializer<JsonParser> typeProcessor = typeProcessor(chain,
                                                                             String.class,
-                                                                            classCustomization,
+                                                                            propertyCustomization,
                                                                             JustReturn.create());
                 ModelDeserializer<JsonParser> base64Deserializer = ArrayInstanceCreator
                         .createBase64Deserializer(strategy, typeProcessor);
@@ -184,7 +189,7 @@ public class ChainModelCreator {
             Class<?> arrayType = rawType.getComponentType();
             ModelDeserializer<JsonParser> typeProcessor = typeProcessor(chain,
                                                                         arrayType,
-                                                                        classCustomization,
+                                                                        propertyCustomization,
                                                                         JustReturn.create());
             ArrayDeserializer arrayDeserializer = new ArrayDeserializer(typeProcessor);
             ArrayInstanceCreator arrayInstanceCreator = ArrayInstanceCreator.create(rawType, arrayType, arrayDeserializer);
@@ -196,7 +201,7 @@ public class ChainModelCreator {
             Class<?> component = ReflectionUtils.getRawType(((GenericArrayType) type).getGenericComponentType());
             ModelDeserializer<JsonParser> typeProcessor = typeProcessor(chain,
                                                                         ((GenericArrayType) type).getGenericComponentType(),
-                                                                        classCustomization,
+                                                                        propertyCustomization,
                                                                         JustReturn.create());
             ArrayDeserializer arrayDeserializer = new ArrayDeserializer(typeProcessor);
             ArrayInstanceCreator arrayInstanceCreator = ArrayInstanceCreator.create(rawType, component, arrayDeserializer);
@@ -210,13 +215,15 @@ public class ChainModelCreator {
                     : Object.class;
             ModelDeserializer<JsonParser> typeProcessor = typeProcessor(chain,
                                                                         colType,
-                                                                        classCustomization,
+                                                                        propertyCustomization,
                                                                         JustReturn.create());
             OptionalDeserializer optionalDeserializer = new OptionalDeserializer(typeProcessor, JustReturn.create());
             deserializerChain.put(type, optionalDeserializer);
             return optionalDeserializer;
         } else {
-            Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(type, classCustomization);
+            ClassCustomization classCustomization = classModel.getClassCustomization();
+            Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(type,
+                                                                                    (ComponentBoundCustomization) propertyCustomization);
             if (deserializerBinding.isPresent()) {
                 UserDefinedDeserializer user = new UserDefinedDeserializer(deserializerBinding.get().getJsonbDeserializer(),
                                                                            JustReturn.create(), type, classCustomization);
@@ -351,7 +358,7 @@ public class ChainModelCreator {
         ModelDeserializer<JsonParser> typeDeserializer = typeDeserializer(rawType, customization, memberDeserializer, events);
         if (typeDeserializer == null) {
             Class<?> implClass = resolveImplClass(rawType, customization);
-            return createNewChain(chain, memberDeserializer, implClass, resolved);
+            return createNewChain(chain, memberDeserializer, implClass, resolved, customization);
         }
         return typeDeserializer;
     }
@@ -359,9 +366,10 @@ public class ChainModelCreator {
     private ModelDeserializer<JsonParser> createNewChain(LinkedList<Type> chain,
                                                          ModelDeserializer<Object> memberDeserializer,
                                                          Class<?> rawType,
-                                                         Type type) {
+                                                         Type type,
+                                                         Customization propertyCustomization) {
         ClassModel classModel = jsonbContext.getMappingContext().getOrCreateClassModel(rawType);
-        ModelDeserializer<JsonParser> modelDeserializer = deserializerChain(chain, type, classModel);
+        ModelDeserializer<JsonParser> modelDeserializer = deserializerChain(chain, type, propertyCustomization, classModel);
         return new ContextSwitcher(memberDeserializer, modelDeserializer);
     }
 
