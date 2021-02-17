@@ -15,7 +15,7 @@ import org.eclipse.yasson.internal.serializer.SerializationModelCreator;
 /**
  * TODO javadoc
  */
-class ObjectTypeSerializer extends TypeSerializer<Object> {
+public class ObjectTypeSerializer extends TypeSerializer<Object> {
 
     private final Customization customization;
 
@@ -53,5 +53,9 @@ class ObjectTypeSerializer extends TypeSerializer<Object> {
             SerializationModelCreator serializationModelCreator = context.getJsonbContext().getSerializationModelCreator();
             return serializationModelCreator.serializerChainRuntime(new LinkedList<>(chain), clazz, customization, false, isKey);
         }).serialize(key, generator, context);
+    }
+
+    public void addSpecificSerializer(Class<?> clazz, ModelSerializer modelSerializer) {
+        cache.put(clazz, modelSerializer);
     }
 }

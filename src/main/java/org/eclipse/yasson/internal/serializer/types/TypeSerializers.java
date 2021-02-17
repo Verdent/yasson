@@ -143,10 +143,11 @@ public class TypeSerializers {
         TypeSerializerBuilder builder = new TypeSerializerBuilder(chainClone, clazz, customization, jsonbContext, key);
         ModelSerializer typeSerializer = null;
         if (Object.class.equals(current)) {
-            if (key) {
-                return SERIALIZERS.get(current).apply(builder);
-            }
-            return new NullSerializer(SERIALIZERS.get(current).apply(builder), customization, jsonbContext);
+            return SERIALIZERS.get(current).apply(builder);
+//            if (key) {
+//                return SERIALIZERS.get(current).apply(builder);
+//            }
+//            return new NullSerializer(SERIALIZERS.get(current).apply(builder), customization, jsonbContext);
         }
         if (OPTIONALS.containsKey(current)) {
             Class<?> optionalInner = OPTIONALS.get(current);
