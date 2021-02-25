@@ -21,25 +21,23 @@ import org.eclipse.yasson.internal.JsonbNumberFormatter;
  */
 public class CreatorCustomization extends CustomizationBase {
 
-    private JsonbNumberFormatter numberFormatter;
-
-    private JsonbDateFormatter dateFormatter;
-
+    private final JsonbNumberFormatter numberFormatter;
+    private final JsonbDateFormatter dateFormatter;
     private PropertyModel propertyModel;
 
     /**
      * Creates new creator customization instance.
      *
-     * @param customization   builder of the customization
-     * @param numberFormatter number formatter
-     * @param dateFormatter   date formatter
+     * @param builder   builder of the customization
      */
-    public CreatorCustomization(CustomizationBuilder customization,
-                                JsonbNumberFormatter numberFormatter,
-                                JsonbDateFormatter dateFormatter) {
-        super(customization);
-        this.numberFormatter = numberFormatter;
-        this.dateFormatter = dateFormatter;
+    private CreatorCustomization(Builder builder) {
+        super(builder);
+        this.numberFormatter = builder.numberFormatter;
+        this.dateFormatter = builder.dateFormatter;
+    }
+
+    public static Builder builder() {
+        return new Builder();
     }
 
     @Override
@@ -85,4 +83,38 @@ public class CreatorCustomization extends CustomizationBase {
     public void setPropertyModel(PropertyModel propertyModel) {
         this.propertyModel = propertyModel;
     }
+
+    public static final class Builder extends CustomizationBase.Builder<Builder, CreatorCustomization> {
+
+        private JsonbNumberFormatter numberFormatter;
+        private JsonbDateFormatter dateFormatter;
+
+        private Builder() {
+        }
+
+        @Override
+        public Builder copyFrom(CreatorCustomization customization) {
+            super.copyFrom(customization);
+            numberFormatter = customization.numberFormatter;
+            dateFormatter = customization.dateFormatter;
+            return this;
+        }
+
+        public Builder numberFormatter(JsonbNumberFormatter numberFormatter) {
+            this.numberFormatter = numberFormatter;
+            return this;
+        }
+
+        public Builder dateFormatter(JsonbDateFormatter dateFormatter) {
+            this.dateFormatter = dateFormatter;
+            return this;
+        }
+
+        @Override
+        public CreatorCustomization build() {
+            return new CreatorCustomization(this);
+        }
+
+    }
+
 }
