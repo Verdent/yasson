@@ -23,16 +23,12 @@ import org.eclipse.yasson.internal.JsonbNumberFormatter;
  */
 public class ClassCustomization extends CustomizationBase {
 
-    private static final ClassCustomization EMPTY = new ClassCustomization(new ClassCustomizationBuilder());
+    private static final ClassCustomization EMPTY = new ClassCustomization(new Builder());
 
     private final JsonbCreator creator;
-
-    private String[] propertyOrder;
-
+    private final String[] propertyOrder;
     private final JsonbNumberFormatter numberFormatter;
-
     private final JsonbDateFormatter dateTimeFormatter;
-
     private final PropertyVisibilityStrategy propertyVisibilityStrategy;
 
     /**
@@ -40,27 +36,21 @@ public class ClassCustomization extends CustomizationBase {
      *
      * @param builder not null
      */
-    ClassCustomization(ClassCustomizationBuilder builder) {
+    private ClassCustomization(Builder builder) {
         super(builder);
-        this.creator = builder.getCreator();
-        this.propertyOrder = builder.getPropertyOrder();
-        this.numberFormatter = builder.getNumberFormatter();
-        this.dateTimeFormatter = builder.getDateFormatter();
-        this.propertyVisibilityStrategy = builder.getPropertyVisibilityStrategy();
+        this.creator = builder.creator;
+        this.propertyOrder = builder.propertyOrder;
+        this.numberFormatter = builder.numberFormatter;
+        this.dateTimeFormatter = builder.dateTimeFormatter;
+        this.propertyVisibilityStrategy = builder.propertyVisibilityStrategy;
     }
 
-    /**
-     * Copy constructor.
-     *
-     * @param other other customization instance
-     */
-    public ClassCustomization(ClassCustomization other) {
-        super(other);
-        this.creator = other.getCreator();
-        this.propertyOrder = other.getPropertyOrder();
-        this.numberFormatter = other.getSerializeNumberFormatter();
-        this.dateTimeFormatter = other.getSerializeDateFormatter();
-        this.propertyVisibilityStrategy = other.getPropertyVisibilityStrategy();
+    public static ClassCustomization empty() {
+        return EMPTY;
+    }
+
+    public static Builder builder() {
+        return new Builder();
     }
 
     /**
@@ -79,15 +69,6 @@ public class ClassCustomization extends CustomizationBase {
      */
     public String[] getPropertyOrder() {
         return propertyOrder;
-    }
-
-    /**
-     * Sets sorted properties.
-     *
-     * @param propertyOrder sorted names of properties
-     */
-    public void setPropertyOrder(String[] propertyOrder) {
-        this.propertyOrder = propertyOrder;
     }
 
     /**
@@ -119,8 +100,63 @@ public class ClassCustomization extends CustomizationBase {
         return dateTimeFormatter;
     }
 
-    public static ClassCustomization empty() {
-        return EMPTY;
+    /**
+     * The customization builder that would be used to build an instance of {@link ClassCustomization} to ensure its immutability.
+     */
+    public static class Builder extends CustomizationBase.Builder<Builder, ClassCustomization> {
+
+        private JsonbCreator creator;
+        private String[] propertyOrder;
+        private JsonbNumberFormatter numberFormatter;
+        private JsonbDateFormatter dateTimeFormatter;
+        private PropertyVisibilityStrategy propertyVisibilityStrategy;
+
+        private Builder() {
+        }
+
+        @Override
+        public Builder copyFrom(ClassCustomization customization) {
+            super.copyFrom(customization);
+            creator(customization.creator);
+            propertyOrder(customization.propertyOrder);
+            numberFormatter(customization.numberFormatter);
+            dateTimeFormatter(customization.dateTimeFormatter);
+            propertyVisibilityStrategy(customization.propertyVisibilityStrategy);
+            return this;
+        }
+
+        public Builder creator(JsonbCreator creator) {
+            this.creator = creator;
+            return this;
+        }
+
+        public Builder propertyOrder(String[] propertyOrder) {
+            this.propertyOrder = propertyOrder;
+            return this;
+        }
+
+        public Builder numberFormatter(JsonbNumberFormatter numberFormatter) {
+            this.numberFormatter = numberFormatter;
+            return this;
+        }
+
+        public Builder dateTimeFormatter(JsonbDateFormatter dateTimeFormatter) {
+            this.dateTimeFormatter = dateTimeFormatter;
+            return this;
+        }
+
+        public Builder propertyVisibilityStrategy(PropertyVisibilityStrategy propertyVisibilityStrategy) {
+            this.propertyVisibilityStrategy = propertyVisibilityStrategy;
+            return this;
+        }
+
+        
+
+        @Override
+        public ClassCustomization build() {
+            return new ClassCustomization(this);
+        }
+
     }
 
 }

@@ -70,6 +70,7 @@ import org.eclipse.yasson.internal.model.JsonbAnnotatedElement;
 import org.eclipse.yasson.internal.model.JsonbCreator;
 import org.eclipse.yasson.internal.model.Property;
 import org.eclipse.yasson.internal.model.customization.ClassCustomization;
+import org.eclipse.yasson.internal.model.customization.ClassCustomizationBuilder;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
 
@@ -144,11 +145,13 @@ public class AnnotationIntrospector {
      * @return JsonbCreator metadata object
      */
     public JsonbCreator getCreator(Class<?> clazz) {
-        JsonbCreator jsonbCreator;
+        JsonbCreator jsonbCreator = null;
         Constructor<?>[] declaredConstructors =
                 AccessController.doPrivileged((PrivilegedAction<Constructor<?>[]>) clazz::getDeclaredConstructors);
 
-        jsonbCreator = ClassMultiReleaseExtension.findJsonbCreator(clazz, declaredConstructors, this);
+        if (clazz.isRecord()) {
+            return createJsonbCreator(declaredConstructors[0], null, clazz);
+        }
 
         for (Constructor<?> constructor : declaredConstructors) {
             final jakarta.json.bind.annotation.JsonbCreator annot = findAnnotation(constructor.getDeclaredAnnotations(),
@@ -178,7 +181,7 @@ public class AnnotationIntrospector {
         return jsonbCreator;
     }
 
-    JsonbCreator createJsonbCreator(Executable executable, JsonbCreator existing, Class<?> clazz) {
+    private JsonbCreator createJsonbCreator(Executable executable, JsonbCreator existing, Class<?> clazz) {
         if (existing != null) {
             throw new JsonbException(Messages.getMessage(MessageKeys.MULTIPLE_JSONB_CREATORS, clazz));
         }
@@ -727,17 +730,17 @@ public class AnnotationIntrospector {
      * @return Populated {@link ClassCustomization} instance.
      */
     public ClassCustomization introspectCustomization(JsonbAnnotatedElement<Class<?>> clsElement) {
-        return ClassCustomization.builder()
-                .nillable(isClassNillable(clsElement))
-                .dateTimeFormatter(getJsonbDateFormat(clsElement))
-                .numberFormatter(getJsonbNumberFormat(clsElement))
-                .creator(getCreator(clsElement.getElement()))
-                .propertyOrder(getPropertyOrder(clsElement))
-                .adapterBinding(getAdapterBinding(clsElement))
-                .serializerBinding(getSerializerBinding(clsElement))
-                .deserializerBinding(getDeserializerBinding(clsElement))
-                .propertyVisibilityStrategy(getPropertyVisibilityStrategy(clsElement.getElement()))
-                .build();
+        final ClassCustomizationBuilder builder = new ClassCustomizationBuilder();
+        builder.setNillable(isClassNillable(clsElement));
+        builder.setDateFormatter(getJsonbDateFormat(clsElement));
+        builder.setNumberFormatter(getJsonbNumberFormat(clsElement));
+        builder.setCreator(getCreator(clsElement.getElement()));
+        builder.setPropertyOrder(getPropertyOrder(clsElement));
+        builder.setAdapterInfo(getAdapterBinding(clsElement));
+        builder.setSerializerBinding(getSerializerBinding(clsElement));
+        builder.setDeserializerBinding(getDeserializerBinding(clsElement));
+        builder.setPropertyVisibilityStrategy(getPropertyVisibilityStrategy(clsElement.getElement()));
+        return builder.buildClassCustomization();
     }
 
     /**
