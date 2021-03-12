@@ -20,6 +20,6 @@ class ModulesUtil {
     }
 
     static MethodHandles.Lookup lookup(){
-        return MethodHandles.lookup();
+        return MethodHandles.publicLookup();
     }
 }
