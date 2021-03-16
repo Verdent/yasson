@@ -15,12 +15,17 @@ package org.eclipse.yasson.internal;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+import jakarta.json.bind.JsonbException;
+import org.eclipse.yasson.config.Polymorphism;
+import org.eclipse.yasson.config.PolymorphismSupport;
 import org.eclipse.yasson.internal.model.ClassModel;
 import org.eclipse.yasson.internal.model.JsonbAnnotatedElement;
 import org.eclipse.yasson.internal.model.customization.ClassCustomization;
+import org.eclipse.yasson.internal.model.customization.PolymorphismConfig;
 
 /**
  * JSONB mappingContext. Created once per {@link jakarta.json.bind.Jsonb} instance. Represents a global scope.
@@ -85,6 +90,13 @@ public class MappingContext {
         return aClass -> {
             JsonbAnnotatedElement<Class<?>> clsElement = jsonbContext.getAnnotationIntrospector().collectAnnotations(aClass);
             ClassCustomization customization = jsonbContext.getAnnotationIntrospector().introspectCustomization(clsElement);
+            PolymorphismSupport configPolymorphism = jsonbContext.getConfigProperties().getPolymorphismSupport();
+            if (configPolymorphism != null) {
+                customization = mergeConfigAndAnnotationPolymorphism(configPolymorphism,
+                                                                     configPolymorphism.getClassPolymorphism(aClass),
+                                                                     customization,
+                                                                     aClass);
+            }
             ClassModel newClassModel = new ClassModel(aClass,
                                                       customization,
                                                       parentClassModel,
@@ -94,6 +106,40 @@ public class MappingContext {
             }
             return newClassModel;
         };
+    }
+
+    private static ClassCustomization mergeConfigAndAnnotationPolymorphism(PolymorphismSupport generalPolymorphism,
+                                                                           Optional<Polymorphism> maybeClassPolymorphism,
+                                                                           ClassCustomization customization,
+                                                                           Class<?> aClass) {
+        PolymorphismConfig polymorphismConfig = customization.getPolymorphismConfig();
+        PolymorphismConfig.Builder polyConfigBuilder;
+        if (polymorphismConfig != null) {
+            polyConfigBuilder = PolymorphismConfig.builder().of(polymorphismConfig);
+        } else {
+            polyConfigBuilder = PolymorphismConfig.builder();
+            maybeClassPolymorphism.ifPresent(classPolymorphism -> polyConfigBuilder
+                    .inherited(!classPolymorphism.getBoundClass().equals(aClass)));
+        }
+        generalPolymorphism.getKeyName().filter(s -> !s.isEmpty()).ifPresent(polyConfigBuilder::fieldName);
+        generalPolymorphism.useClassNames().ifPresent(polyConfigBuilder::useClassNames);
+        polyConfigBuilder.whitelistedPackages(generalPolymorphism.getWhitelistedPackages());
+
+        maybeClassPolymorphism.ifPresent(classPolymorphism -> {
+            classPolymorphism.getKeyName().filter(s -> !s.isEmpty()).ifPresent(polyConfigBuilder::fieldName);
+            classPolymorphism.useClassNames().ifPresent(polyConfigBuilder::useClassNames);
+            classPolymorphism.getFormat().ifPresent(polyConfigBuilder::format);
+            classPolymorphism.getAliases().forEach(polyConfigBuilder::alias);
+            polyConfigBuilder.whitelistedPackages(classPolymorphism.getWhitelistedPackages());
+        });
+        PolymorphismConfig polyConfigMerged = polyConfigBuilder.build();
+        if (polyConfigMerged.getFieldName() == null || polyConfigMerged.getFieldName().isEmpty()) {
+            throw new JsonbException("Polymorphism type field name cannot be null or empty: " + aClass);
+        }
+        return ClassCustomization.builder()
+                .of(customization)
+                .polymorphismConfig(polyConfigMerged)
+                .build();
     }
 
     /**

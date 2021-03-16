@@ -30,6 +30,7 @@ public class ClassCustomization extends CustomizationBase {
     private final JsonbNumberFormatter numberFormatter;
     private final JsonbDateFormatter dateTimeFormatter;
     private final PropertyVisibilityStrategy propertyVisibilityStrategy;
+    private final PolymorphismConfig polymorphismConfig;
 
     /**
      * Copies properties from builder an creates immutable instance.
@@ -43,6 +44,7 @@ public class ClassCustomization extends CustomizationBase {
         this.numberFormatter = builder.numberFormatter;
         this.dateTimeFormatter = builder.dateTimeFormatter;
         this.propertyVisibilityStrategy = builder.propertyVisibilityStrategy;
+        this.polymorphismConfig = builder.polymorphismConfig;
     }
 
     public static ClassCustomization empty() {
@@ -100,6 +102,10 @@ public class ClassCustomization extends CustomizationBase {
         return dateTimeFormatter;
     }
 
+    public PolymorphismConfig getPolymorphismConfig() {
+        return polymorphismConfig;
+    }
+
     /**
      * The customization builder that would be used to build an instance of {@link ClassCustomization} to ensure its immutability.
      */
@@ -110,13 +116,14 @@ public class ClassCustomization extends CustomizationBase {
         private JsonbNumberFormatter numberFormatter;
         private JsonbDateFormatter dateTimeFormatter;
         private PropertyVisibilityStrategy propertyVisibilityStrategy;
+        private PolymorphismConfig polymorphismConfig;
 
         private Builder() {
         }
 
         @Override
-        public Builder copyFrom(ClassCustomization customization) {
-            super.copyFrom(customization);
+        public Builder of(ClassCustomization customization) {
+            super.of(customization);
             creator(customization.creator);
             propertyOrder(customization.propertyOrder);
             numberFormatter(customization.numberFormatter);
@@ -150,7 +157,10 @@ public class ClassCustomization extends CustomizationBase {
             return this;
         }
 
-        
+        public Builder polymorphismConfig(PolymorphismConfig polymorphismConfig) {
+            this.polymorphismConfig = polymorphismConfig;
+            return this;
+        }
 
         @Override
         public ClassCustomization build() {

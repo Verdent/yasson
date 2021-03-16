@@ -38,6 +38,7 @@ import jakarta.json.bind.config.PropertyVisibilityStrategy;
 import jakarta.json.bind.serializer.JsonbSerializer;
 
 import org.eclipse.yasson.YassonConfig;
+import org.eclipse.yasson.config.PolymorphismSupport;
 import org.eclipse.yasson.internal.model.PropertyModel;
 import org.eclipse.yasson.internal.model.ReverseTreeMap;
 import org.eclipse.yasson.internal.model.customization.PropertyOrdering;
@@ -82,6 +83,8 @@ public class JsonbConfigProperties {
 
     private final boolean forceMapArraySerializerForNullKeys;
 
+    private final PolymorphismSupport polymorphismSupport;
+
     /**
      * Creates new resolved JSONB config.
      *
@@ -104,6 +107,7 @@ public class JsonbConfigProperties {
         this.nullSerializer = initNullSerializer();
         this.eagerInitClasses = initEagerInitClasses();
         this.forceMapArraySerializerForNullKeys = initForceMapArraySerializerForNullKeys();
+        this.polymorphismSupport = initPolymorphismSupport();
     }
 
     private Class<?> initDefaultMapImplType() {
@@ -265,6 +269,18 @@ public class JsonbConfigProperties {
 
     private boolean initForceMapArraySerializerForNullKeys() {
         return getBooleanConfigProperty(YassonConfig.FORCE_MAP_ARRAY_SERIALIZER_FOR_NULL_KEYS, false);
+    }
+
+    private PolymorphismSupport initPolymorphismSupport() {
+        Optional<Object> property = jsonbConfig.getProperty(YassonConfig.POLYMORPHISM_SUPPORT);
+        if (!property.isPresent()) {
+            return null;
+        }
+        Object polymorphismSupport = property.get();
+        if (!(polymorphismSupport instanceof PolymorphismSupport)) {
+            throw new JsonbException("YassonConfig.POLYMORPHISM_SUPPORT must be instance of PolymorphismSupport");
+        }
+        return (PolymorphismSupport) polymorphismSupport;
     }
 
     /**
@@ -439,5 +455,9 @@ public class JsonbConfigProperties {
      */
     public boolean isForceMapArraySerializerForNullKeys() {
         return forceMapArraySerializerForNullKeys;
+    }
+
+    public PolymorphismSupport getPolymorphismSupport() {
+        return polymorphismSupport;
     }
 }

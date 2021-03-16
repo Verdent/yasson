@@ -33,7 +33,8 @@ public class AnnotatedWithSerializerTypeDeserializer implements JsonbDeserialize
     @Override
     public AnnotatedWithSerializerType deserialize(JsonParser parser, DeserializationContext ctx, Type rtType) {
         AnnotatedWithSerializerType result = new AnnotatedWithSerializerType();
-        parser.next(); parser.next();
+        parser.next();
+        parser.next();
         result.value = parser.getString();
         return result;
     }

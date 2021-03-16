@@ -16,6 +16,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import jakarta.json.bind.JsonbException;
 
@@ -29,7 +30,7 @@ import org.eclipse.yasson.internal.properties.Messages;
  */
 public class JsonbAnnotatedElement<T extends AnnotatedElement> {
 
-    private final Map<Class<? extends Annotation>, Annotation> annotations = new HashMap<>(4);
+    private final Map<Class<? extends Annotation>, AnnotationWrapper<?>> annotations = new HashMap<>(4);
 
     private final T element;
 
@@ -40,7 +41,7 @@ public class JsonbAnnotatedElement<T extends AnnotatedElement> {
      */
     public JsonbAnnotatedElement(T element) {
         for (Annotation ann : element.getAnnotations()) {
-            annotations.put(ann.annotationType(), ann);
+            putAnnotation(ann, false);
         }
 
         this.element = element;
@@ -57,16 +58,25 @@ public class JsonbAnnotatedElement<T extends AnnotatedElement> {
 
     /**
      * Get an annotation by type.
-     * @param <AT> Type of annotation
+     *
+     * @param <AT>            Type of annotation
      * @param annotationClass Type of annotation
      * @return Annotation by passed type
      */
     public <AT extends Annotation> AT getAnnotation(Class<AT> annotationClass) {
-        return annotationClass.cast(annotations.get(annotationClass));
+        return Optional.ofNullable(annotations.get(annotationClass))
+                .map(AnnotationWrapper::getAnnotation)
+                .map(annotationClass::cast)
+                .orElse(null);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <AT extends Annotation> AnnotationWrapper<AT> getAnnotationWrapper(Class<AT> annotationClass) {
+        return (AnnotationWrapper<AT>) annotations.get(annotationClass);
     }
 
     public Annotation[] getAnnotations() {
-        return annotations.values().toArray(new Annotation[0]);
+        return annotations.values().stream().map(AnnotationWrapper::getAnnotation).toArray(Annotation[]::new);
     }
 
     /**
@@ -74,11 +84,30 @@ public class JsonbAnnotatedElement<T extends AnnotatedElement> {
      *
      * @param annotation Annotation to add.
      */
-    public void putAnnotation(Annotation annotation) {
+    public void putAnnotation(Annotation annotation, boolean inherited) {
         if (annotations.containsKey(annotation.annotationType())) {
             throw new JsonbException(Messages.getMessage(MessageKeys.INTERNAL_ERROR,
                                                          "Annotation already present: " + annotation));
         }
-        annotations.put(annotation.annotationType(), annotation);
+        annotations.put(annotation.annotationType(), new AnnotationWrapper(annotation, inherited));
+    }
+
+    public static final class AnnotationWrapper<T extends Annotation> {
+
+        private final T annotation;
+        private final boolean inherited;
+
+        public AnnotationWrapper(T annotation, boolean inherited) {
+            this.annotation = annotation;
+            this.inherited = inherited;
+        }
+
+        public T getAnnotation() {
+            return annotation;
+        }
+
+        public boolean isInherited() {
+            return inherited;
+        }
     }
 }

@@ -84,7 +84,7 @@ abstract class CustomizationBase implements Customization, ComponentBoundCustomi
 
         Builder() {}
 
-        public T copyFrom(B customization) {
+        public T of(B customization) {
             adapterBinding = customization.getDeserializeAdapterBinding();
             serializerBinding = customization.getSerializerBinding();
             deserializerBinding = customization.getDeserializerBinding();

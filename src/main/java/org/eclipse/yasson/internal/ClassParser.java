@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.config.PropertyVisibilityStrategy;
-
 import org.eclipse.yasson.internal.model.ClassModel;
 import org.eclipse.yasson.internal.model.CreatorModel;
 import org.eclipse.yasson.internal.model.JsonbAnnotatedElement;
@@ -171,7 +170,7 @@ class ClassParser {
             //Only push iface annotations if not overridden on impl classes
             for (Annotation ann : method.getDeclaredAnnotations()) {
                 if (methodElement.getAnnotation(ann.annotationType()) == null) {
-                    methodElement.putAnnotation(ann);
+                    methodElement.putAnnotation(ann, true);
                 }
             }
         }

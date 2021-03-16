@@ -22,16 +22,14 @@ abstract class ArraySerializer implements ModelSerializer {
     private static final Map<Class<?>, Function<ModelSerializer, ArraySerializer>> ARRAY_SERIALIZERS;
 
     static {
-        Map<Class<?>, Function<ModelSerializer, ArraySerializer>> cache = new HashMap<>();
-        cache.put(boolean[].class, ArraySerializer.BooleanArraySerializer::new);
-        cache.put(byte[].class, ArraySerializer.ByteArraySerializer::new);
-        cache.put(char[].class, ArraySerializer.CharacterArraySerializer::new);
-        cache.put(double[].class, ArraySerializer.DoubleArraySerializer::new);
-        cache.put(float[].class, ArraySerializer.FloatArraySerializer::new);
-        cache.put(int[].class, ArraySerializer.IntegerArraySerializer::new);
-        cache.put(long[].class, ArraySerializer.LongArraySerializer::new);
-        cache.put(short[].class, ArraySerializer.ShortArraySerializer::new);
-        ARRAY_SERIALIZERS = Collections.unmodifiableMap(cache);
+        ARRAY_SERIALIZERS = Map.of(boolean[].class, BooleanArraySerializer::new,
+                                   byte[].class, ByteArraySerializer::new,
+                                   char[].class, CharacterArraySerializer::new,
+                                   double[].class, DoubleArraySerializer::new,
+                                   float[].class, FloatArraySerializer::new,
+                                   int[].class, IntegerArraySerializer::new,
+                                   long[].class, LongArraySerializer::new,
+                                   short[].class, ShortArraySerializer::new);
     }
 
     private final ModelSerializer valueSerializer;

@@ -104,20 +104,20 @@ public class TypeSerializers {
             cache.put(java.sql.Date.class, SqlDateSerializer::new);
             cache.put(java.sql.Timestamp.class, SqlTimestampSerializer::new);
         }
-        SERIALIZERS = Collections.unmodifiableMap(cache);
+        SERIALIZERS = Map.copyOf(cache);
 
         Map<Class<?>, Class<?>> optionals = new HashMap<>();
         optionals.put(OptionalDouble.class, Double.class);
         optionals.put(OptionalInt.class, Integer.class);
         optionals.put(OptionalLong.class, Long.class);
-        OPTIONALS = Collections.unmodifiableMap(optionals);
+        OPTIONALS = Map.copyOf(optionals);
 
         Set<Class<?>> mapKeys = new HashSet<>(SERIALIZERS.keySet());
         mapKeys.addAll(optionals.keySet());
         mapKeys.add(JsonNumber.class);
         mapKeys.add(JsonString.class);
         mapKeys.remove(Object.class);
-        SUPPORTED_MAP_KEYS = Collections.unmodifiableSet(mapKeys);
+        SUPPORTED_MAP_KEYS = Set.copyOf(mapKeys);
 
     }
 

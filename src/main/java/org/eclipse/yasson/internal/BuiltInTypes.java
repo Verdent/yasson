@@ -90,7 +90,7 @@ public class BuiltInTypes {
             buildInTypes.add(java.sql.Date.class);
             buildInTypes.add(java.sql.Timestamp.class);
         }
-        BUILD_IN_SUPPORT = Collections.unmodifiableSet(buildInTypes);
+        BUILD_IN_SUPPORT = Set.copyOf(buildInTypes);
     }
 
 

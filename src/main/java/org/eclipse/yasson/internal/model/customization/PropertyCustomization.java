@@ -159,7 +159,7 @@ public class PropertyCustomization extends CustomizationBase {
         }
 
         @Override
-        public Builder copyFrom(PropertyCustomization customization) {
+        public Builder of(PropertyCustomization customization) {
             jsonReadName = customization.jsonReadName;
             jsonWriteName = customization.jsonWriteName;
             serializeNumberFormatter = customization.serializeNumberFormatter;
@@ -171,7 +171,7 @@ public class PropertyCustomization extends CustomizationBase {
             readTransient = customization.readTransient;
             writeTransient = customization.writeTransient;
             implementationClass = customization.implementationClass;
-            return super.copyFrom(customization);
+            return super.of(customization);
         }
 
         /**

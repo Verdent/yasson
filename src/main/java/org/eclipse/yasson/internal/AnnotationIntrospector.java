@@ -43,6 +43,8 @@ import java.util.OptionalInt;
 import java.util.OptionalLong;
 import java.util.Queue;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.adapter.JsonbAdapter;
@@ -59,17 +61,21 @@ import jakarta.json.bind.annotation.JsonbVisibility;
 import jakarta.json.bind.config.PropertyVisibilityStrategy;
 import jakarta.json.bind.serializer.JsonbDeserializer;
 import jakarta.json.bind.serializer.JsonbSerializer;
-
 import org.eclipse.yasson.ImplementationClass;
+import org.eclipse.yasson.PolymorphicType;
+import org.eclipse.yasson.SubType;
+import org.eclipse.yasson.YassonSubTypes;
 import org.eclipse.yasson.internal.components.AdapterBinding;
 import org.eclipse.yasson.internal.components.DeserializerBinding;
 import org.eclipse.yasson.internal.components.SerializerBinding;
 import org.eclipse.yasson.internal.model.AnnotationTarget;
 import org.eclipse.yasson.internal.model.CreatorModel;
 import org.eclipse.yasson.internal.model.JsonbAnnotatedElement;
+import org.eclipse.yasson.internal.model.JsonbAnnotatedElement.AnnotationWrapper;
 import org.eclipse.yasson.internal.model.JsonbCreator;
 import org.eclipse.yasson.internal.model.Property;
 import org.eclipse.yasson.internal.model.customization.ClassCustomization;
+import org.eclipse.yasson.internal.model.customization.PolymorphismConfig;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
 
@@ -81,10 +87,16 @@ public class AnnotationIntrospector {
     private final JsonbContext jsonbContext;
     private final ConstructorPropertiesAnnotationIntrospector constructorPropertiesIntrospector;
 
+    private static final Set<Class<? extends Annotation>> NON_REPEATABLE;
+
+    static {
+        NON_REPEATABLE = Set.of(YassonSubTypes.class, SubType.class, PolymorphicType.class);
+    }
+
     /**
      * Annotations to report exception when used in combination with {@link JsonbTransient}.
      */
-    public static final List<Class<? extends Annotation>> TRANSIENT_INCOMPATIBLE =
+    private static final List<Class<? extends Annotation>> TRANSIENT_INCOMPATIBLE =
             Arrays.asList(JsonbDateFormat.class, JsonbNumberFormat.class, JsonbProperty.class,
                           JsonbTypeAdapter.class, JsonbTypeSerializer.class, JsonbTypeDeserializer.class);
 
@@ -152,7 +164,7 @@ public class AnnotationIntrospector {
 
         for (Constructor<?> constructor : declaredConstructors) {
             final jakarta.json.bind.annotation.JsonbCreator annot = findAnnotation(constructor.getDeclaredAnnotations(),
-                                                                                 jakarta.json.bind.annotation.JsonbCreator.class);
+                                                                                   jakarta.json.bind.annotation.JsonbCreator.class);
             if (annot != null) {
                 jsonbCreator = createJsonbCreator(constructor, jsonbCreator, clazz);
             }
@@ -162,7 +174,7 @@ public class AnnotationIntrospector {
                 AccessController.doPrivileged((PrivilegedAction<Method[]>) clazz::getDeclaredMethods);
         for (Method method : declaredMethods) {
             final jakarta.json.bind.annotation.JsonbCreator annot = findAnnotation(method.getDeclaredAnnotations(),
-                                                                                 jakarta.json.bind.annotation.JsonbCreator.class);
+                                                                                   jakarta.json.bind.annotation.JsonbCreator.class);
             if (annot != null && Modifier.isStatic(method.getModifiers())) {
                 if (!clazz.equals(method.getReturnType())) {
                     throw new JsonbException(Messages.getMessage(MessageKeys.INCOMPATIBLE_FACTORY_CREATOR_RETURN_TYPE,
@@ -356,7 +368,7 @@ public class AnnotationIntrospector {
         Class<?> clazz = clazzElement.getElement();
         if (clazz == Optional.class
                 || clazz == OptionalDouble.class
-                || clazz == OptionalInt.class 
+                || clazz == OptionalInt.class
                 || clazz == OptionalLong.class) {
             return true;
         }
@@ -481,18 +493,19 @@ public class AnnotationIntrospector {
         Map<AnnotationTarget, JsonbNumberFormat> annotationFromPropertyCategorized = getAnnotationFromPropertyCategorized(
                 JsonbNumberFormat.class,
                 property);
-//        if (annotationFromPropertyCategorized.size() == 0) {
-//            final Optional<Class<?>> propertyRawTypeOptional = ReflectionUtils.getOptionalRawType(property.getPropertyType());
-//            if (propertyRawTypeOptional.isPresent()) {
-//                Class<?> rawType = propertyRawTypeOptional.get();
-//                if (!Number.class.isAssignableFrom(rawType)) {
-//                    return new HashMap<>();
-//                }
-//            }
-//        } else {
-//            annotationFromPropertyCategorized.forEach((key, annotation) -> result
-//                    .put(key, new JsonbNumberFormatter(annotation.value(), annotation.locale())));
-//        }
+        //        if (annotationFromPropertyCategorized.size() == 0) {
+        //            final Optional<Class<?>> propertyRawTypeOptional = ReflectionUtils.getOptionalRawType(property
+        //            .getPropertyType());
+        //            if (propertyRawTypeOptional.isPresent()) {
+        //                Class<?> rawType = propertyRawTypeOptional.get();
+        //                if (!Number.class.isAssignableFrom(rawType)) {
+        //                    return new HashMap<>();
+        //                }
+        //            }
+        //        } else {
+        //            annotationFromPropertyCategorized.forEach((key, annotation) -> result
+        //                    .put(key, new JsonbNumberFormatter(annotation.value(), annotation.locale())));
+        //        }
         annotationFromPropertyCategorized.forEach((key, annotation) -> result
                 .put(key, new JsonbNumberFormatter(annotation.value(), annotation.locale())));
 
@@ -668,7 +681,6 @@ public class AnnotationIntrospector {
      *
      * @param target target to check
      */
-    @SuppressWarnings("unchecked")
     public void checkTransientIncompatible(JsonbAnnotatedElement<?> target) {
         if (target == null) {
             return;
@@ -690,7 +702,7 @@ public class AnnotationIntrospector {
     }
 
     private <T extends Annotation> void collectFromInterfaces(Class<T> annotationClass,
-                                                              Class clazz,
+                                                              Class<?> clazz,
                                                               Map<Class<?>, T> collectedAnnotations) {
 
         for (Class<?> interfaceClass : clazz.getInterfaces()) {
@@ -710,8 +722,7 @@ public class AnnotationIntrospector {
      */
     public Set<Class<?>> collectInterfaces(Class<?> cls) {
         Set<Class<?>> collected = new LinkedHashSet<>();
-        Queue<Class<?>> toScan = new LinkedList<>();
-        toScan.addAll(Arrays.asList(cls.getInterfaces()));
+        Queue<Class<?>> toScan = new LinkedList<>(Arrays.asList(cls.getInterfaces()));
         Class<?> nextIfc;
         while ((nextIfc = toScan.poll()) != null) {
             collected.add(nextIfc);
@@ -737,7 +748,30 @@ public class AnnotationIntrospector {
                 .serializerBinding(getSerializerBinding(clsElement))
                 .deserializerBinding(getDeserializerBinding(clsElement))
                 .propertyVisibilityStrategy(getPropertyVisibilityStrategy(clsElement.getElement()))
+                .polymorphismConfig(getPolymorphismConfig(clsElement))
                 .build();
+    }
+
+    private PolymorphismConfig getPolymorphismConfig(JsonbAnnotatedElement<Class<?>> clsElement) {
+        final AnnotationWrapper<PolymorphicType> polymorphicType =
+                clsElement.getAnnotationWrapper(PolymorphicType.class);
+        if (polymorphicType == null) {
+            return null;
+        }
+        PolymorphicType annotation = polymorphicType.getAnnotation();
+        PolymorphismConfig.Builder builder = PolymorphismConfig.builder();
+        builder.fieldName(annotation.keyName())
+                .inherited(polymorphicType.isInherited())
+                .useClassNames(annotation.classNames())
+                .format(annotation.format())
+                .whitelistedPackages(Arrays.stream(annotation.whitelist())
+                                             .filter(p -> !p.isBlank())
+                                             .collect(Collectors.toSet()));
+        Consumer<SubType> consumer = subType -> builder.alias(subType.type(), subType.alias());
+        Optional.ofNullable(clsElement.getAnnotation(YassonSubTypes.class))
+                .ifPresentOrElse(subtypes -> Arrays.stream(subtypes.value()).forEach(consumer),
+                                 () -> Optional.ofNullable(clsElement.getAnnotation(SubType.class)).ifPresent(consumer));
+        return builder.build();
     }
 
     /**
@@ -777,7 +811,11 @@ public class AnnotationIntrospector {
     private void addIfNotPresent(JsonbAnnotatedElement<?> element, Annotation... annotations) {
         for (Annotation annotation : annotations) {
             if (element.getAnnotation(annotation.annotationType()) == null) {
-                element.putAnnotation(annotation);
+                element.putAnnotation(annotation, true);
+            } else if (NON_REPEATABLE.contains(annotation.annotationType())) {
+                //TODO change to something readable
+                throw new JsonbException("Annotation " + annotation.annotationType().getSimpleName()
+                                                 + " cannot be used multiple times in the class tree.");
             }
         }
     }
