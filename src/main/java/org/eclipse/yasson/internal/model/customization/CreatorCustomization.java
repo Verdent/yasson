@@ -93,8 +93,8 @@ public class CreatorCustomization extends CustomizationBase {
         }
 
         @Override
-        public Builder copyFrom(CreatorCustomization customization) {
-            super.copyFrom(customization);
+        public Builder of(CreatorCustomization customization) {
+            super.of(customization);
             numberFormatter = customization.numberFormatter;
             dateFormatter = customization.dateFormatter;
             return this;

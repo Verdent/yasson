@@ -2,7 +2,9 @@ package org.eclipse.yasson.internal;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import jakarta.json.bind.JsonbException;
@@ -23,8 +25,10 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
     private static final Logger LOGGER = Logger.getLogger(DeserializationContextImpl.class.getName());
 
     private final List<Runnable> delayedSetters = new ArrayList<>();
+    private final Set<Class<?>> userProcessorChain = new HashSet<>();
     private JsonParser.Event lastValueEvent;
     private Customization customization = ClassCustomization.empty();
+    private boolean disableNextPositionCheck = false;
 
     /**
      * Parent instance for marshaller and unmarshaller.
@@ -38,6 +42,7 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
     public DeserializationContextImpl(DeserializationContextImpl context) {
         super(context.getJsonbContext());
         this.lastValueEvent = context.lastValueEvent;
+        this.disableNextPositionCheck = context.disableNextPositionCheck;
     }
 
     public List<Runnable> getDelayedSetters() {
@@ -58,6 +63,18 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
 
     public void setCustomization(Customization customization) {
         this.customization = customization;
+    }
+
+    public boolean isDisableNextPositionCheck() {
+        return disableNextPositionCheck;
+    }
+
+    public void setDisableNextPositionCheck(boolean disableNextPositionCheck) {
+        this.disableNextPositionCheck = disableNextPositionCheck;
+    }
+
+    public Set<Class<?>> getUserProcessorChain() {
+        return userProcessorChain;
     }
 
     @Override

@@ -102,19 +102,31 @@ public class YassonParser implements JsonParser {
     public JsonObject getObject() {
         validate();
         level--;
-        return delegate.getObject();
+        JsonObject jsonObject = delegate.getObject();
+        context.setLastValueEvent(Event.END_OBJECT);
+        return jsonObject;
     }
 
     @Override
     public JsonValue getValue() {
-        return delegate.getValue();
+        final Event currentLevel = context.getLastValueEvent();
+        switch (currentLevel) {
+        case START_ARRAY:
+            return getArray();
+        case START_OBJECT:
+            return getObject();
+        default:
+            return delegate.getValue();
+        }
     }
 
     @Override
     public JsonArray getArray() {
         validate();
         level--;
-        return delegate.getArray();
+        JsonArray array = delegate.getArray();
+        context.setLastValueEvent(Event.END_ARRAY);
+        return array;
     }
 
     @Override

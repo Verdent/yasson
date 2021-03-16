@@ -23,17 +23,14 @@ abstract class ArrayInstanceCreator implements ModelDeserializer<JsonParser> {
     private static final Map<Class<?>, Function<ModelDeserializer<JsonParser>, ArrayInstanceCreator>> CACHE;
 
     static {
-        Map<Class<?>, Function<ModelDeserializer<JsonParser>, ArrayInstanceCreator>> cache = new HashMap<>();
-        cache.put(boolean[].class, BooleanArrayCreator::new);
-        cache.put(byte[].class, ByteArrayCreator::new);
-        cache.put(char[].class, CharArrayCreator::new);
-        cache.put(double[].class, DoubleArrayCreator::new);
-        cache.put(float[].class, FloatArrayCreator::new);
-        cache.put(int[].class, IntegerArrayCreator::new);
-        cache.put(long[].class, LongArrayCreator::new);
-        cache.put(short[].class, ShortArrayCreator::new);
-
-        CACHE = Collections.unmodifiableMap(cache);
+        CACHE = Map.of(boolean[].class, BooleanArrayCreator::new,
+                       byte[].class, ByteArrayCreator::new,
+                       char[].class, CharArrayCreator::new,
+                       double[].class, DoubleArrayCreator::new,
+                       float[].class, FloatArrayCreator::new,
+                       int[].class, IntegerArrayCreator::new,
+                       long[].class, LongArrayCreator::new,
+                       short[].class, ShortArrayCreator::new);
     }
 
     private final ModelDeserializer<JsonParser> delegate;

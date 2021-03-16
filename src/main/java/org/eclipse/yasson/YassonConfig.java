@@ -12,9 +12,12 @@
 package org.eclipse.yasson;
 
 import java.util.Map;
+import java.util.Objects;
 
 import jakarta.json.bind.JsonbConfig;
 import jakarta.json.bind.serializer.JsonbSerializer;
+import org.eclipse.yasson.config.PolymorphismSupport;
+import org.eclipse.yasson.config.Whitelist;
 
 /**
  * Custom properties for configuring Yasson outside of the specification {@link jakarta.json.bind.JsonbConfig} scope.
@@ -50,7 +53,10 @@ public class YassonConfig extends JsonbConfig {
      * @see #withForceMapArraySerializerForNullKeys(boolean)
      */
     public static final String FORCE_MAP_ARRAY_SERIALIZER_FOR_NULL_KEYS = "yasson.force-map-array-serializer-for-null-keys";
-    
+
+
+    public static final String POLYMORPHISM_SUPPORT = "yasson.polymorphism-support";
+
     /**
      * Property used to specify behaviour on deserialization when JSON document contains properties
      * which doesn't exist in the target class. Default value is 'false'.
@@ -120,4 +126,10 @@ public class YassonConfig extends JsonbConfig {
         setProperty(FORCE_MAP_ARRAY_SERIALIZER_FOR_NULL_KEYS, value);
         return this;
     }
+
+    public YassonConfig withPolymorphism(PolymorphismSupport polymorphism) {
+        setProperty(POLYMORPHISM_SUPPORT, Objects.requireNonNull(polymorphism));
+        return this;
+    }
+
 }
