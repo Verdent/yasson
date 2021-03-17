@@ -15,6 +15,7 @@ package org.eclipse.yasson.internal;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.util.Locale;
+import java.util.Objects;
 
 import jakarta.json.bind.annotation.JsonbDateFormat;
 
@@ -113,5 +114,32 @@ public class JsonbDateFormatter {
 
     public boolean isDefault() {
         return JsonbDateFormat.DEFAULT_FORMAT.equals(format);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        //DateTimeFormatter is constructed based on passed locale and format.
+        JsonbDateFormatter that = (JsonbDateFormatter) o;
+        return Objects.equals(format, that.format)
+                && Objects.equals(locale, that.locale);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(format, locale);
+    }
+
+    @Override
+    public String toString() {
+        return "JsonbDateFormatter{" +
+                "format='" + format + '\'' +
+                ", locale='" + locale + '\'' +
+                '}';
     }
 }

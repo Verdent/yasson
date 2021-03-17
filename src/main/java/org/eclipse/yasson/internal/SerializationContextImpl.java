@@ -192,7 +192,6 @@ public class SerializationContextImpl extends ProcessingContext implements Seria
      * @param root      Root.
      * @param generator JSON generator.
      */
-    @SuppressWarnings("unchecked")
     public <T> void serializeObject(T root, JsonGenerator generator) {
         Type type = runtimeType == null ? (root == null ? Object.class : root.getClass()) : runtimeType;
         final ModelSerializer rootSerializer = getRootSerializer(type);
@@ -200,7 +199,7 @@ public class SerializationContextImpl extends ProcessingContext implements Seria
     }
 
     public ModelSerializer getRootSerializer(Type type) {
-        return getJsonbContext().getSerializationModelCreator().serializerChain(type, true);
+        return getJsonbContext().getSerializationModelCreator().serializerChain(type, true, true);
     }
 
     /**
