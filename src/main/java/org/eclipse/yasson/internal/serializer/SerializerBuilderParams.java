@@ -16,6 +16,7 @@ public class SerializerBuilderParams {
     private final Customization customization;
     private final boolean root;
     private final boolean key;
+    private final boolean resolveRootAdapter;
     private final ModelSerializer objectBaseSerializer;
 
     private SerializerBuilderParams(Builder builder) {
@@ -23,6 +24,7 @@ public class SerializerBuilderParams {
         this.customization = builder.customization;
         this.root = builder.root;
         this.key = builder.key;
+        this.resolveRootAdapter = builder.resolveRootAdapter;
         this.objectBaseSerializer = builder.objectBaseSerializer;
     }
 
@@ -46,6 +48,10 @@ public class SerializerBuilderParams {
         return key;
     }
 
+    public boolean isResolveRootAdapter() {
+        return resolveRootAdapter;
+    }
+
     public ModelSerializer getObjectBaseSerializer() {
         return objectBaseSerializer;
     }
@@ -56,6 +62,7 @@ public class SerializerBuilderParams {
         private Customization customization;
         private boolean root;
         private boolean key;
+        private boolean resolveRootAdapter;
         private ModelSerializer objectBaseSerializer;
 
         private Builder(Type type) {
@@ -82,6 +89,11 @@ public class SerializerBuilderParams {
 
         public Builder key(boolean key) {
             this.key = key;
+            return this;
+        }
+
+        public Builder resolveRootAdapter(boolean resolveRootAdapter) {
+            this.resolveRootAdapter = resolveRootAdapter;
             return this;
         }
 

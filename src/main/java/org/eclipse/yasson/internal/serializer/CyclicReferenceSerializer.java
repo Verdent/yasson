@@ -20,7 +20,7 @@ class CyclicReferenceSerializer implements ModelSerializer {
     @Override
     public void serialize(Object value, JsonGenerator generator, SerializationContextImpl context) {
         if (delegate == null) {
-            delegate = context.getJsonbContext().getSerializationModelCreator().serializerChain(type, true);
+            delegate = context.getJsonbContext().getSerializationModelCreator().serializerChain(type, true, true);
         }
         delegate.serialize(value, generator, context);
     }

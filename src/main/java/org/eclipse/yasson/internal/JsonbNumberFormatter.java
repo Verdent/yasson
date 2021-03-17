@@ -12,6 +12,8 @@
 
 package org.eclipse.yasson.internal;
 
+import java.util.Objects;
+
 /**
  * Formatter for numbers.
  */
@@ -50,4 +52,29 @@ public class JsonbNumberFormatter {
         return locale;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        JsonbNumberFormatter that = (JsonbNumberFormatter) o;
+        return Objects.equals(format, that.format)
+                && Objects.equals(locale, that.locale);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(format, locale);
+    }
+
+    @Override
+    public String toString() {
+        return "JsonbNumberFormatter{" +
+                "format='" + format + '\'' +
+                ", locale='" + locale + '\'' +
+                '}';
+    }
 }

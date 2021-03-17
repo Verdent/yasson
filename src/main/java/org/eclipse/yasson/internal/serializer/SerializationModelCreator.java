@@ -53,11 +53,11 @@ public class SerializationModelCreator {
                 .get();
     }
 
-    public ModelSerializer serializerChain(Type type, boolean rootValue) {
+    public ModelSerializer serializerChain(Type type, boolean rootValue, boolean resolveRootAdapter) {
         Class<?> rawType = ReflectionUtils.getRawType(type);
         ClassModel classModel = jsonbContext.getMappingContext().getOrCreateClassModel(rawType);
         LinkedList<Type> chain = new LinkedList<>();
-        return serializerChain(chain, type, classModel.getClassCustomization(), rootValue, false);
+        return serializerChain(chain, type, classModel.getClassCustomization(), rootValue, false, resolveRootAdapter);
     }
 
     public ModelSerializer serializerChainRuntime(LinkedList<Type> chain,
@@ -73,22 +73,23 @@ public class SerializationModelCreator {
         Class<?> rawType = ReflectionUtils.getRawType(type);
         Class<?> rawLast = ReflectionUtils.getRawType(chain.getLast());
         if (rawLast.equals(rawType)) {
-            return serializerChainInternal(chain, chain.getLast(), propertyCustomization, rootValue, isKey);
+            return serializerChainInternal(chain, chain.getLast(), propertyCustomization, rootValue, isKey, true);
         }
-        return serializerChainInternal(chain, type, propertyCustomization, rootValue, isKey);
+        return serializerChainInternal(chain, type, propertyCustomization, rootValue, isKey, true);
     }
 
     private ModelSerializer serializerChain(LinkedList<Type> chain,
                                             Type type,
                                             Customization propertyCustomization,
                                             boolean rootValue,
-                                            boolean isKey) {
+                                            boolean isKey,
+                                            boolean resolveRootAdapter) {
         if (chain.contains(type)) {
             return new CyclicReferenceSerializer(type);
         }
         try {
             chain.add(type);
-            return serializerChainInternal(chain, type, propertyCustomization, rootValue, isKey);
+            return serializerChainInternal(chain, type, propertyCustomization, rootValue, isKey, resolveRootAdapter);
         } finally {
             chain.removeLast();
         }
@@ -98,7 +99,8 @@ public class SerializationModelCreator {
                                                     Type type,
                                                     Customization propertyCustomization,
                                                     boolean rootValue,
-                                                    boolean isKey) {
+                                                    boolean isKey,
+                                                    boolean resolveRootAdapter) {
         if (explicitChain.containsKey(type)) {
             return explicitChain.get(type);
         }
@@ -108,20 +110,23 @@ public class SerializationModelCreator {
         if (serializerBinding.isPresent()) {
             return serializerBinding.get();
         }
-        Optional<AdapterBinding> maybeAdapter = adapterBinding(type, (ComponentBoundCustomization) propertyCustomization);
-        if (maybeAdapter.isPresent()) {
-            AdapterBinding adapterBinding = maybeAdapter.get();
-            Type toType = adapterBinding.getToType();
-            Class<?> rawToType = ReflectionUtils.getRawType(toType);
-            ModelSerializer typeSerializer = TypeSerializers.getTypeSerializer(rawToType, propertyCustomization, jsonbContext);
-            if (typeSerializer == null) {
-                typeSerializer = serializerChain(toType, rootValue);
+        if (resolveRootAdapter) {
+            Optional<AdapterBinding> maybeAdapter = adapterBinding(type, (ComponentBoundCustomization) propertyCustomization);
+            if (maybeAdapter.isPresent()) {
+                AdapterBinding adapterBinding = maybeAdapter.get();
+                Type toType = adapterBinding.getToType();
+                Class<?> rawToType = ReflectionUtils.getRawType(toType);
+                ModelSerializer typeSerializer = TypeSerializers
+                        .getTypeSerializer(rawToType, propertyCustomization, jsonbContext);
+                if (typeSerializer == null) {
+                    typeSerializer = serializerChain(toType, rootValue, !type.equals(toType));
+                }
+                AdapterSerializer adapterSerializer = new AdapterSerializer(adapterBinding, typeSerializer);
+                RecursionChecker recursionChecker = new RecursionChecker(adapterSerializer);
+                NullSerializer nullSerializer = new NullSerializer(recursionChecker, propertyCustomization, jsonbContext);
+                explicitChain.put(type, nullSerializer);
+                return nullSerializer;
             }
-            AdapterSerializer adapterSerializer = new AdapterSerializer(adapterBinding, typeSerializer);
-            RecursionChecker recursionChecker = new RecursionChecker(adapterSerializer);
-            NullSerializer nullSerializer = new NullSerializer(recursionChecker, propertyCustomization, jsonbContext);
-            explicitChain.put(type, nullSerializer);
-            return nullSerializer;
         }
 
         ModelSerializer typeSerializer = null;
@@ -308,7 +313,7 @@ public class SerializationModelCreator {
             Class<?> rawToType = ReflectionUtils.getRawType(toType);
             ModelSerializer typeSerializer = TypeSerializers.getTypeSerializer(rawToType, customization, jsonbContext);
             if (typeSerializer == null) {
-                typeSerializer = serializerChain(toType, false);
+                typeSerializer = serializerChain(toType, false, true);
             }
             AdapterSerializer adapterSerializer = new AdapterSerializer(adapterBinding, typeSerializer);
             return new NullSerializer(adapterSerializer, customization, jsonbContext);
@@ -320,7 +325,7 @@ public class SerializationModelCreator {
             if (isFinal
                     || Collection.class.isAssignableFrom(rawType)
                     || Map.class.isAssignableFrom(rawType)) {
-                return serializerChain(chain, resolved, customization, false, key);
+                return serializerChain(chain, resolved, customization, false, key, true);
             } else {
                 if (dynamicChain.containsKey(resolved)) {
                     return dynamicChain.get(resolved);
@@ -331,7 +336,7 @@ public class SerializationModelCreator {
                     if (explicitChain.containsKey(resolved)) {
                         specificTypeSerializer = explicitChain.get(resolved);
                     } else {
-                        specificTypeSerializer = serializerChain(chain, resolved, customization, false, key);
+                        specificTypeSerializer = serializerChain(chain, resolved, customization, false, key, true);
                     }
                 }
                 //Needs to be dynamically resolved with special cache since possible inheritance problem.
