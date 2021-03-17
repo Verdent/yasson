@@ -20,15 +20,13 @@ import org.eclipse.yasson.internal.DeserializationContextImpl;
 public class MapInstanceCreator implements ModelDeserializer<JsonParser> {
 
     private final MapDeserializer delegate;
-    private final InstanceCreator instanceCreator;
     private final JsonbConfigProperties configProperties;
     private final Class<?> clazz;
 
     public MapInstanceCreator(MapDeserializer delegate,
-                              InstanceCreator instanceCreator,
-                              JsonbConfigProperties configProperties, Class<?> clazz) {
+                              JsonbConfigProperties configProperties,
+                              Class<?> clazz) {
         this.delegate = delegate;
-        this.instanceCreator = instanceCreator;
         this.configProperties = configProperties;
         this.clazz = clazz;
     }

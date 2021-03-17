@@ -22,20 +22,9 @@ import org.eclipse.yasson.spi.JsonbComponentInstanceCreator;
  */
 public class DefaultConstructorCreator implements JsonbComponentInstanceCreator {
 
-    private final InstanceCreator creator;
-
-    /**
-     * Constructs default constructor creator.
-     *
-     * @param creator instance creator
-     */
-    DefaultConstructorCreator(InstanceCreator creator) {
-        this.creator = creator;
-    }
-
     @Override
     public <T> T getOrCreateComponent(Class<T> componentClass) {
-        return creator.createInstance(componentClass);
+        return InstanceCreator.createInstance(componentClass);
     }
 
     @Override

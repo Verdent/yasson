@@ -54,17 +54,16 @@ public class JsonbComponentInstanceCreatorFactory {
      * If one of the above is found {@link BeanManagerInstanceCreator} is returned,
      * or {@link DefaultConstructorCreator} otherwise.
      *
-     * @param creator Instance creator
      * @return Component instance creator, either CDI or default constructor.
      */
-    public static JsonbComponentInstanceCreator getComponentInstanceCreator(InstanceCreator creator) {
+    public static JsonbComponentInstanceCreator getComponentInstanceCreator() {
         Object beanManager = getCdiBeanManager();
         if (beanManager == null) {
             beanManager = getJndiBeanManager();
         }
         if (beanManager == null) {
             LOGGER.finest(Messages.getMessage(MessageKeys.BEAN_MANAGER_NOT_FOUND_USING_DEFAULT));
-            return new DefaultConstructorCreator(creator);
+            return new DefaultConstructorCreator();
         }
         return new BeanManagerInstanceCreator(beanManager);
     }

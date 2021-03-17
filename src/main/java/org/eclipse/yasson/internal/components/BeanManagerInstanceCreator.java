@@ -75,7 +75,6 @@ public class BeanManagerInstanceCreator implements JsonbComponentInstanceCreator
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void close() throws IOException {
         injectionTargets.forEach((clazz, target) -> cleanupBean(target));
         injectionTargets.clear();

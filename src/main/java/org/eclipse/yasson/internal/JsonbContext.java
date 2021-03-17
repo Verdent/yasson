@@ -54,8 +54,6 @@ public class JsonbContext {
 
     private final JsonbConfigProperties configProperties;
 
-    private final InstanceCreator instanceCreator;
-
     /**
      * Creates and initialize context.
      *
@@ -66,8 +64,7 @@ public class JsonbContext {
         Objects.requireNonNull(jsonbConfig);
         this.jsonbConfig = jsonbConfig;
         this.mappingContext = new MappingContext(this);
-        this.instanceCreator = InstanceCreator.getSingleton();
-        this.componentInstanceCreator = initComponentInstanceCreator(instanceCreator);
+        this.componentInstanceCreator = initComponentInstanceCreator();
         this.componentMatcher = new ComponentMatcher(this);
         this.annotationIntrospector = new AnnotationIntrospector(this);
         this.jsonProvider = jsonProvider;
@@ -152,16 +149,7 @@ public class JsonbContext {
         return configProperties;
     }
 
-    /**
-     * Returns component for creating instances of non-parsed types.
-     *
-     * @return InstanceCreator
-     */
-    public InstanceCreator getInstanceCreator() {
-        return instanceCreator;
-    }
-
-    private JsonbComponentInstanceCreator initComponentInstanceCreator(InstanceCreator instanceCreator) {
+    private JsonbComponentInstanceCreator initComponentInstanceCreator() {
         ServiceLoader<JsonbComponentInstanceCreator> loader = AccessController
                 .doPrivileged((PrivilegedAction<ServiceLoader<JsonbComponentInstanceCreator>>) () -> ServiceLoader
                         .load(JsonbComponentInstanceCreator.class));
@@ -171,7 +159,7 @@ public class JsonbContext {
         }
         if (creators.isEmpty()) {
             // No service provider found - use the defaults
-            return JsonbComponentInstanceCreatorFactory.getComponentInstanceCreator(instanceCreator);
+            return JsonbComponentInstanceCreatorFactory.getComponentInstanceCreator();
         }
         creators.sort(Comparator.comparingInt(JsonbComponentInstanceCreator::getPriority).reversed());
         JsonbComponentInstanceCreator creator = creators.get(0);
