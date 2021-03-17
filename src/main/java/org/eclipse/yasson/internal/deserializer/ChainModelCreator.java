@@ -168,7 +168,6 @@ public class ChainModelCreator {
 
             MapDeserializer mapDeserializer = new MapDeserializer(keyProcessor, valueProcessor);
             MapInstanceCreator mapInstanceCreator = new MapInstanceCreator(mapDeserializer,
-                                                                           jsonbContext.getInstanceCreator(),
                                                                            jsonbContext.getConfigProperties(),
                                                                            rawType);
             PositionChecker positionChecker = new PositionChecker(mapInstanceCreator, rawType, PositionChecker.Checker.CONTAINER);
