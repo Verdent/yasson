@@ -69,8 +69,9 @@ public class ChainModelCreator {
         this.userTypeMapping = jsonbContext.getConfigProperties().getUserTypeMapping();
     }
 
-    public ModelDeserializer<JsonParser> deserializerChain(Type type, ClassModel classModel) {
+    public ModelDeserializer<JsonParser> deserializerChain(Type type) {
         LinkedList<Type> chain = new LinkedList<>();
+        ClassModel classModel = jsonbContext.getMappingContext().getOrCreateClassModel(ReflectionUtils.getRawType(type));
         return deserializerChain(chain, type, classModel.getClassCustomization(), classModel);
     }
 
@@ -100,8 +101,7 @@ public class ChainModelCreator {
             return deserializerChain.get(cachedItem);
         } else if (userTypeMapping.containsKey(rawType)) {
             Class<?> userTypeRaw = userTypeMapping.get(rawType);
-            ClassModel userTypeModel = jsonbContext.getMappingContext().getOrCreateClassModel(userTypeRaw);
-            ModelDeserializer<JsonParser> deserializer = deserializerChain(userTypeRaw, userTypeModel);
+            ModelDeserializer<JsonParser> deserializer = deserializerChain(userTypeRaw);
             deserializerChain.put(cachedItem, deserializer);
             return deserializer;
         }
@@ -114,7 +114,7 @@ public class ChainModelCreator {
                                                                               targetModel.getClassCustomization(),
                                                                               JustReturn.create());
             if (typeDeserializer == null) {
-                typeDeserializer = deserializerChain(adapter.getToType(), targetModel);
+                typeDeserializer = deserializerChain(adapter.getToType());
             }
             ModelDeserializer<JsonParser> targetAdapterModel = typeDeserializer;
             AdapterDeserializer adapterDeserializer = new AdapterDeserializer(adapter, JustReturn.create());
@@ -129,7 +129,7 @@ public class ChainModelCreator {
                                                                           propertyCustomization,
                                                                           JustReturn.create());
         if (typeDeserializer != null) {
-//            deserializerChain.put(type, typeDeserializer);
+            deserializerChain.put(cachedItem, typeDeserializer);
             return typeDeserializer;
         }
         JsonbConfigProperties configProperties = jsonbContext.getConfigProperties();
@@ -244,7 +244,7 @@ public class ChainModelCreator {
             if (deserializerBinding.isPresent()) {
                 UserDefinedDeserializer user = new UserDefinedDeserializer(deserializerBinding.get().getJsonbDeserializer(),
                                                                            JustReturn.create(), type, classCustomization);
-//                deserializerChain.put(cachedItem, user);
+                deserializerChain.put(cachedItem, user);
                 return user;
             }
             JsonbCreator creator = classCustomization.getCreator();
@@ -361,14 +361,11 @@ public class ChainModelCreator {
         Optional<AdapterBinding> adapterBinding = adapterBinding(resolved, (ComponentBoundCustomization) customization);
         if (adapterBinding.isPresent()) {
             AdapterBinding adapter = adapterBinding.get();
-            ClassModel targetModel = jsonbContext.getMappingContext()
-                    .getOrCreateClassModel(ReflectionUtils.getRawType(adapter.getToType()));
-
             ModelDeserializer<JsonParser> typeDeserializer = typeDeserializer(ReflectionUtils.getRawType(adapter.getToType()),
                                                                               customization,
                                                                               JustReturn.create(), events);
             if (typeDeserializer == null) {
-                typeDeserializer = deserializerChain(adapter.getToType(), targetModel);
+                typeDeserializer = deserializerChain(adapter.getToType());
             }
             ModelDeserializer<JsonParser> targetAdapterModel = typeDeserializer;
 

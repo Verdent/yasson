@@ -12,12 +12,22 @@
 
 package org.eclipse.yasson.internal;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Optional;
+import java.util.ServiceLoader;
 
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
 import jakarta.json.bind.JsonbConfig;
+import jakarta.json.bind.adapter.JsonbAdapter;
+import jakarta.json.bind.serializer.JsonbDeserializer;
+import jakarta.json.bind.serializer.JsonbSerializer;
 import jakarta.json.spi.JsonProvider;
+import org.eclipse.yasson.spi.JsonbAdapterProvider;
+import org.eclipse.yasson.spi.JsonbConfigDataProvider;
+import org.eclipse.yasson.spi.JsonbDeserializerProvider;
+import org.eclipse.yasson.spi.JsonbSerializerProvider;
 
 /**
  * JsonbBuilder implementation.
@@ -58,6 +68,38 @@ public class JsonBindingBuilder implements JsonbBuilder {
 
     @Override
     public Jsonb build() {
+        initJsonbSerializersFromSpi();
+        initJsonbDeserializersFromSpi();
+        initJsonbAdaptersFromSpi();
+        setupConfigValuesFromSpi();
         return new JsonBinding(this);
+    }
+
+    private void initJsonbSerializersFromSpi() {
+        ServiceLoader<JsonbSerializerProvider> loader = AccessController
+                .doPrivileged((PrivilegedAction<ServiceLoader<JsonbSerializerProvider>>) () -> ServiceLoader
+                        .load(JsonbSerializerProvider.class));
+        loader.forEach(provider -> config.withSerializers(provider.createSerializers().toArray(new JsonbSerializer[0])));
+    }
+
+    private void initJsonbDeserializersFromSpi() {
+        ServiceLoader<JsonbDeserializerProvider> loader = AccessController
+                .doPrivileged((PrivilegedAction<ServiceLoader<JsonbDeserializerProvider>>) () -> ServiceLoader
+                        .load(JsonbDeserializerProvider.class));
+        loader.forEach(provider -> config.withDeserializers(provider.createDeserializers().toArray(new JsonbDeserializer[0])));
+    }
+
+    private void initJsonbAdaptersFromSpi() {
+        ServiceLoader<JsonbAdapterProvider> loader = AccessController
+                .doPrivileged((PrivilegedAction<ServiceLoader<JsonbAdapterProvider>>) () -> ServiceLoader
+                        .load(JsonbAdapterProvider.class));
+        loader.forEach(provider -> config.withAdapters(provider.createAdapters().toArray(new JsonbAdapter[0])));
+    }
+
+    private void setupConfigValuesFromSpi() {
+        ServiceLoader<JsonbConfigDataProvider> loader = AccessController
+                .doPrivileged((PrivilegedAction<ServiceLoader<JsonbConfigDataProvider>>) () -> ServiceLoader
+                        .load(JsonbConfigDataProvider.class));
+        loader.forEach(provider -> provider.getConfigData().forEach((key, val) -> config.setProperty(key, val)));
     }
 }

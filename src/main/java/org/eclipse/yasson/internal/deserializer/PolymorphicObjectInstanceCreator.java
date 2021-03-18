@@ -104,8 +104,7 @@ public class PolymorphicObjectInstanceCreator implements ModelDeserializer<JsonP
                     break;
                 case START_OBJECT:
                     Class<?> type = getPolymorphicTypeClass(alias);
-                    ClassModel classModel = context.getMappingContext().getOrCreateClassModel(type);
-                    ModelDeserializer<JsonParser> deserializer = chainModelCreator.deserializerChain(type, classModel);
+                    ModelDeserializer<JsonParser> deserializer = chainModelCreator.deserializerChain(type);
                     deserializer.deserialize(parser, context);
                     done = true;
                     break;
@@ -141,8 +140,7 @@ public class PolymorphicObjectInstanceCreator implements ModelDeserializer<JsonP
                 case VALUE_STRING:
                     String alias = parser.getString();
                     Class<?> type = getPolymorphicTypeClass(alias);
-                    ClassModel classModel = context.getMappingContext().getOrCreateClassModel(type);
-                    ModelDeserializer<JsonParser> deserializer = chainModelCreator.deserializerChain(type, classModel);
+                    ModelDeserializer<JsonParser> deserializer = chainModelCreator.deserializerChain(type);
                     deserializer.deserialize(parser, context);
                     done = true;
                     break;
@@ -174,8 +172,7 @@ public class PolymorphicObjectInstanceCreator implements ModelDeserializer<JsonP
                 case VALUE_STRING:
                     String alias = parser.getString();
                     Class<?> type = getPolymorphicTypeClass(alias);
-                    ClassModel classModel = context.getMappingContext().getOrCreateClassModel(type);
-                    ModelDeserializer<JsonParser> deserializer = chainModelCreator.deserializerChain(type, classModel);
+                    ModelDeserializer<JsonParser> deserializer = chainModelCreator.deserializerChain(type);
                     context.setDisableNextPositionCheck(true);
                     return deserializer.deserialize(parser, context);
                 default:
