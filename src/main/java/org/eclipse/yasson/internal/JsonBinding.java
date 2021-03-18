@@ -50,8 +50,9 @@ public class JsonBinding implements YassonJsonb {
         Set<Class<?>> eagerInitClasses = this.jsonbContext.getConfigProperties().getEagerInitClasses();
         for (Class<?> eagerInitClass : eagerInitClasses) {
             // Eagerly initialize requested ClassModels and Serializers
-            jsonbContext.getMappingContext().getOrCreateClassModel(eagerInitClass);
-            new SerializationContextImpl(jsonbContext).getRootSerializer(eagerInitClass);
+//            jsonbContext.getMappingContext().getOrCreateClassModel(eagerInitClass);
+            jsonbContext.getChainModelCreator().deserializerChain(eagerInitClass);
+            jsonbContext.getSerializationModelCreator().serializerChain(eagerInitClass, true, true);
         }
     }
 

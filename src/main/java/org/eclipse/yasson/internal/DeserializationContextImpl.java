@@ -94,10 +94,7 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
                 lastValueEvent = parser.next();
                 checkState();
             }
-            Class<?> rawType = ReflectionUtils.getRawType(type);
-            ClassModel classModel = getMappingContext().getOrCreateClassModel(rawType);
-            ModelDeserializer<JsonParser> modelDeserializer = getJsonbContext().getChainModelCreator()
-                    .deserializerChain(type, classModel);
+            ModelDeserializer<JsonParser> modelDeserializer = getJsonbContext().getChainModelCreator().deserializerChain(type);
             return (T) modelDeserializer.deserialize(parser, this);
         } catch (JsonbException e) {
             LOGGER.severe(e.getMessage());
