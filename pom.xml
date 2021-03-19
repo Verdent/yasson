@@ -23,11 +23,11 @@
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.eclipse</groupId>
-    <artifactId>yasson</artifactId>
+    <groupId>org.eclipse.yasson</groupId>
+    <artifactId>yasson-project</artifactId>
     <version>3.0.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
-    <name>org.eclipse.yasson</name>
+    <packaging>pom</packaging>
+    <name>Yasson Project</name>
 
     <description>Eclipse Yasson. Reference implementation of JSR-367 (JSON-B).</description>
     <url>https://projects.eclipse.org/projects/ee4j.yasson</url>
@@ -39,6 +39,11 @@
         <jakarta.enterprise.cdi-api.version>3.0.0</jakarta.enterprise.cdi-api.version>
         <netbeans.hint.jdkPlatform>JDK_9</netbeans.hint.jdkPlatform>
     </properties>
+
+    <modules>
+        <module>extensions</module>
+        <module>yasson</module>
+    </modules>
 
     <dependencies>
         <!-- Compile dependencies -->
@@ -69,7 +74,7 @@
         <dependency>
             <groupId>org.jboss.weld.se</groupId>
             <artifactId>weld-se-core</artifactId>
-            <version>4.0.0.Beta2</version>
+            <version>4.0.0.Final</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -248,12 +253,12 @@
     </profiles>
 
     <build>
-        <testResources>
-            <testResource>
-                <directory>src/test/resources</directory>
-                <filtering>true</filtering>
-            </testResource>
-        </testResources>
+<!--        <testResources>-->
+<!--            <testResource>-->
+<!--                <directory>src/test/resources</directory>-->
+<!--                <filtering>true</filtering>-->
+<!--            </testResource>-->
+<!--        </testResources>-->
         <finalName>${project.artifactId}</finalName>
         <pluginManagement>
             <plugins>
@@ -298,20 +303,20 @@
                                 <release>11</release>
                             </configuration>
                         </execution>
-                        <execution>
-                            <id>multi-release-compile-15</id>
-                            <goals>
-                                <goal>compile</goal>
-                            </goals>
-                            <configuration>
-                                <release>15</release>
-                                <compileSourceRoots>
-                                    <compileSourceRoot>${project.basedir}/src/main/java15</compileSourceRoot>
-                                </compileSourceRoots>
-                                <multiReleaseOutput>true</multiReleaseOutput>
-                                <compilerArgs>--enable-preview</compilerArgs>
-                            </configuration>
-                        </execution>
+                        <!--                        <execution>-->
+                        <!--                            <id>multi-release-compile-15</id>-->
+                        <!--                            <goals>-->
+                        <!--                                <goal>compile</goal>-->
+                        <!--                            </goals>-->
+                        <!--                            <configuration>-->
+                        <!--                                <release>15</release>-->
+                        <!--                                <compileSourceRoots>-->
+                        <!--                                    <compileSourceRoot>${project.basedir}/src/main/java15</compileSourceRoot>-->
+                        <!--                                </compileSourceRoots>-->
+                        <!--                                <multiReleaseOutput>true</multiReleaseOutput>-->
+                        <!--                                <compilerArgs>&#45;&#45;enable-preview</compilerArgs>-->
+                        <!--                            </configuration>-->
+                        <!--                        </execution>-->
                     </executions>
                     <!-- defaults for compile and testCompile -->
                     <configuration>
@@ -480,7 +485,7 @@
                     <configuration>
                         <rules>
                             <requireJavaVersion>
-                                <version>[9,)</version>
+                                <version>[11,)</version>
                             </requireJavaVersion>
                             <requireMavenVersion>
                                 <version>[3.3.9,)</version>
@@ -488,6 +493,23 @@
                             <DependencyConvergence/>
                         </rules>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.commonjava.maven.plugins</groupId>
+                    <artifactId>directory-maven-plugin</artifactId>
+                    <version>0.1</version>
+                    <executions>
+                        <execution>
+                            <id>generate-top-parent-basedir</id>
+                            <goals>
+                                <goal>highest-basedir</goal>
+                            </goals>
+                            <phase>validate</phase>
+                            <configuration>
+                                <property>top.parent.basedir</property>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
@@ -503,7 +525,8 @@
                             <configuration>
                                 <resources>
                                     <resource>
-                                        <directory>${basedir}</directory>
+                                        <!--suppress UnresolvedMavenProperty -->
+                                        <directory>${top.parent.basedir}</directory>
                                         <targetPath>META-INF</targetPath>
                                         <includes>
                                             <include>LICENSE.md</include>
@@ -594,6 +617,10 @@
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.commonjava.maven.plugins</groupId>
+                <artifactId>directory-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>
