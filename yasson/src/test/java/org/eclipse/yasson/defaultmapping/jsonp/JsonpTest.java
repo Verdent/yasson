@@ -13,6 +13,10 @@
 package org.eclipse.yasson.defaultmapping.jsonp;
 
 import org.junit.jupiter.api.*;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.eclipse.yasson.Jsonbs.*;
 
@@ -45,7 +49,7 @@ public class JsonpTest {
 
     @Test
     public void testInnerJsonObject() {
-        
+
         final JsonBuilderFactory factory = Json.createBuilderFactory(null);
         final JsonObject jsonObject = factory.createObjectBuilder()
                 .add("name", "home")
@@ -76,7 +80,7 @@ public class JsonpTest {
 
     @Test
     public void testMarshallJsonArray() {
-        
+
         final JsonBuilderFactory factory = Json.createBuilderFactory(null);
         final JsonArray jsonArray = factory.createArrayBuilder()
                 .add(1)
@@ -237,5 +241,17 @@ public class JsonpTest {
         assertEquals(3, resultArray.getInt(2));
         assertEquals("b", resultArray.getJsonObject(3).getString("a"));
 
+    }
+
+    @Test
+    public void testJsonNullValue() {
+        JsonValueWrapper pojo = new JsonValueWrapper(null);
+        String expected = "{}";
+        String json = defaultJsonb.toJson(pojo);
+        assertThat(json, is(expected));
+        JsonValueWrapper deserialized = defaultJsonb.fromJson(expected, JsonValueWrapper.class);
+        assertThat(deserialized.jsonValue, nullValue());
+        deserialized = defaultJsonb.fromJson("{\"jsonValue\":null}", JsonValueWrapper.class);
+        assertThat(deserialized.jsonValue, is(JsonValue.NULL));
     }
 }
