@@ -102,8 +102,6 @@ public class TypeDeserializers {
             DESERIALIZERS.put(Timestamp.class, SqlTimestampDeserializer::new);
         }
 
-        ASSIGNABLE.put(JsonValue.class, JsonValueDeserializer::new);
-
         OPTIONAL_TYPES.put(OptionalLong.class, Long.class);
         OPTIONAL_TYPES.put(OptionalInt.class, Integer.class);
         OPTIONAL_TYPES.put(OptionalDouble.class, Double.class);
@@ -150,6 +148,9 @@ public class TypeDeserializers {
                                              clazz);
         }
 
+        if (JsonValue.class.isAssignableFrom(builder.getClazz())) {
+            return new JsonValueDeserializer(builder);
+        }
         ModelDeserializer<JsonParser> deserializer = assignableCases(builder, eventArray);
         if (deserializer != null) {
             return new NullCheckDeserializer(deserializer, delegate, clazz);
@@ -173,12 +174,6 @@ public class TypeDeserializers {
                                        checker);
         } else if (Object.class.equals(builder.getClazz())) {
             return new ObjectTypeDeserializer(builder);
-        }
-        //TODO replace to else if?
-        for (Class<?> clazz : ASSIGNABLE.keySet()) {
-            if (clazz.isAssignableFrom(builder.getClazz())) {
-                return ASSIGNABLE.get(clazz).apply(builder);
-            }
         }
         return null;
     }
