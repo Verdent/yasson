@@ -36,13 +36,13 @@ import jakarta.json.bind.config.PropertyNamingStrategy;
 import jakarta.json.bind.config.PropertyOrderStrategy;
 import jakarta.json.bind.config.PropertyVisibilityStrategy;
 import jakarta.json.bind.serializer.JsonbSerializer;
-
 import org.eclipse.yasson.YassonConfig;
 import org.eclipse.yasson.config.PolymorphismSupport;
 import org.eclipse.yasson.internal.model.PropertyModel;
 import org.eclipse.yasson.internal.model.ReverseTreeMap;
 import org.eclipse.yasson.internal.model.customization.PropertyOrdering;
 import org.eclipse.yasson.internal.model.customization.StrategiesProvider;
+import org.eclipse.yasson.internal.model.customization.VisibilityStrategiesProvider;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
 
@@ -132,7 +132,7 @@ public class JsonbConfigProperties {
     @SuppressWarnings("unchecked")
     private Map<Class<?>, Class<?>> initUserTypeMapping() {
         Optional<Object> property = jsonbConfig.getProperty(YassonConfig.USER_TYPE_MAPPING);
-        if (!property.isPresent()) {
+        if (property.isEmpty()) {
             return Collections.emptyMap();
         }
         Object result = property.get();
@@ -201,14 +201,13 @@ public class JsonbConfigProperties {
 
     private PropertyNamingStrategy initPropertyNamingStrategy() {
         final Optional<Object> property = jsonbConfig.getProperty(JsonbConfig.PROPERTY_NAMING_STRATEGY);
-        if (!property.isPresent()) {
+        if (property.isEmpty()) {
             return StrategiesProvider.getPropertyNamingStrategy(PropertyNamingStrategy.IDENTITY);
         }
         Object propertyNamingStrategy = property.get();
         if (propertyNamingStrategy instanceof String) {
             return StrategiesProvider.getPropertyNamingStrategy((String) propertyNamingStrategy);
-        }
-        if (!(propertyNamingStrategy instanceof PropertyNamingStrategy)) {
+        } else if (!(propertyNamingStrategy instanceof PropertyNamingStrategy)) {
             throw new JsonbException(Messages.getMessage(MessageKeys.PROPERTY_NAMING_STRATEGY_INVALID));
         }
         return (PropertyNamingStrategy) property.get();
@@ -216,11 +215,13 @@ public class JsonbConfigProperties {
 
     private PropertyVisibilityStrategy initPropertyVisibilityStrategy() {
         final Optional<Object> property = jsonbConfig.getProperty(JsonbConfig.PROPERTY_VISIBILITY_STRATEGY);
-        if (!property.isPresent()) {
+        if (property.isEmpty()) {
             return null;
         }
         final Object propertyVisibilityStrategy = property.get();
-        if (!(propertyVisibilityStrategy instanceof PropertyVisibilityStrategy)) {
+        if (propertyVisibilityStrategy instanceof String) {
+            return VisibilityStrategiesProvider.getStrategy((String) propertyVisibilityStrategy);
+        } else if (!(propertyVisibilityStrategy instanceof PropertyVisibilityStrategy)) {
             throw new JsonbException("JsonbConfig.PROPERTY_VISIBILITY_STRATEGY must be instance of " + PropertyVisibilityStrategy.class);
         }
         return (PropertyVisibilityStrategy) propertyVisibilityStrategy;
@@ -257,7 +258,7 @@ public class JsonbConfigProperties {
 
     private Set<Class<?>> initEagerInitClasses() {
         Optional<Object> property = jsonbConfig.getProperty(YassonConfig.EAGER_PARSE_CLASSES);
-        if (!property.isPresent()) {
+        if (property.isEmpty()) {
             return Collections.emptySet();
         }
         Object eagerInitClasses = property.get();
@@ -273,7 +274,7 @@ public class JsonbConfigProperties {
 
     private PolymorphismSupport initPolymorphismSupport() {
         Optional<Object> property = jsonbConfig.getProperty(YassonConfig.POLYMORPHISM_SUPPORT);
-        if (!property.isPresent()) {
+        if (property.isEmpty()) {
             return null;
         }
         Object polymorphismSupport = property.get();
