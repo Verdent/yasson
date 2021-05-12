@@ -100,6 +100,6 @@ public class JsonBindingBuilder implements JsonbBuilder {
         ServiceLoader<JsonbConfigDataProvider> loader = AccessController
                 .doPrivileged((PrivilegedAction<ServiceLoader<JsonbConfigDataProvider>>) () -> ServiceLoader
                         .load(JsonbConfigDataProvider.class));
-        loader.forEach(provider -> provider.getConfigData().forEach((key, val) -> config.setProperty(key, val)));
+        loader.forEach(provider -> provider.updateConfig(config));
     }
 }
