@@ -48,9 +48,7 @@ public class JsonbDateFormatter {
             .toFormatter();
 
     private final DateTimeFormatter dateTimeFormatter;
-
     private final String format;
-
     private final String locale;
 
     /**
@@ -124,21 +122,22 @@ public class JsonbDateFormatter {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        //DateTimeFormatter is constructed based on passed locale and format.
         JsonbDateFormatter that = (JsonbDateFormatter) o;
         return Objects.equals(format, that.format)
-                && Objects.equals(locale, that.locale);
+                && Objects.equals(locale, that.locale)
+                && Objects.equals(dateTimeFormatter, that.dateTimeFormatter);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(format, locale);
+        return Objects.hash(dateTimeFormatter, format, locale);
     }
 
     @Override
     public String toString() {
         return "JsonbDateFormatter{" +
-                "format='" + format + '\'' +
+                "dateTimeFormatter=" + dateTimeFormatter +
+                ", format='" + format + '\'' +
                 ", locale='" + locale + '\'' +
                 '}';
     }
