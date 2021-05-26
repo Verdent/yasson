@@ -86,22 +86,6 @@ import jakarta.json.stream.JsonParser;
  */
 public class SerializersTest {
 
-
-    public static final class CreateOnCollection {
-
-        @JsonbTypeSerializer(CrateSerializerWithConversion.class)
-        @JsonbTypeDeserializer(CrateDeserializer.class)
-        public Collection<Crate> crates = List.of(new Crate(), new Crate());
-
-    }
-
-    @Test
-    public void testSomething() {
-        CreateOnCollection crate = new CreateOnCollection();
-        System.out.println(defaultJsonb.toJson(crate));
-
-    }
-
     @Test
     public void testClassLevelAnnotation() {
         Crate crate = new Crate();

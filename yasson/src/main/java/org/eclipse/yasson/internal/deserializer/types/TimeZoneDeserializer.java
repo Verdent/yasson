@@ -22,7 +22,7 @@ class TimeZoneDeserializer extends TypeDeserializer {
     }
 
     @Override
-    Object deserializeValue(String value, DeserializationContextImpl context, Type rType) {
+    Object deserializeStringValue(String value, DeserializationContextImpl context, Type rType) {
         try {
             final ZoneId zoneId = ZoneId.of(value);
             final ZonedDateTime zonedDateTime = LocalDateTime.now().atZone(zoneId);

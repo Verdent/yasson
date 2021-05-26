@@ -19,7 +19,7 @@ class StringDeserializer extends TypeDeserializer {
     }
 
     @Override
-    public Object deserializeValue(String value, DeserializationContextImpl context, Type rType) {
+    public Object deserializeStringValue(String value, DeserializationContextImpl context, Type rType) {
         JsonbConfigProperties config = context.getJsonbContext().getConfigProperties();
         return getDelegate().deserialize(checkIJson(value, config), context);
     }

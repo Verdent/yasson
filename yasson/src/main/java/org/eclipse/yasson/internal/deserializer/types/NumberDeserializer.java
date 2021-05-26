@@ -15,7 +15,7 @@ class NumberDeserializer extends TypeDeserializer {
     }
 
     @Override
-    Object deserializeValue(String value, DeserializationContextImpl context, Type rType) {
+    Object deserializeStringValue(String value, DeserializationContextImpl context, Type rType) {
         return new BigDecimal(value);
     }
 

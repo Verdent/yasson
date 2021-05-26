@@ -72,7 +72,7 @@ abstract class AbstractNumberDeserializer<T extends Number> extends TypeDeserial
     abstract T parseNumberValue(String value);
 
     @Override
-    Object deserializeValue(String value, DeserializationContextImpl context, Type rType) {
+    Object deserializeStringValue(String value, DeserializationContextImpl context, Type rType) {
         return actualDeserializer.deserialize(value, context);
     }
 
