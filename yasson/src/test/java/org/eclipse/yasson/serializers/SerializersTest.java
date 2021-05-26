@@ -37,6 +37,8 @@ import java.util.SortedMap;
 import java.util.TimeZone;
 import java.util.TreeMap;
 
+import jakarta.json.bind.annotation.JsonbTypeDeserializer;
+import jakarta.json.bind.annotation.JsonbTypeSerializer;
 import org.eclipse.yasson.TestTypeToken;
 import org.eclipse.yasson.YassonConfig;
 import org.eclipse.yasson.internal.model.ReverseTreeMap;
@@ -83,6 +85,22 @@ import jakarta.json.stream.JsonParser;
  * @author Roman Grigoriadi
  */
 public class SerializersTest {
+
+
+    public static final class CreateOnCollection {
+
+        @JsonbTypeSerializer(CrateSerializerWithConversion.class)
+        @JsonbTypeDeserializer(CrateDeserializer.class)
+        public Collection<Crate> crates = List.of(new Crate(), new Crate());
+
+    }
+
+    @Test
+    public void testSomething() {
+        CreateOnCollection crate = new CreateOnCollection();
+        System.out.println(defaultJsonb.toJson(crate));
+
+    }
 
     @Test
     public void testClassLevelAnnotation() {

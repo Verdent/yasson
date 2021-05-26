@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
 
-package org.eclipse.yasson.internal.serializer;
+package org.eclipse.yasson.internal.serializer.types;
 
 import java.time.Instant;
 import java.time.MonthDay;
@@ -18,24 +18,17 @@ import java.time.Year;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
-import org.eclipse.yasson.internal.model.customization.Customization;
-
 /**
  * Serializer for {@link MonthDay} type.
  */
-public class MonthDayTypeSerializer extends AbstractDateTimeSerializer<MonthDay> {
+class MonthDayTypeSerializer extends AbstractDateSerializer<MonthDay> {
 
     private static final int YEAR_NUMBER = Year.now().getValue();
 
     private static final DateTimeFormatter DEFAULT_FORMAT = DateTimeFormatter.ofPattern("--MM-dd").withZone(UTC);
 
-    /**
-     * Creates a new instance.
-     *
-     * @param customization Model customization.
-     */
-    public MonthDayTypeSerializer(Customization customization) {
-        super(customization);
+    MonthDayTypeSerializer(TypeSerializerBuilder serializerBuilder) {
+        super(serializerBuilder);
     }
 
     @Override

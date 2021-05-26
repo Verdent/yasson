@@ -53,6 +53,7 @@ public class MixedPolymorphismTest {
         yassonConfig = new YassonConfig()
                 .withPolymorphism(PolymorphismSupport.builder()
                                           .polymorphism(Polymorphism.builder(Animal.class)
+                                                                .keyName("@type")
                                                                 .format(PolymorphicType.Format.WRAPPING_ARRAY)
                                                                 .alias(Rat.class, "rat")
                                                                 .build())

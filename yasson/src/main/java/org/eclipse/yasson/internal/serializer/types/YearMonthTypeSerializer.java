@@ -10,29 +10,22 @@
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
 
-package org.eclipse.yasson.internal.serializer;
+package org.eclipse.yasson.internal.serializer.types;
 
 import java.time.Instant;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
-import org.eclipse.yasson.internal.model.customization.Customization;
-
 /**
  * Serializer for {@link YearMonth} type.
  */
-public class YearMonthTypeSerializer extends AbstractDateTimeSerializer<YearMonth> {
+class YearMonthTypeSerializer extends AbstractDateSerializer<YearMonth> {
 
     private static final DateTimeFormatter DEFAULT_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM").withZone(UTC);
 
-    /**
-     * Creates a new instance.
-     *
-     * @param customization Model customization.
-     */
-    public YearMonthTypeSerializer(Customization customization) {
-        super(customization);
+    YearMonthTypeSerializer(TypeSerializerBuilder serializerBuilder) {
+        super(serializerBuilder);
     }
 
     @Override
