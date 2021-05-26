@@ -51,9 +51,7 @@ import org.eclipse.yasson.internal.deserializer.ValueExtractor;
  */
 public class TypeDeserializers {
 
-    private static final Map<Class<?>, Function<TypeDeserializerBuilder, ModelDeserializer<String>>> DESERIALIZERS =
-            new HashMap<>();
-    private static final Map<Class<?>, Function<TypeDeserializerBuilder, ModelDeserializer<JsonParser>>> ASSIGNABLE =
+    private static final Map<Class<?>, Function<TypeDeserializerBuilder, TypeDeserializer>> DESERIALIZERS =
             new HashMap<>();
     private static final Map<Class<?>, Class<?>> OPTIONAL_TYPES = new HashMap<>();
 

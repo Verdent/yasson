@@ -73,7 +73,7 @@ abstract class AbstractDateDeserializer<T> extends TypeDeserializer {
     }
 
     @Override
-    public Object deserializeValue(String value, DeserializationContextImpl context, Type rType) {
+    public Object deserializeStringValue(String value, DeserializationContextImpl context, Type rType) {
         if (actualDeserializer == null) {
             actualDeserializer = actualDeserializer(context.getJsonbContext().getConfigProperties(), context.getCustomization());
         }

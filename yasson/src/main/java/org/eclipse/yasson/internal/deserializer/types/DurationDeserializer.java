@@ -15,7 +15,7 @@ class DurationDeserializer extends TypeDeserializer {
     }
 
     @Override
-    public Object deserializeValue(String value, DeserializationContextImpl context, Type rType) {
+    public Object deserializeStringValue(String value, DeserializationContextImpl context, Type rType) {
         return Duration.parse(value);
     }
 

@@ -13,6 +13,9 @@
 package org.eclipse.yasson.defaultmapping.basic;
 
 import org.junit.jupiter.api.*;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.eclipse.yasson.Jsonbs.*;
 
@@ -43,8 +46,8 @@ public class BooleanTest {
     @Test
     public void testBooleanDeserializationFromBooleanRawValue() throws Exception {
         BooleanModel booleanModel = defaultJsonb.fromJson("{\"field1\":false,\"field2\":false}", BooleanModel.class);
-        assertEquals(false, booleanModel.field1);
-        assertEquals(false, booleanModel.field2);
+        assertThat(booleanModel.field1, is(false));
+        assertThat(booleanModel.field2, is(false));
     }
 
     @Test
