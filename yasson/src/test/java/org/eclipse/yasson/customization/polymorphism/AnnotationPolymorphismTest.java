@@ -92,6 +92,7 @@ public class AnnotationPolymorphismTest {
     @PolymorphicType(keyName = "@type")
     @SubType(alias = "dog", type = Dog.class)
     @SubType(alias = "cat", type = Cat.class)
+    //"{\"@type\":\"dog\",\"isDog\":true}"
     public interface Animal {
 
     }

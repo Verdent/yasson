@@ -11,9 +11,11 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.MonthDay;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.Period;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -82,6 +84,7 @@ public class TypeSerializers {
         cache.put(LocalTime.class, LocalTimeSerializer::new);
         cache.put(Long.class, LongSerializer::new);
         cache.put(Long.TYPE, LongSerializer::new);
+        cache.put(MonthDay.class, MonthDayTypeSerializer::new);
         cache.put(Number.class, NumberSerializer::new);
         cache.put(Object.class, ObjectTypeSerializer::new);
         cache.put(OffsetDateTime.class, OffsetDateTimeSerializer::new);
@@ -96,6 +99,7 @@ public class TypeSerializers {
         cache.put(URL.class, UrlSerializer::new);
         cache.put(UUID.class, UuidSerializer::new);
         cache.put(XMLGregorianCalendar.class, XmlGregorianCalendarSerializer::new);
+        cache.put(YearMonth.class, YearMonthTypeSerializer::new);
         cache.put(ZonedDateTime.class, ZonedDateTimeSerializer::new);
         cache.put(ZoneId.class, ZoneIdSerializer::new);
         cache.put(ZoneOffset.class, ZoneOffsetSerializer::new);

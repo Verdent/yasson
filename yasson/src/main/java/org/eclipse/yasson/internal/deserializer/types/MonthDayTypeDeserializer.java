@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
 
-package org.eclipse.yasson.internal.serializer;
+package org.eclipse.yasson.internal.deserializer.types;
 
 import java.time.Instant;
 import java.time.MonthDay;
@@ -22,17 +22,12 @@ import org.eclipse.yasson.internal.model.customization.Customization;
 /**
  * Deserializer for {@link MonthDay} type.
  */
-public class MonthDayTypeDeserializer extends AbstractDateTimeDeserializer<MonthDay> {
+class MonthDayTypeDeserializer extends AbstractDateDeserializer<MonthDay> {
 
     private static final DateTimeFormatter DEFAULT_FORMAT = DateTimeFormatter.ofPattern("--MM-dd").withZone(UTC);
 
-    /**
-     * Creates an instance.
-     *
-     * @param customization Model customization.
-     */
-    public MonthDayTypeDeserializer(Customization customization) {
-        super(MonthDay.class, customization);
+    MonthDayTypeDeserializer(TypeDeserializerBuilder builder) {
+        super(builder);
     }
 
     @Override

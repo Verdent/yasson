@@ -11,9 +11,11 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.MonthDay;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.Period;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -80,6 +82,7 @@ public class TypeDeserializers {
         DESERIALIZERS.put(LocalTime.class, LocalTimeDeserializer::new);
         DESERIALIZERS.put(Long.class, LongDeserializer::new);
         DESERIALIZERS.put(Long.TYPE, LongDeserializer::new);
+        DESERIALIZERS.put(MonthDay.class, MonthDayTypeDeserializer::new);
         DESERIALIZERS.put(Number.class, NumberDeserializer::new);
         DESERIALIZERS.put(OffsetDateTime.class, OffsetDateTimeDeserializer::new);
         DESERIALIZERS.put(OffsetTime.class, OffsetTimeDeserializer::new);
@@ -94,6 +97,7 @@ public class TypeDeserializers {
         DESERIALIZERS.put(URL.class, UrlDeserializer::new);
         DESERIALIZERS.put(UUID.class, UuidDeserializer::new);
         DESERIALIZERS.put(XMLGregorianCalendar.class, XmlGregorianCalendar::new);
+        DESERIALIZERS.put(YearMonth.class, YearMonthTypeDeserializer::new);
         DESERIALIZERS.put(ZonedDateTime.class, ZonedDateTimeDeserializer::new);
         DESERIALIZERS.put(ZoneId.class, ZoneIdDeserializer::new);
         DESERIALIZERS.put(ZoneOffset.class, ZoneOffsetDeserializer::new);
