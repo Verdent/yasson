@@ -98,7 +98,9 @@ public class TypeSerializers {
         cache.put(URI.class, UriSerializer::new);
         cache.put(URL.class, UrlSerializer::new);
         cache.put(UUID.class, UuidSerializer::new);
-        cache.put(XMLGregorianCalendar.class, XmlGregorianCalendarSerializer::new);
+        if (isClassAvailable("javax.xml.datatype.XMLGregorianCalendar")) {
+            cache.put(XMLGregorianCalendar.class, XmlGregorianCalendarSerializer::new);
+        }
         cache.put(YearMonth.class, YearMonthTypeSerializer::new);
         cache.put(ZonedDateTime.class, ZonedDateTimeSerializer::new);
         cache.put(ZoneId.class, ZoneIdSerializer::new);
