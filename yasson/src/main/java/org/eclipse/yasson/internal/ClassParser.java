@@ -169,7 +169,7 @@ class ClassParser {
                     ? property.getGetterElement() : property.getSetterElement();
             //Only push iface annotations if not overridden on impl classes
             for (Annotation ann : method.getDeclaredAnnotations()) {
-                if (methodElement.getAnnotation(ann.annotationType()) == null) {
+                if (methodElement.getAnnotation(ann.annotationType()).isEmpty()) {
                     methodElement.putAnnotation(ann, true);
                 }
             }
@@ -237,7 +237,7 @@ class ClassParser {
     }
 
     private static String toPropertyMethod(String name) {
-        return lowerFirstLetter(name.substring(name.startsWith(IS_PREFIX) ? 2 : 3, name.length()));
+        return lowerFirstLetter(name.substring(name.startsWith(IS_PREFIX) ? 2 : 3));
     }
 
     private static String lowerFirstLetter(String name) {
