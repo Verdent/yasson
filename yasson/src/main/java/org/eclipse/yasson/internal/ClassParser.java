@@ -169,7 +169,7 @@ class ClassParser {
                     ? property.getGetterElement() : property.getSetterElement();
             //Only push iface annotations if not overridden on impl classes
             for (Annotation ann : method.getDeclaredAnnotations()) {
-                if (methodElement.getAnnotation(ann.annotationType()) == null) {
+                if (methodElement.getAnnotation(ann.annotationType()).isEmpty()) {
                     methodElement.putAnnotation(ann, true);
                 }
             }

@@ -145,7 +145,7 @@ public class ChainModelCreator {
             CollectionDeserializer collectionDeserializer = new CollectionDeserializer(typeProcessor);
             CollectionInstanceCreator instanceDeserializer = new CollectionInstanceCreator(collectionDeserializer, type);
             PositionChecker positionChecker = new PositionChecker(instanceDeserializer, rawType, Event.START_ARRAY);
-            NullCheckDeserializer nullChecker = new NullCheckDeserializer(positionChecker, JustReturn.create(), rawType);
+            NullCheckDeserializer nullChecker = new NullCheckDeserializer(positionChecker, JustReturn.create());
             deserializerChain.put(cachedItem, nullChecker);
             return nullChecker;
         } else if (Map.class.isAssignableFrom(rawType)) {
@@ -170,7 +170,7 @@ public class ChainModelCreator {
                                                                            jsonbContext.getConfigProperties(),
                                                                            rawType);
             PositionChecker positionChecker = new PositionChecker(mapInstanceCreator, rawType, PositionChecker.Checker.CONTAINER);
-            NullCheckDeserializer nullChecker = new NullCheckDeserializer(positionChecker, JustReturn.create(), rawType);
+            NullCheckDeserializer nullChecker = new NullCheckDeserializer(positionChecker, JustReturn.create());
             deserializerChain.put(cachedItem, nullChecker);
             return nullChecker;
         } else if (rawType.isArray()) {
@@ -182,7 +182,7 @@ public class ChainModelCreator {
                                                                             JustReturn.create());
                 ModelDeserializer<JsonParser> base64Deserializer = ArrayInstanceCreator
                         .createBase64Deserializer(strategy, typeProcessor);
-                NullCheckDeserializer nullChecker = new NullCheckDeserializer(base64Deserializer, JustReturn.create(), rawType);
+                NullCheckDeserializer nullChecker = new NullCheckDeserializer(base64Deserializer, JustReturn.create());
                 deserializerChain.put(cachedItem, nullChecker);
                 return nullChecker;
             }
@@ -194,7 +194,7 @@ public class ChainModelCreator {
             ArrayDeserializer arrayDeserializer = new ArrayDeserializer(typeProcessor);
             ArrayInstanceCreator arrayInstanceCreator = ArrayInstanceCreator.create(rawType, arrayType, arrayDeserializer);
             PositionChecker positionChecker = new PositionChecker(arrayInstanceCreator, rawType, Event.START_ARRAY);
-            NullCheckDeserializer nullChecker = new NullCheckDeserializer(positionChecker, JustReturn.create(), rawType);
+            NullCheckDeserializer nullChecker = new NullCheckDeserializer(positionChecker, JustReturn.create());
             deserializerChain.put(cachedItem, nullChecker);
             return nullChecker;
         } else if (type instanceof GenericArrayType) {
@@ -206,7 +206,7 @@ public class ChainModelCreator {
             ArrayDeserializer arrayDeserializer = new ArrayDeserializer(typeProcessor);
             ArrayInstanceCreator arrayInstanceCreator = ArrayInstanceCreator.create(rawType, component, arrayDeserializer);
             PositionChecker positionChecker = new PositionChecker(arrayInstanceCreator, rawType, Event.START_ARRAY);
-            NullCheckDeserializer nullChecker = new NullCheckDeserializer(positionChecker, JustReturn.create(), rawType);
+            NullCheckDeserializer nullChecker = new NullCheckDeserializer(positionChecker, JustReturn.create());
             deserializerChain.put(cachedItem, nullChecker);
             return nullChecker;
         } else if (Optional.class.isAssignableFrom(rawType)) {
@@ -286,9 +286,7 @@ public class ChainModelCreator {
                                                                    classModel.getDefaultConstructor());
                 positionChecker = new PositionChecker(instanceCreator, rawType, Event.START_OBJECT);
             }
-            ModelDeserializer<JsonParser> nullChecker = new NullCheckDeserializer(positionChecker,
-                                                                                  JustReturn.create(),
-                                                                                  rawType);
+            ModelDeserializer<JsonParser> nullChecker = new NullCheckDeserializer(positionChecker, JustReturn.create());
             deserializerChain.put(cachedItem, nullChecker);
             return nullChecker;
         }

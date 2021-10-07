@@ -57,37 +57,21 @@ public class JsonbConfigProperties {
                    PropertyOrderStrategy.ANY, HashMap.class);
 
     private final JsonbConfig jsonbConfig;
-
     private final PropertyVisibilityStrategy propertyVisibilityStrategy;
-
     private final PropertyNamingStrategy propertyNamingStrategy;
-
     private final PropertyOrdering propertyOrdering;
-
     private final JsonbDateFormatter dateFormatter;
-
     private final Locale locale;
-
     private final String binaryDataStrategy;
-
     private final boolean nullable;
-
     private final boolean failOnUnknownProperties;
-
     private final boolean strictIJson;
-
     private final boolean zeroTimeDefaulting;
-
     private final Map<Class<?>, Class<?>> userTypeMapping;
-
     private final Class<?> defaultMapImplType;
-
     private final JsonbSerializer<Object> nullSerializer;
-
     private final Set<Class<?>> eagerInitClasses;
-
     private final boolean forceMapArraySerializerForNullKeys;
-
     private final PolymorphismSupport polymorphismSupport;
 
     /**
@@ -116,7 +100,10 @@ public class JsonbConfigProperties {
     }
 
     private Class<? extends Map> initDefaultMapImplType() {
-        return PROPERTY_ORDER_STRATEGY_MAPS.getOrDefault(getPropertyOrderStrategy(), HashMap.class);
+        //We need to get PropertyOrderStrategy again. This time, if was not set, use ANY to get proper map implementation.
+        //This is intentional!
+        String propertyOrder = getConfigProperty(JsonbConfig.PROPERTY_ORDER_STRATEGY, String.class, PropertyOrderStrategy.ANY);
+        return PROPERTY_ORDER_STRATEGY_MAPS.getOrDefault(propertyOrder, HashMap.class);
     }
 
     private boolean initZeroTimeDefaultingForJavaTime() {
