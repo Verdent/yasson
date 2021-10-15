@@ -24,14 +24,14 @@ import org.eclipse.yasson.internal.properties.Messages;
 /**
  * TODO javadoc
  */
-class XmlGregorianCalendar extends AbstractDateDeserializer<XMLGregorianCalendar> {
+class XmlGregorianCalendarDeserializer extends AbstractDateDeserializer<XMLGregorianCalendar> {
 
     private static final LocalTime ZERO_LOCAL_TIME = LocalTime.parse("00:00:00");
 
     private final Calendar calendarTemplate;
     private final DatatypeFactory datatypeFactory;
 
-    XmlGregorianCalendar(TypeDeserializerBuilder builder) {
+    XmlGregorianCalendarDeserializer(TypeDeserializerBuilder builder) {
         super(builder);
         this.calendarTemplate = new GregorianCalendar();
         this.calendarTemplate.clear();
