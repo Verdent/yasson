@@ -21,15 +21,19 @@ import org.eclipse.yasson.internal.properties.Messages;
 public class ObjectInstanceCreator implements ModelDeserializer<JsonParser> {
 
     private final Map<String, ModelDeserializer<JsonParser>> propertyDeserializerChains;
+    private final Map<String, ModelDeserializer<Object>> defaultCreatorValues;
     private final List<String> creatorParams;
     private final JsonbCreator creator;
     private final Class<?> clazz;
     private final Function<String, String> renamer;
 
     public ObjectInstanceCreator(Map<String, ModelDeserializer<JsonParser>> propertyDeserializerChains,
+                                 Map<String, ModelDeserializer<Object>> defaultCreatorValues,
                                  JsonbCreator creator,
-                                 Class<?> clazz, Function<String, String> renamer) {
+                                 Class<?> clazz,
+                                 Function<String, String> renamer) {
         this.propertyDeserializerChains = propertyDeserializerChains;
+        this.defaultCreatorValues = defaultCreatorValues;
         this.creatorParams = Arrays.stream(creator.getParams()).map(CreatorModel::getName).collect(Collectors.toList());
         this.creator = creator;
         this.clazz = clazz;
@@ -68,7 +72,7 @@ public class ObjectInstanceCreator implements ModelDeserializer<JsonParser> {
                     if (paramValues.containsKey(param)) {
                         params[i] = paramValues.get(param);
                     } else {
-                        throw new JsonbException(Messages.getMessage(MessageKeys.JSONB_CREATOR_MISSING_PROPERTY, param));
+                        params[i] = defaultCreatorValues.get(param).deserialize(null, context);
                     }
                 }
                 context.setInstance(creator.call(params, clazz));

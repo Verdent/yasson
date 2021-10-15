@@ -6,6 +6,7 @@ import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -13,6 +14,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -23,6 +27,7 @@ import jakarta.json.bind.config.BinaryDataStrategy;
 import jakarta.json.bind.config.PropertyNamingStrategy;
 import jakarta.json.stream.JsonParser;
 import org.eclipse.yasson.PolymorphicType;
+import org.eclipse.yasson.internal.DeserializationContextImpl;
 import org.eclipse.yasson.internal.JsonbConfigProperties;
 import org.eclipse.yasson.internal.JsonbContext;
 import org.eclipse.yasson.internal.JsonbDateFormatter;
@@ -30,6 +35,7 @@ import org.eclipse.yasson.internal.JsonbNumberFormatter;
 import org.eclipse.yasson.internal.ReflectionUtils;
 import org.eclipse.yasson.internal.components.AdapterBinding;
 import org.eclipse.yasson.internal.components.DeserializerBinding;
+import org.eclipse.yasson.internal.deserializer.types.TypeDeserializers;
 import org.eclipse.yasson.internal.model.ClassModel;
 import org.eclipse.yasson.internal.model.CreatorModel;
 import org.eclipse.yasson.internal.model.JsonbCreator;
@@ -39,8 +45,6 @@ import org.eclipse.yasson.internal.model.customization.ComponentBoundCustomizati
 import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.model.customization.PolymorphismConfig;
 import org.eclipse.yasson.internal.model.customization.PropertyCustomization;
-import org.eclipse.yasson.internal.DeserializationContextImpl;
-import org.eclipse.yasson.internal.deserializer.types.TypeDeserializers;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
 
@@ -52,11 +56,29 @@ import static jakarta.json.stream.JsonParser.Event;
  */
 public class ChainModelCreator {
 
+    private static final Map<Class<?>, ModelDeserializer<Object>> DEFAULT_CREATOR_VALUES;
     private static final Set<JsonParser.Event> MAP_KEY_EVENTS = new HashSet<>();
 
     static {
         MAP_KEY_EVENTS.add(Event.KEY_NAME);
         MAP_KEY_EVENTS.addAll(PositionChecker.Checker.VALUES.getEvents());
+
+        Map<Class<?>, ModelDeserializer<Object>> tmpValuesMap = new HashMap<>();
+
+        tmpValuesMap.put(byte.class, (value, context) -> 0);
+        tmpValuesMap.put(short.class, (value, context) -> 0);
+        tmpValuesMap.put(int.class, (value, context) -> 0);
+        tmpValuesMap.put(long.class, (value, context) -> 0L);
+        tmpValuesMap.put(float.class, (value, context) -> 0.0F);
+        tmpValuesMap.put(double.class, (value, context) -> 0.0);
+        tmpValuesMap.put(char.class, (value, context) -> '\u0000');
+        tmpValuesMap.put(boolean.class, (value, context) -> false);
+        tmpValuesMap.put(Optional.class, (value, context) -> Optional.empty());
+        tmpValuesMap.put(OptionalInt.class, (value, context) -> OptionalInt.empty());
+        tmpValuesMap.put(OptionalLong.class, (value, context) -> OptionalLong.empty());
+        tmpValuesMap.put(OptionalDouble.class, (value, context) -> OptionalDouble.empty());
+
+        DEFAULT_CREATOR_VALUES = Map.copyOf(tmpValuesMap);
     }
 
     private final Map<CachedItem, ModelDeserializer<JsonParser>> deserializerChain = new ConcurrentHashMap<>();
@@ -94,7 +116,7 @@ public class ChainModelCreator {
                                                                     Type type,
                                                                     Customization propertyCustomization,
                                                                     ClassModel classModel) {
-//                                                                    boolean evaluateRoot) {//TODO remove or not?
+        //                                                                    boolean evaluateRoot) {//TODO remove or not?
         Class<?> rawType = classModel.getType();
         CachedItem cachedItem = createCachedItem(type, propertyCustomization);
         if (deserializerChain.containsKey(cachedItem)) {
@@ -223,22 +245,24 @@ public class ChainModelCreator {
         } else {
             ClassCustomization classCustomization = classModel.getClassCustomization();
             //TODO remove or not? fix for deserializer cycle
-//            if (evaluateRoot) {
-//                Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(type,
-//                                                                                        (ComponentBoundCustomization) propertyCustomization);
-//                if (deserializerBinding.isPresent()) {
-//                    ModelDeserializer<JsonParser> exactType = deserializerChainInternal(chain,
-//                                                                                        type,
-//                                                                                        propertyCustomization,
-//                                                                                        classModel,
-//                                                                                        false);
-//                    UserDefinedDeserializer user = new UserDefinedDeserializer(deserializerBinding.get().getJsonbDeserializer(),
-//                                                                               exactType,
-//                                                                               JustReturn.create(), type, classCustomization);
-//                    deserializerChain.put(type, user);
-//                    return user;
-//                }
-//            }
+            //            if (evaluateRoot) {
+            //                Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(type,
+            //                                                                                        (ComponentBoundCustomization) propertyCustomization);
+            //                if (deserializerBinding.isPresent()) {
+            //                    ModelDeserializer<JsonParser> exactType = deserializerChainInternal(chain,
+            //                                                                                        type,
+            //                                                                                        propertyCustomization,
+            //                                                                                        classModel,
+            //                                                                                        false);
+            //                    UserDefinedDeserializer user = new UserDefinedDeserializer(deserializerBinding.get()
+            //                    .getJsonbDeserializer(),
+            //                                                                               exactType,
+            //                                                                               JustReturn.create(), type,
+            //                                                                               classCustomization);
+            //                    deserializerChain.put(type, user);
+            //                    return user;
+            //                }
+            //            }
             Optional<DeserializerBinding<?>> deserializerBinding = userDeserializer(type,
                                                                                     (ComponentBoundCustomization) propertyCustomization);
             if (deserializerBinding.isPresent()) {
@@ -252,6 +276,7 @@ public class ChainModelCreator {
             List<String> params = hasCreator ? creatorParamsList(creator) : Collections.emptyList();
             Function<String, String> renamer = propertyRenamer();
             Map<String, ModelDeserializer<JsonParser>> processors = new LinkedHashMap<>();
+            Map<String, ModelDeserializer<Object>> defaultCreatorValues = new HashMap<>();
             for (PropertyModel propertyModel : classModel.getSortedProperties()) {
                 if (!propertyModel.isWritable() || params.contains(propertyModel.getReadName())) {
                     continue;
@@ -265,7 +290,15 @@ public class ChainModelCreator {
                                                                                 creatorModel.getType(),
                                                                                 creatorModel.getCustomization(),
                                                                                 JustReturn.create());
-                processors.put(renamer.apply(creatorModel.getName()), modelDeserializer);
+                String parameterName = renamer.apply(creatorModel.getName());
+                processors.put(parameterName, modelDeserializer);
+                if (true) { //if parameter is optional
+                    Class<?> rawParamType = ReflectionUtils.getRawType(creatorModel.getType());
+                    defaultCreatorValues.put(parameterName,
+                                             DEFAULT_CREATOR_VALUES.getOrDefault(rawParamType, (value, context) -> null));
+                } else { //if parameter is not optional
+                    defaultCreatorValues.put(parameterName,new RequiredCreatorParameter(parameterName));
+                }
             }
             ModelDeserializer<JsonParser> instanceCreator;
             PolymorphismConfig polymorphismConfig = classCustomization.getPolymorphismConfig();
@@ -278,7 +311,7 @@ public class ChainModelCreator {
                     positionChecker = new PositionChecker(instanceCreator, rawType, Event.START_OBJECT);
                 }
             } else if (hasCreator) {
-                instanceCreator = new ObjectInstanceCreator(processors, creator, rawType, renamer);
+                instanceCreator = new ObjectInstanceCreator(processors, defaultCreatorValues, creator, rawType, renamer);
                 positionChecker = new PositionChecker(instanceCreator, rawType, Event.START_OBJECT);
             } else {
                 ModelDeserializer<JsonParser> typeWrapper = new ObjectDeserializer(processors, renamer, rawType);
@@ -345,12 +378,13 @@ public class ChainModelCreator {
                                                                                 (ComponentBoundCustomization) customization);
         if (deserializerBinding.isPresent()) {
             //TODO remove or not? fix for deserializer cycle
-//            ModelDeserializer<JsonParser> exactType = createNewChain(chain, memberDeserializer, rawType, resolved, customization);
-//            return new UserDefinedDeserializer(deserializerBinding.get().getJsonbDeserializer(),
-//                                               exactType,
-//                                               memberDeserializer,
-//                                               resolved,
-//                                               customization);
+            //            ModelDeserializer<JsonParser> exactType = createNewChain(chain, memberDeserializer, rawType,
+            //            resolved, customization);
+            //            return new UserDefinedDeserializer(deserializerBinding.get().getJsonbDeserializer(),
+            //                                               exactType,
+            //                                               memberDeserializer,
+            //                                               resolved,
+            //                                               customization);
             return new UserDefinedDeserializer(deserializerBinding.get().getJsonbDeserializer(),
                                                memberDeserializer,
                                                resolved,
@@ -432,8 +466,6 @@ public class ChainModelCreator {
     private CachedItem createCachedItem(Type type, Customization customization) {
         return new CachedItem(type, customization.getDeserializeNumberFormatter(), customization.getDeserializeDateFormatter());
     }
-
-
 
     private static final class CachedItem {
 
