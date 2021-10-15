@@ -95,7 +95,7 @@ public class TypeDeserializers {
         DESERIALIZERS.put(URL.class, UrlDeserializer::new);
         DESERIALIZERS.put(UUID.class, UuidDeserializer::new);
         if (isClassAvailable("javax.xml.datatype.XMLGregorianCalendar")) {
-            DESERIALIZERS.put(XMLGregorianCalendar.class, XmlGregorianCalendar::new);
+            DESERIALIZERS.put(XMLGregorianCalendar.class, XmlGregorianCalendarDeserializer::new);
         }
         DESERIALIZERS.put(YearMonth.class, YearMonthTypeDeserializer::new);
         DESERIALIZERS.put(ZonedDateTime.class, ZonedDateTimeDeserializer::new);
