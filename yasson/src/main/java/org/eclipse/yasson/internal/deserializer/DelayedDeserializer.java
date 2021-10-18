@@ -5,7 +5,7 @@ import org.eclipse.yasson.internal.DeserializationContextImpl;
 /**
  * TODO javadoc
  */
-public class DelayedDeserializer implements ModelDeserializer<Object> {
+class DelayedDeserializer implements ModelDeserializer<Object> {
 
     private final ModelDeserializer<Object> delegate;
 

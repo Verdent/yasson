@@ -6,7 +6,7 @@ import org.eclipse.yasson.internal.DeserializationContextImpl;
 /**
  * TODO javadoc
  */
-public class ContextSwitcher implements ModelDeserializer<JsonParser> {
+class ContextSwitcher implements ModelDeserializer<JsonParser> {
 
     private final ModelDeserializer<Object> delegate;
     private final ModelDeserializer<JsonParser> modelDeserializer;

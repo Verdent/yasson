@@ -11,7 +11,7 @@ import org.eclipse.yasson.internal.YassonParser;
 /**
  * TODO javadoc
  */
-public class UserDefinedDeserializer implements ModelDeserializer<JsonParser> {
+class UserDefinedDeserializer implements ModelDeserializer<JsonParser> {
 
     private final JsonbDeserializer<?> userDefinedDeserializer;
 //    private final ModelDeserializer<JsonParser> exactType;

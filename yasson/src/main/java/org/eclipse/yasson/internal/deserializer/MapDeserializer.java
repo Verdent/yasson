@@ -9,7 +9,7 @@ import org.eclipse.yasson.internal.DeserializationContextImpl;
 /**
  * TODO javadoc
  */
-public class MapDeserializer implements ModelDeserializer<JsonParser> {
+class MapDeserializer implements ModelDeserializer<JsonParser> {
 
     private final ModelDeserializer<JsonParser> keyDelegate;
     private final ModelDeserializer<JsonParser> valueDelegate;

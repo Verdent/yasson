@@ -18,7 +18,7 @@ import org.eclipse.yasson.internal.properties.Messages;
 /**
  * TODO javadoc
  */
-public class ObjectInstanceCreator implements ModelDeserializer<JsonParser> {
+class ObjectInstanceCreator implements ModelDeserializer<JsonParser> {
 
     private final Map<String, ModelDeserializer<JsonParser>> propertyDeserializerChains;
     private final Map<String, ModelDeserializer<Object>> defaultCreatorValues;

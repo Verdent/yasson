@@ -1,6 +1,7 @@
 package org.eclipse.yasson.internal.deserializer;
 
 import java.lang.invoke.MethodHandle;
+import java.util.Objects;
 
 import jakarta.json.bind.JsonbException;
 import org.eclipse.yasson.internal.DeserializationContextImpl;
@@ -8,12 +9,12 @@ import org.eclipse.yasson.internal.DeserializationContextImpl;
 /**
  * TODO javadoc
  */
-public class ValueSetterDeserializer implements ModelDeserializer<Object>{
+class ValueSetterDeserializer implements ModelDeserializer<Object>{
 
     private final MethodHandle valueSetter;
 
     public ValueSetterDeserializer(MethodHandle valueSetter) {
-        this.valueSetter = valueSetter;
+        this.valueSetter = Objects.requireNonNull(valueSetter);
     }
 
     @Override

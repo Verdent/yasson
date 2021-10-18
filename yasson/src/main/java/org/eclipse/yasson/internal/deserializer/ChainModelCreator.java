@@ -65,8 +65,8 @@ public class ChainModelCreator {
 
         Map<Class<?>, ModelDeserializer<Object>> tmpValuesMap = new HashMap<>();
 
-        tmpValuesMap.put(byte.class, (value, context) -> 0);
-        tmpValuesMap.put(short.class, (value, context) -> 0);
+        tmpValuesMap.put(byte.class, (value, context) -> (byte) 0);
+        tmpValuesMap.put(short.class, (value, context) -> (short) 0);
         tmpValuesMap.put(int.class, (value, context) -> 0);
         tmpValuesMap.put(long.class, (value, context) -> 0L);
         tmpValuesMap.put(float.class, (value, context) -> 0.0F);
