@@ -13,15 +13,20 @@
 
 package org.eclipse.yasson.internal;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
@@ -35,6 +40,7 @@ import jakarta.json.bind.config.PropertyNamingStrategy;
 import jakarta.json.bind.config.PropertyOrderStrategy;
 import jakarta.json.bind.config.PropertyVisibilityStrategy;
 import jakarta.json.bind.serializer.JsonbSerializer;
+
 import org.eclipse.yasson.YassonConfig;
 import org.eclipse.yasson.config.PolymorphismSupport;
 import org.eclipse.yasson.internal.model.PropertyModel;
@@ -42,6 +48,7 @@ import org.eclipse.yasson.internal.model.ReverseTreeMap;
 import org.eclipse.yasson.internal.model.customization.PropertyOrdering;
 import org.eclipse.yasson.internal.model.customization.StrategiesProvider;
 import org.eclipse.yasson.internal.model.customization.VisibilityStrategiesProvider;
+import org.eclipse.yasson.internal.model.newCustom.api.TypeCustomization;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
 
@@ -67,6 +74,7 @@ public class JsonbConfigProperties {
     private final boolean failOnUnknownProperties;
     private final boolean strictIJson;
     private final boolean zeroTimeDefaulting;
+    private final boolean optionalCreatorParameters;
     private final Map<Class<?>, Class<?>> userTypeMapping;
     private final Class<?> defaultMapImplType;
     private final JsonbSerializer<Object> nullSerializer;
@@ -95,6 +103,7 @@ public class JsonbConfigProperties {
         this.defaultMapImplType = initDefaultMapImplType();
         this.nullSerializer = initNullSerializer();
         this.eagerInitClasses = initEagerInitClasses();
+        this.optionalCreatorParameters = initOptionalCreatorParameters();
         this.forceMapArraySerializerForNullKeys = initForceMapArraySerializerForNullKeys();
         this.polymorphismSupport = initPolymorphismSupport();
     }
@@ -107,7 +116,7 @@ public class JsonbConfigProperties {
     }
 
     private boolean initZeroTimeDefaultingForJavaTime() {
-        return getConfigProperty(YassonConfig.ZERO_TIME_PARSE_DEFAULTING, Boolean.class,false);
+        return getConfigProperty(YassonConfig.ZERO_TIME_PARSE_DEFAULTING, Boolean.class, false);
     }
 
     @SuppressWarnings("unchecked")
@@ -184,6 +193,10 @@ public class JsonbConfigProperties {
         return getConfigProperty(YassonConfig.FAIL_ON_UNKNOWN_PROPERTIES, Boolean.class, false);
     }
 
+    private boolean initOptionalCreatorParameters() {
+        return getConfigProperty("REPLACE ME", boolean.class, false);
+    }
+
     @SuppressWarnings("unchecked")
     private JsonbSerializer<Object> initNullSerializer() {
         return jsonbConfig.getProperty(YassonConfig.NULL_ROOT_SERIALIZER)
@@ -247,6 +260,7 @@ public class JsonbConfigProperties {
     }
 
     private <T> T getConfigProperty(String propertyName, Class<T> propertyType, T defaultValue) {
+        Objects.requireNonNull(defaultValue, "Default value cannot be null");
         return jsonbConfig.getProperty(propertyName)
                 .or(() -> Optional.of(defaultValue))
                 .filter(propertyType::isInstance)
@@ -371,6 +385,10 @@ public class JsonbConfigProperties {
 
     public JsonbSerializer<Object> getNullSerializer() {
         return nullSerializer;
+    }
+
+    public boolean hasOptionalCreatorParameters() {
+        return optionalCreatorParameters;
     }
 
     public Set<Class<?>> getEagerInitClasses() {
