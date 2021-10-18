@@ -61,6 +61,7 @@ import jakarta.json.bind.annotation.JsonbVisibility;
 import jakarta.json.bind.config.PropertyVisibilityStrategy;
 import jakarta.json.bind.serializer.JsonbDeserializer;
 import jakarta.json.bind.serializer.JsonbSerializer;
+
 import org.eclipse.yasson.ImplementationClass;
 import org.eclipse.yasson.PolymorphicType;
 import org.eclipse.yasson.SubType;
@@ -202,9 +203,9 @@ public class AnnotationIntrospector {
             final Parameter parameter = parameters[i];
             final JsonbProperty jsonbPropertyAnnotation = parameter.getAnnotation(JsonbProperty.class);
             if (jsonbPropertyAnnotation != null && !jsonbPropertyAnnotation.value().isEmpty()) {
-                creatorModels[i] = new CreatorModel(jsonbPropertyAnnotation.value(), parameter, jsonbContext);
+                creatorModels[i] = new CreatorModel(jsonbPropertyAnnotation.value(), parameter, executable, jsonbContext);
             } else {
-                creatorModels[i] = new CreatorModel(parameter.getName(), parameter, jsonbContext);
+                creatorModels[i] = new CreatorModel(parameter.getName(), parameter, executable, jsonbContext);
             }
         }
 
@@ -843,5 +844,12 @@ public class AnnotationIntrospector {
                                                  + " cannot be used multiple times in the class tree.");
             }
         }
+    }
+
+    public boolean optionalParameters(Executable executable, JsonbAnnotatedElement<Parameter> annotated) {
+        return annotated.getAnnotation(JsonbNillable.class)
+                .or(() -> Optional.ofNullable(executable.getAnnotation(JsonbNillable.class)))
+                .map(JsonbNillable::value)
+                .orElseGet(() -> jsonbContext.getConfigProperties().hasOptionalCreatorParameters());
     }
 }

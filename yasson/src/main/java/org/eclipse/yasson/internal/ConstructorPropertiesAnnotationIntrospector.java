@@ -83,7 +83,7 @@ class ConstructorPropertiesAnnotationIntrospector {
         CreatorModel[] creatorModels = new CreatorModel[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
             final Parameter parameter = parameters[i];
-            creatorModels[i] = new CreatorModel(properties[i], parameter, jsonbContext);
+            creatorModels[i] = new CreatorModel(properties[i], parameter, executable, jsonbContext);
         }
         return new JsonbCreator(executable, creatorModels);
     }

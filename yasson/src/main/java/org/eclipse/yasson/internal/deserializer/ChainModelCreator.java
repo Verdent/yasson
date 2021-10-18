@@ -292,7 +292,7 @@ public class ChainModelCreator {
                                                                                 JustReturn.create());
                 String parameterName = renamer.apply(creatorModel.getName());
                 processors.put(parameterName, modelDeserializer);
-                if (true) { //if parameter is optional
+                if (creatorModel.getCustomization().isOptional()) { //if parameter is optional
                     Class<?> rawParamType = ReflectionUtils.getRawType(creatorModel.getType());
                     defaultCreatorValues.put(parameterName,
                                              DEFAULT_CREATOR_VALUES.getOrDefault(rawParamType, (value, context) -> null));

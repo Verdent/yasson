@@ -12,6 +12,7 @@
 
 package org.eclipse.yasson.internal.model;
 
+import java.lang.reflect.Executable;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
 
@@ -35,18 +36,19 @@ public class CreatorModel {
 
     /**
      * Creates a new instance.
-     *
-     * @param name      Parameter name
+     *  @param name      Parameter name
      * @param parameter constructor parameter
+     * @param executable
      * @param context   jsonb context
      */
-    public CreatorModel(String name, Parameter parameter, JsonbContext context) {
+    public CreatorModel(String name, Parameter parameter, Executable executable, JsonbContext context) {
         this.name = name;
         this.type = parameter.getParameterizedType();
 
         AnnotationIntrospector annotationIntrospector = context.getAnnotationIntrospector();
 
         JsonbAnnotatedElement<Parameter> annotated = new JsonbAnnotatedElement<>(parameter);
+        boolean optional = context.getAnnotationIntrospector().optionalParameters(executable, annotated);
         JsonbNumberFormatter constructorNumberFormatter = context.getAnnotationIntrospector()
                 .getConstructorNumberFormatter(annotated);
         JsonbDateFormatter constructorDateFormatter = context.getAnnotationIntrospector().getConstructorDateFormatter(annotated);
@@ -61,6 +63,7 @@ public class CreatorModel {
                 .serializerBinding(annotationIntrospector.getSerializerBinding(clsElement))
                 .numberFormatter(constructorNumberFormatter)
                 .dateFormatter(constructorDateFormatter)
+                .optional(optional)
                 .build();
     }
 

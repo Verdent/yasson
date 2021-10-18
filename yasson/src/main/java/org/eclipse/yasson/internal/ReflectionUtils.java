@@ -167,7 +167,7 @@ public class ReflectionUtils {
      * @param warn         whether or not to log a warning message when bounds are not found
      * @return Type of a generic "runtime" bound, not null.
      */
-    static Type resolveItemVariableType(List<Type> chain, TypeVariable<?> typeVariable, boolean warn) {
+    public static Type resolveItemVariableType(List<Type> chain, TypeVariable<?> typeVariable, boolean warn) {
 //        if (chain == null) {
 //        Optional<Class<?>> optionalRawType = getOptionalRawType(typeVariable);
 //        if (optionalRawType.isPresent()) {
