@@ -10,7 +10,7 @@ import org.eclipse.yasson.internal.DeserializationContextImpl;
 /**
  * TODO javadoc
  */
-public class CyclicReferenceDeserializer implements ModelDeserializer<JsonParser> {
+class CyclicReferenceDeserializer implements ModelDeserializer<JsonParser> {
 
     private final Type type;
     private ModelDeserializer<JsonParser> delegate;

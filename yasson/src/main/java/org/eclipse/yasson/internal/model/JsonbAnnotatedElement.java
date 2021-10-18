@@ -63,11 +63,10 @@ public class JsonbAnnotatedElement<T extends AnnotatedElement> {
      * @param annotationClass Type of annotation
      * @return Annotation by passed type
      */
-    public <AT extends Annotation> AT getAnnotation(Class<AT> annotationClass) {
+    public <AT extends Annotation> Optional<AT> getAnnotation(Class<AT> annotationClass) {
         return Optional.ofNullable(annotations.get(annotationClass))
                 .map(AnnotationWrapper::getAnnotation)
-                .map(annotationClass::cast)
-                .orElse(null);
+                .map(annotationClass::cast);
     }
 
     @SuppressWarnings("unchecked")

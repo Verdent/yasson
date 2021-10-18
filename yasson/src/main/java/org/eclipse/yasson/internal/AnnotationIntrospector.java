@@ -64,7 +64,7 @@ import jakarta.json.bind.serializer.JsonbSerializer;
 import org.eclipse.yasson.ImplementationClass;
 import org.eclipse.yasson.PolymorphicType;
 import org.eclipse.yasson.SubType;
-import org.eclipse.yasson.YassonSubTypes;
+import org.eclipse.yasson.SubTypes;
 import org.eclipse.yasson.internal.components.AdapterBinding;
 import org.eclipse.yasson.internal.components.DeserializerBinding;
 import org.eclipse.yasson.internal.components.SerializerBinding;
@@ -90,7 +90,7 @@ public class AnnotationIntrospector {
     private static final Set<Class<? extends Annotation>> NON_REPEATABLE;
 
     static {
-        NON_REPEATABLE = Set.of(YassonSubTypes.class, SubType.class, PolymorphicType.class);
+        NON_REPEATABLE = Set.of(SubTypes.class, SubType.class, PolymorphicType.class);
     }
 
     /**
@@ -275,6 +275,31 @@ public class AnnotationIntrospector {
     }
 
     /**
+     * Checks for {@link JsonbDeserializer} on a {@link Parameter}.
+     *
+     * @param parameter parameter not null
+     * @return components info
+     */
+    public DeserializerBinding getDeserializerBinding(Parameter parameter) {
+        Objects.requireNonNull(parameter);
+        JsonbTypeDeserializer deserializerAnnotation = Optional.ofNullable(parameter.getDeclaredAnnotation(JsonbTypeDeserializer.class))
+                .orElseGet(() -> getAnnotationFromParameterType(parameter, JsonbTypeDeserializer.class));
+        if (deserializerAnnotation == null) {
+            return null;
+        }
+
+        final Class<? extends JsonbDeserializer> deserializerClass = deserializerAnnotation.value();
+        return jsonbContext.getComponentMatcher().introspectDeserializerBinding(deserializerClass, null);
+    }
+
+    private <T extends Annotation> T getAnnotationFromParameterType(Parameter parameter, Class<T> annotationClass) {
+        final Optional<Class<?>> optionalRawType = ReflectionUtils.getOptionalRawType(parameter.getParameterizedType());
+        //will not work for type variable properties, which are bound to class that is annotated.
+        return optionalRawType.map(aClass -> findAnnotation(collectAnnotations(aClass).getAnnotations(), annotationClass))
+                .orElse(null);
+    }
+
+    /**
      * Checks for {@link JsonbDeserializer} on a type.
      *
      * @param clsElement type not null
@@ -347,6 +372,10 @@ public class AnnotationIntrospector {
     public Optional<Boolean> isPropertyNillable(Property property) {
         Objects.requireNonNull(property);
 
+        Optional<JsonbNillable> nillable = getAnnotationFromProperty(JsonbNillable.class, property);
+        if (nillable.isPresent()) {
+            return nillable.map(JsonbNillable::value);
+        }
         final Optional<JsonbProperty> jsonbProperty = getAnnotationFromProperty(JsonbProperty.class, property);
         return jsonbProperty.map(JsonbProperty::nillable);
 
@@ -524,11 +553,9 @@ public class AnnotationIntrospector {
      * @return formatter instance if {@link JsonbNumberFormat} is present otherwise null
      */
     public JsonbNumberFormatter getConstructorNumberFormatter(JsonbAnnotatedElement<Parameter> param) {
-        JsonbNumberFormat annotation = param.getAnnotation(JsonbNumberFormat.class);
-        if (annotation != null) {
-            return new JsonbNumberFormatter(annotation.value(), annotation.locale());
-        }
-        return null;
+        return param.getAnnotation(JsonbNumberFormat.class)
+                .map(annotation -> new JsonbNumberFormatter(annotation.value(), annotation.locale()))
+                .orElse(null);
     }
 
     /**
@@ -538,13 +565,11 @@ public class AnnotationIntrospector {
      * @return formatter instance if {@link JsonbDateFormat} is present otherwise null
      */
     public JsonbDateFormatter getConstructorDateFormatter(JsonbAnnotatedElement<Parameter> param) {
-        JsonbDateFormat annotation = param.getAnnotation(JsonbDateFormat.class);
-        if (annotation != null) {
-            return new JsonbDateFormatter(DateTimeFormatter
-                                                  .ofPattern(annotation.value(), Locale.forLanguageTag(annotation.locale())),
-                                          annotation.value(), annotation.locale());
-        }
-        return null;
+        return param.getAnnotation(JsonbDateFormat.class)
+                .map(annotation -> new JsonbDateFormatter(DateTimeFormatter.ofPattern(annotation.value(),
+                                                                                      Locale.forLanguageTag(annotation.locale())),
+                                                          annotation.value(), annotation.locale()))
+                .orElse(null);
     }
 
     /**
@@ -766,9 +791,9 @@ public class AnnotationIntrospector {
                                              .filter(p -> !p.isBlank())
                                              .collect(Collectors.toSet()));
         Consumer<SubType> consumer = subType -> builder.alias(subType.type(), subType.alias());
-        Optional.ofNullable(clsElement.getAnnotation(YassonSubTypes.class))
+        clsElement.getAnnotation(SubTypes.class)
                 .ifPresentOrElse(subtypes -> Arrays.stream(subtypes.value()).forEach(consumer),
-                                 () -> Optional.ofNullable(clsElement.getAnnotation(SubType.class)).ifPresent(consumer));
+                                 () -> clsElement.getAnnotation(SubType.class).ifPresent(consumer));
         return builder.build();
     }
 
@@ -808,7 +833,7 @@ public class AnnotationIntrospector {
 
     private void addIfNotPresent(JsonbAnnotatedElement<?> element, Annotation... annotations) {
         for (Annotation annotation : annotations) {
-            if (element.getAnnotation(annotation.annotationType()) == null) {
+            if (element.getAnnotation(annotation.annotationType()).isEmpty()) {
                 element.putAnnotation(annotation, true);
             } else if (NON_REPEATABLE.contains(annotation.annotationType())) {
                 //TODO change to something readable

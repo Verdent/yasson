@@ -12,7 +12,7 @@ import org.eclipse.yasson.internal.properties.Messages;
 /**
  * TODO javadoc
  */
-public class ObjectDeserializer implements ModelDeserializer<JsonParser> {
+class ObjectDeserializer implements ModelDeserializer<JsonParser> {
 
     private final Map<String, ModelDeserializer<JsonParser>> propertyDeserializerChains;
     private final Function<String, String> renamer;

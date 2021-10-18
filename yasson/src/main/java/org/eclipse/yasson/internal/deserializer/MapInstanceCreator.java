@@ -17,7 +17,7 @@ import org.eclipse.yasson.internal.DeserializationContextImpl;
 /**
  * TODO javadoc
  */
-public class MapInstanceCreator implements ModelDeserializer<JsonParser> {
+class MapInstanceCreator implements ModelDeserializer<JsonParser> {
 
     private final MapDeserializer delegate;
     private final JsonbConfigProperties configProperties;

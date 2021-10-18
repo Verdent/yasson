@@ -35,13 +35,13 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jakarta.json.version>2.0.0</jakarta.json.version>
-        <jakarta.json.bind.version>2.0.0</jakarta.json.bind.version>
+        <jakarta.json.bind.version>2.1.0-SNAPSHOT</jakarta.json.bind.version>
         <jakarta.enterprise.cdi-api.version>3.0.0</jakarta.enterprise.cdi-api.version>
         <netbeans.hint.jdkPlatform>JDK_9</netbeans.hint.jdkPlatform>
     </properties>
 
     <modules>
-        <module>extensions</module>
+<!--        <module>extensions</module>-->
         <module>yasson</module>
     </modules>
 
@@ -321,6 +321,7 @@
                     <!-- defaults for compile and testCompile -->
                     <configuration>
                         <compilerArgs>
+                            <compilerArgument>-proc:none</compilerArgument>
                             <arg>-Xlint:all</arg>
                         </compilerArgs>
                     </configuration>

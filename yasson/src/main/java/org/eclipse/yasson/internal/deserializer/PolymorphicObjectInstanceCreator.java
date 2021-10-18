@@ -13,7 +13,7 @@ import org.eclipse.yasson.internal.model.customization.PolymorphismConfig;
 /**
  * TODO javadoc
  */
-public class PolymorphicObjectInstanceCreator implements ModelDeserializer<JsonParser> {
+class PolymorphicObjectInstanceCreator implements ModelDeserializer<JsonParser> {
 
     private final Map<String, Class<?>> resolvedClasses = new ConcurrentHashMap<>();
     private final ChainModelCreator chainModelCreator;

@@ -12,7 +12,7 @@ import org.eclipse.yasson.internal.properties.Messages;
 /**
  * TODO javadoc
  */
-public class ObjectDefaultInstanceCreator implements ModelDeserializer<JsonParser> {
+class ObjectDefaultInstanceCreator implements ModelDeserializer<JsonParser> {
 
     private final ModelDeserializer<JsonParser> delegate;
     private final Constructor<?> defaultConstructor;
