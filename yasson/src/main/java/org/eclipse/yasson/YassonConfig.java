@@ -17,7 +17,6 @@ import java.util.Objects;
 import jakarta.json.bind.JsonbConfig;
 import jakarta.json.bind.serializer.JsonbSerializer;
 import org.eclipse.yasson.config.PolymorphismSupport;
-import org.eclipse.yasson.config.Whitelist;
 
 /**
  * Custom properties for configuring Yasson outside of the specification {@link jakarta.json.bind.JsonbConfig} scope.
@@ -54,6 +53,10 @@ public class YassonConfig extends JsonbConfig {
      */
     public static final String FORCE_MAP_ARRAY_SERIALIZER_FOR_NULL_KEYS = "yasson.force-map-array-serializer-for-null-keys";
 
+    /**
+     * @see #withJsonbParametersOptional(boolean)
+     */
+    public static final String JSONB_CREATOR_PARAMETERS_OPTIONAL = "yasson.jsonb_creator_parameters_optional";
 
     public static final String POLYMORPHISM_SUPPORT = "yasson.polymorphism-support";
 
@@ -124,6 +127,22 @@ public class YassonConfig extends JsonbConfig {
      */
     public YassonConfig withForceMapArraySerializerForNullKeys(boolean value) {
         setProperty(FORCE_MAP_ARRAY_SERIALIZER_FOR_NULL_KEYS, value);
+        return this;
+    }
+
+
+    /**
+     * {@link jakarta.json.bind.annotation.JsonbCreator} parameters are required to be optional since the spec 3.0.0.
+     * However, if it is needed to revert functionality as it used to be before, it is possible to use this switch
+     * which globally turns the requirement of the {@link jakarta.json.bind.annotation.JsonbCreator} parameters
+     * to be required.
+     *
+     * @param value whether to treat {@link jakarta.json.bind.annotation.JsonbCreator} parameters
+     *              as optional. Default value is {@code true}.
+     * @return This YassonConfig instance
+     */
+    public YassonConfig withJsonbParametersOptional(boolean value) {
+        setProperty(JSONB_CREATOR_PARAMETERS_OPTIONAL, value);
         return this;
     }
 

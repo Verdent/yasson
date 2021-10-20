@@ -194,7 +194,7 @@ public class JsonbConfigProperties {
     }
 
     private boolean initOptionalCreatorParameters() {
-        return getConfigProperty("REPLACE ME", boolean.class, false);
+        return getConfigProperty(YassonConfig.JSONB_CREATOR_PARAMETERS_OPTIONAL, Boolean.class, true);
     }
 
     @SuppressWarnings("unchecked")
@@ -222,7 +222,7 @@ public class JsonbConfigProperties {
     }
 
     private boolean initForceMapArraySerializerForNullKeys() {
-        return getBooleanConfigProperty(YassonConfig.FORCE_MAP_ARRAY_SERIALIZER_FOR_NULL_KEYS, false);
+        return getConfigProperty(YassonConfig.FORCE_MAP_ARRAY_SERIALIZER_FOR_NULL_KEYS, Boolean.class, false);
     }
 
     private PolymorphismSupport initPolymorphismSupport() {
@@ -398,7 +398,8 @@ public class JsonbConfigProperties {
     /**
      * Whether the MapToEntriesArraySerializer is selected when a null key
      * is detected in a map.
-     * @return  false or true
+     *
+     * @return false or true
      */
     public boolean isForceMapArraySerializerForNullKeys() {
         return forceMapArraySerializerForNullKeys;
