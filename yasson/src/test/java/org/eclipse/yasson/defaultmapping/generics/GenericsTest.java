@@ -37,6 +37,8 @@ import org.eclipse.yasson.defaultmapping.generics.model.Circle;
 import org.eclipse.yasson.defaultmapping.generics.model.CollectionWrapper;
 import org.eclipse.yasson.defaultmapping.generics.model.ColoredCircle;
 import org.eclipse.yasson.defaultmapping.generics.model.CyclicSubClass;
+import org.eclipse.yasson.defaultmapping.generics.model.FinalGenericWrapper;
+import org.eclipse.yasson.defaultmapping.generics.model.FinalMember;
 import org.eclipse.yasson.defaultmapping.generics.model.GenericArrayClass;
 import org.eclipse.yasson.defaultmapping.generics.model.GenericTestClass;
 import org.eclipse.yasson.defaultmapping.generics.model.GenericWithUnboundedWildcardClass;
