@@ -38,7 +38,7 @@ public class CreatorModel {
      * Creates a new instance.
      *  @param name      Parameter name
      * @param parameter constructor parameter
-     * @param executable
+     * @param executable creator executable
      * @param context   jsonb context
      */
     public CreatorModel(String name, Parameter parameter, Executable executable, JsonbContext context) {
