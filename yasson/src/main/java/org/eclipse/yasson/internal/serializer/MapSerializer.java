@@ -58,6 +58,10 @@ abstract class MapSerializer implements ModelSerializer {
                 boolean suitable = true;
                 for (Object key : map.keySet()) {
                     if (key == null) {
+                        if (context.getJsonbContext().getConfigProperties().isForceMapArraySerializerForNullKeys()) {
+                            suitable = false;
+                            break;
+                        }
                         continue;
                     }
                     Class<?> keyClass = key.getClass();
@@ -111,7 +115,11 @@ abstract class MapSerializer implements ModelSerializer {
             map.forEach((key, val) -> {
                 generator.writeStartObject();
                 generator.writeKey("key");
-                getKeySerializer().serialize(key, generator, context);
+                if (key == null) {
+                    generator.writeNull();
+                } else {
+                    getKeySerializer().serialize(key, generator, context);
+                }
                 generator.writeKey("value");
                 getValueSerializer().serialize(val, generator, context);
                 generator.writeEnd();
