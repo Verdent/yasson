@@ -23,7 +23,7 @@ public class CreatorCustomization extends CustomizationBase {
 
     private final JsonbNumberFormatter numberFormatter;
     private final JsonbDateFormatter dateFormatter;
-    private final boolean optional;
+    private final boolean required;
     private PropertyModel propertyModel;
 
     /**
@@ -35,7 +35,7 @@ public class CreatorCustomization extends CustomizationBase {
         super(builder);
         this.numberFormatter = builder.numberFormatter;
         this.dateFormatter = builder.dateFormatter;
-        this.optional = builder.optional;
+        this.required = builder.required;
     }
 
     public static Builder builder() {
@@ -86,15 +86,15 @@ public class CreatorCustomization extends CustomizationBase {
         this.propertyModel = propertyModel;
     }
 
-    public boolean isOptional() {
-        return optional;
+    public boolean isRequired() {
+        return required;
     }
 
     public static final class Builder extends CustomizationBase.Builder<Builder, CreatorCustomization> {
 
         private JsonbNumberFormatter numberFormatter;
         private JsonbDateFormatter dateFormatter;
-        private boolean optional = false;
+        private boolean required = false;
 
         private Builder() {
         }
@@ -117,8 +117,8 @@ public class CreatorCustomization extends CustomizationBase {
             return this;
         }
 
-        public Builder optional(boolean optional) {
-            this.optional = optional;
+        public Builder required(boolean required) {
+            this.required = required;
             return this;
         }
 

@@ -35,7 +35,7 @@ public class PositionChecker implements ModelDeserializer<JsonParser> {
     }
 
     public PositionChecker(ModelDeserializer<JsonParser> delegate, Type rType, Event... events) {
-        this(new HashSet<>(Arrays.asList(events)), delegate, rType);
+        this(Set.copyOf(Arrays.asList(events)), delegate, rType);
     }
 
     private PositionChecker(Set<Event> expectedEvents,
@@ -47,10 +47,6 @@ public class PositionChecker implements ModelDeserializer<JsonParser> {
 
     @Override
     public Object deserialize(JsonParser value, DeserializationContextImpl context) {
-        if (context.isDisableNextPositionCheck()) {
-            context.setDisableNextPositionCheck(false);
-            return delegate.deserialize(value, context);
-        }
         Event original = context.getLastValueEvent();
         Event startEvent = original;
         if (!expectedEvents.contains(startEvent)) {
@@ -70,6 +66,14 @@ public class PositionChecker implements ModelDeserializer<JsonParser> {
                                              + "After processing event: " + context.getLastValueEvent());
         }
         return o;
+    }
+
+    @Override
+    public String toString() {
+        return "PositionChecker{" +
+                "expectedEvents=" + expectedEvents +
+                ", runtimeType=" + rType +
+                '}';
     }
 
     public enum Checker {

@@ -50,7 +50,6 @@ public class JsonBinding implements YassonJsonb {
         Set<Class<?>> eagerInitClasses = this.jsonbContext.getConfigProperties().getEagerInitClasses();
         for (Class<?> eagerInitClass : eagerInitClasses) {
             // Eagerly initialize requested ClassModels and Serializers
-//            jsonbContext.getMappingContext().getOrCreateClassModel(eagerInitClass);
             jsonbContext.getChainModelCreator().deserializerChain(eagerInitClass);
             jsonbContext.getSerializationModelCreator().serializerChain(eagerInitClass, true, true);
         }
@@ -113,8 +112,7 @@ public class JsonBinding implements YassonJsonb {
     }
 
     private JsonParser inputStreamParser(InputStream stream) {
-        return jsonbContext.getJsonProvider()
-                .createParserFactory(createJsonpProperties(jsonbContext.getConfig()))
+        return jsonbContext.getJsonParserFactory()
                 .createParser(stream,
                               Charset.forName((String) jsonbContext.getConfig()
                                       .getProperty(JsonbConfig.ENCODING).orElse("UTF-8")));
@@ -149,7 +147,7 @@ public class JsonBinding implements YassonJsonb {
     }
 
     private JsonGenerator writerGenerator(Writer writer) {
-        Map<String, ?> factoryProperties = createJsonpProperties(jsonbContext.getConfig());
+        Map<String, ?> factoryProperties = jsonbContext.createJsonpProperties(jsonbContext.getConfig());
         if (factoryProperties.isEmpty()) {
             return jsonbContext.getJsonProvider().createGenerator(writer);
         }
@@ -209,7 +207,7 @@ public class JsonBinding implements YassonJsonb {
     }
 
     private JsonGenerator streamGenerator(OutputStream stream) {
-        Map<String, ?> factoryProperties = createJsonpProperties(jsonbContext.getConfig());
+        Map<String, ?> factoryProperties = jsonbContext.createJsonpProperties(jsonbContext.getConfig());
         final String encoding = (String) jsonbContext.getConfig().getProperty(JsonbConfig.ENCODING).orElse("UTF-8");
         return jsonbContext.getJsonProvider().createGeneratorFactory(factoryProperties)
                 .createGenerator(stream, Charset.forName(encoding));
@@ -220,26 +218,4 @@ public class JsonBinding implements YassonJsonb {
         jsonbContext.getComponentInstanceCreator().close();
     }
 
-    /**
-     * Propagates properties from JsonbConfig to JSONP generator / parser factories.
-     *
-     * @param jsonbConfig jsonb config
-     * @return properties for JSONP generator / parser
-     */
-    protected Map<String, ?> createJsonpProperties(JsonbConfig jsonbConfig) {
-        //JSONP 1.0 actually ignores the value, just checks the key is present. Only set if JsonbConfig.FORMATTING is true.
-        final Optional<Object> property = jsonbConfig.getProperty(JsonbConfig.FORMATTING);
-        final Map<String, Object> factoryProperties = new HashMap<>();
-        if (property.isPresent()) {
-            final Object value = property.get();
-            if (!(value instanceof Boolean)) {
-                throw new JsonbException(Messages.getMessage(MessageKeys.JSONB_CONFIG_FORMATTING_ILLEGAL_VALUE));
-            }
-            if ((Boolean) value) {
-                factoryProperties.put(JsonGenerator.PRETTY_PRINTING, Boolean.TRUE);
-            }
-            return factoryProperties;
-        }
-        return factoryProperties;
-    }
 }

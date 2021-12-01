@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.serializer.DeserializationContext;
 import jakarta.json.stream.JsonParser;
-import org.eclipse.yasson.internal.model.ClassModel;
+
 import org.eclipse.yasson.internal.model.customization.ClassCustomization;
 import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.deserializer.ModelDeserializer;
@@ -28,7 +28,7 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
     private final Set<Class<?>> userProcessorChain = new HashSet<>();
     private JsonParser.Event lastValueEvent;
     private Customization customization = ClassCustomization.empty();
-    private boolean disableNextPositionCheck = false;
+    private boolean lastPolymorphismProcessed = false;
 
     /**
      * Parent instance for marshaller and unmarshaller.
@@ -42,7 +42,7 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
     public DeserializationContextImpl(DeserializationContextImpl context) {
         super(context.getJsonbContext());
         this.lastValueEvent = context.lastValueEvent;
-        this.disableNextPositionCheck = context.disableNextPositionCheck;
+        this.lastPolymorphismProcessed = context.lastPolymorphismProcessed;
     }
 
     public List<Runnable> getDelayedSetters() {
@@ -65,12 +65,12 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
         this.customization = customization;
     }
 
-    public boolean isDisableNextPositionCheck() {
-        return disableNextPositionCheck;
+    public boolean isLastPolymorphismProcessed() {
+        return lastPolymorphismProcessed;
     }
 
-    public void setDisableNextPositionCheck(boolean disableNextPositionCheck) {
-        this.disableNextPositionCheck = disableNextPositionCheck;
+    public void setLastPolymorphismProcessed(boolean lastPolymorphismProcessed) {
+        this.lastPolymorphismProcessed = lastPolymorphismProcessed;
     }
 
     public Set<Class<?>> getUserProcessorChain() {

@@ -74,7 +74,7 @@ public class JsonbConfigProperties {
     private final boolean failOnUnknownProperties;
     private final boolean strictIJson;
     private final boolean zeroTimeDefaulting;
-    private final boolean optionalCreatorParameters;
+    private final boolean requiredCreatorParameters;
     private final Map<Class<?>, Class<?>> userTypeMapping;
     private final Class<?> defaultMapImplType;
     private final JsonbSerializer<Object> nullSerializer;
@@ -103,7 +103,7 @@ public class JsonbConfigProperties {
         this.defaultMapImplType = initDefaultMapImplType();
         this.nullSerializer = initNullSerializer();
         this.eagerInitClasses = initEagerInitClasses();
-        this.optionalCreatorParameters = initOptionalCreatorParameters();
+        this.requiredCreatorParameters = initRequiredCreatorParameters();
         this.forceMapArraySerializerForNullKeys = initForceMapArraySerializerForNullKeys();
         this.polymorphismSupport = initPolymorphismSupport();
     }
@@ -193,8 +193,11 @@ public class JsonbConfigProperties {
         return getConfigProperty(YassonConfig.FAIL_ON_UNKNOWN_PROPERTIES, Boolean.class, false);
     }
 
-    private boolean initOptionalCreatorParameters() {
-        return getConfigProperty(YassonConfig.JSONB_CREATOR_PARAMETERS_OPTIONAL, Boolean.class, true);
+    private boolean initRequiredCreatorParameters() {
+        if (System.getProperty(JsonbConfig.CREATOR_PARAMETERS_REQUIRED) != null) {
+            return Boolean.parseBoolean(System.getProperty(YassonConfig.CREATOR_PARAMETERS_REQUIRED));
+        }
+        return getConfigProperty(YassonConfig.CREATOR_PARAMETERS_REQUIRED, Boolean.class, false);
     }
 
     @SuppressWarnings("unchecked")
@@ -387,8 +390,8 @@ public class JsonbConfigProperties {
         return nullSerializer;
     }
 
-    public boolean hasOptionalCreatorParameters() {
-        return optionalCreatorParameters;
+    public boolean hasRequiredCreatorParameters() {
+        return requiredCreatorParameters;
     }
 
     public Set<Class<?>> getEagerInitClasses() {

@@ -12,6 +12,7 @@
 
 package org.eclipse.yasson.internal;
 
+import org.eclipse.yasson.internal.model.customization.ClassCustomization;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -38,7 +39,8 @@ public class ClassParserTest {
     @Test
     public void testDefaultMappingFieldModifiers() {
         final JsonbAnnotatedElement<Class<?>> clsElement = introspector.collectAnnotations(FieldModifiersClass.class);
-        ClassModel model = new ClassModel(FieldModifiersClass.class, introspector.introspectCustomization(clsElement), null, null);
+        ClassModel model = new ClassModel(FieldModifiersClass.class, introspector.introspectCustomization(clsElement,
+                                                                                                          ClassCustomization.empty()), null, null);
         classParser.parseProperties(model, clsElement);
         assertTrue(model.getPropertyModel("finalString").isReadable());
         assertFalse(model.getPropertyModel("finalString").isWritable());
@@ -51,7 +53,8 @@ public class ClassParserTest {
     @Test
     public void testDefaultMappingMethodModifiers() {
         final JsonbAnnotatedElement<Class<?>> clsElement = introspector.collectAnnotations(MethodModifiersClass.class);
-        ClassModel model = new ClassModel(FieldModifiersClass.class, introspector.introspectCustomization(clsElement), null, null);
+        ClassModel model = new ClassModel(FieldModifiersClass.class, introspector.introspectCustomization(clsElement,
+                                                                                                          ClassCustomization.empty()), null, null);
         classParser.parseProperties(model, clsElement);
         assertFalse(model.getPropertyModel("publicFieldWithPrivateMethods").isReadable());
         assertFalse(model.getPropertyModel("publicFieldWithPrivateMethods").isWritable());

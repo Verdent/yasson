@@ -26,7 +26,7 @@ import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.config.BinaryDataStrategy;
 import jakarta.json.bind.config.PropertyNamingStrategy;
 import jakarta.json.stream.JsonParser;
-import org.eclipse.yasson.PolymorphicType;
+
 import org.eclipse.yasson.internal.DeserializationContextImpl;
 import org.eclipse.yasson.internal.JsonbConfigProperties;
 import org.eclipse.yasson.internal.JsonbContext;
@@ -292,7 +292,7 @@ public class ChainModelCreator {
                                                                                 JustReturn.create());
                 String parameterName = renamer.apply(creatorModel.getName());
                 processors.put(parameterName, modelDeserializer);
-                if (creatorModel.getCustomization().isOptional()) { //if parameter is optional
+                if (!creatorModel.getCustomization().isRequired()) { //if parameter is optional
                     Class<?> rawParamType = ReflectionUtils.getRawType(creatorModel.getType());
                     defaultCreatorValues.put(parameterName,
                                              DEFAULT_CREATOR_VALUES.getOrDefault(rawParamType, (value, context) -> null));
@@ -303,20 +303,16 @@ public class ChainModelCreator {
             ModelDeserializer<JsonParser> instanceCreator;
             PolymorphismConfig polymorphismConfig = classCustomization.getPolymorphismConfig();
             PositionChecker positionChecker;
-            if (polymorphismConfig != null && !polymorphismConfig.isInherited()) {
-                instanceCreator = new PolymorphicObjectInstanceCreator(this, polymorphismConfig);
-                if (polymorphismConfig.getAddAs() == PolymorphicType.Format.WRAPPING_ARRAY) {
-                    positionChecker = new PositionChecker(instanceCreator, rawType, Event.START_ARRAY);
-                } else {
-                    positionChecker = new PositionChecker(instanceCreator, rawType, Event.START_OBJECT);
-                }
-            } else if (hasCreator) {
+            if (hasCreator) {
                 instanceCreator = new ObjectInstanceCreator(processors, defaultCreatorValues, creator, rawType, renamer);
-                positionChecker = new PositionChecker(instanceCreator, rawType, Event.START_OBJECT);
             } else {
                 ModelDeserializer<JsonParser> typeWrapper = new ObjectDeserializer(processors, renamer, rawType);
                 instanceCreator = new ObjectDefaultInstanceCreator(typeWrapper, rawType,
                                                                    classModel.getDefaultConstructor());
+            }
+            positionChecker = new PositionChecker(instanceCreator, rawType, Event.START_OBJECT);
+            if (polymorphismConfig != null) {
+                instanceCreator = new PolymorphicObjectInstanceCreator(this, polymorphismConfig, positionChecker);
                 positionChecker = new PositionChecker(instanceCreator, rawType, Event.START_OBJECT);
             }
             ModelDeserializer<JsonParser> nullChecker = new NullCheckDeserializer(positionChecker, JustReturn.create());

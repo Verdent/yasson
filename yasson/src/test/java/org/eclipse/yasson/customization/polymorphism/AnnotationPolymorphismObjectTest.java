@@ -47,6 +47,7 @@ public class AnnotationPolymorphismObjectTest {
     public void testExactTypeDeserialization() {
         Dog dog = Jsonbs.defaultJsonb.fromJson("{\"isDog\":false}", Dog.class);
         assertThat(dog.isDog, is(false));
+        Animal dog2 = Jsonbs.defaultJsonb.fromJson("{\"dog\":{\"isDog\":false}}", Dog.class);
     }
 
     @Test
@@ -111,7 +112,7 @@ public class AnnotationPolymorphismObjectTest {
 
     }
 
-    @PolymorphicType(keyName = "@dateType", format = PolymorphicType.Format.WRAPPING_OBJECT)
+    @PolymorphicType(key = "@dateType", format = PolymorphicType.Format.WRAPPING_OBJECT)
     @SubType(alias = "constructor", type = DateConstructor.class)
     public interface SomeDateType {
 

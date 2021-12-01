@@ -196,7 +196,7 @@ abstract class ArraySerializer implements ModelSerializer {
         public void serializeArray(Object value, JsonGenerator generator, SerializationContextImpl context) {
             boolean[] array = (boolean[]) value;
             for (boolean b : array) {
-                generator.write(b);
+                getValueSerializer().serialize(b, generator, context);
             }
         }
 
@@ -212,7 +212,7 @@ abstract class ArraySerializer implements ModelSerializer {
         public void serializeArray(Object value, JsonGenerator generator, SerializationContextImpl context) {
             char[] array = (char[]) value;
             for (char c : array) {
-                generator.write(Character.valueOf(c).toString());
+                getValueSerializer().serialize(c, generator, context);
             }
         }
 

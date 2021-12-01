@@ -20,4 +20,9 @@ public class JustReturn implements ModelDeserializer<Object> {
     public Object deserialize(Object value, DeserializationContextImpl context) {
         return value;
     }
+
+    @Override
+    public String toString() {
+        return "No other operations will be performed";
+    }
 }

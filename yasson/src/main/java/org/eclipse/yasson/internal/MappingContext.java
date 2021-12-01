@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 import jakarta.json.bind.JsonbException;
+
 import org.eclipse.yasson.config.Polymorphism;
 import org.eclipse.yasson.config.PolymorphismSupport;
 import org.eclipse.yasson.internal.model.ClassModel;
@@ -89,14 +90,18 @@ public class MappingContext {
                                                                                 JsonbContext jsonbContext) {
         return aClass -> {
             JsonbAnnotatedElement<Class<?>> clsElement = jsonbContext.getAnnotationIntrospector().collectAnnotations(aClass);
-            ClassCustomization customization = jsonbContext.getAnnotationIntrospector().introspectCustomization(clsElement);
-            PolymorphismSupport configPolymorphism = jsonbContext.getConfigProperties().getPolymorphismSupport();
-            if (configPolymorphism != null) {
-                customization = mergeConfigAndAnnotationPolymorphism(configPolymorphism,
-                                                                     configPolymorphism.getClassPolymorphism(aClass),
-                                                                     customization,
-                                                                     aClass);
-            }
+            ClassCustomization customization = jsonbContext.getAnnotationIntrospector()
+                    .introspectCustomization(clsElement,
+                                             parentClassModel == null
+                                                     ? ClassCustomization.empty()
+                                                     : parentClassModel.getClassCustomization());
+            //            PolymorphismSupport configPolymorphism = jsonbContext.getConfigProperties().getPolymorphismSupport();
+//            if (configPolymorphism != null) {
+//                customization = mergeConfigAndAnnotationPolymorphism(configPolymorphism,
+//                                                                     configPolymorphism.getClassPolymorphism(aClass),
+//                                                                     customization,
+//                                                                     aClass);
+//            }
             ClassModel newClassModel = new ClassModel(aClass,
                                                       customization,
                                                       parentClassModel,

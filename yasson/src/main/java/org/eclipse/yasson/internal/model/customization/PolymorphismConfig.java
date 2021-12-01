@@ -97,6 +97,11 @@ public class PolymorphismConfig {
             return this;
         }
 
+        public Builder clearAliases() {
+            this.aliases.clear();
+            return this;
+        }
+
         public Builder whitelistedPackages(Set<String> whitelistedPackages) {
             this.whitelistedPackages.addAll(whitelistedPackages);
             return this;

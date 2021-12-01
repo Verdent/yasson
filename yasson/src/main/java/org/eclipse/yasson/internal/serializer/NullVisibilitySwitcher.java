@@ -6,7 +6,7 @@ import org.eclipse.yasson.internal.SerializationContextImpl;
 /**
  * Switching mechanism for default null value visibility in the JSON.
  *
- * Some of the constructs such as arrays, collections etc. require to have nulls serialized into the JSON by default.
+ * Some constructs such as arrays, collections etc. require to have nulls serialized into the JSON by default.
  * This class switches from the default parent null visibility to the current construct visibility. As soon as the current
  * construct is serialized, visibility is switched back to the parent ones.
  */

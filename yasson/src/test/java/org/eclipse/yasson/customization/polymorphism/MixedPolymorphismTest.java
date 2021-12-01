@@ -50,14 +50,14 @@ public class MixedPolymorphismTest {
                                           .whitelist("some.package")
                                           .build());
         jsonbObjectWrapping = JsonbBuilder.create(yassonConfig);
-        yassonConfig = new YassonConfig()
-                .withPolymorphism(PolymorphismSupport.builder()
-                                          .polymorphism(Polymorphism.builder(Animal.class)
-                                                                .keyName("@type")
-                                                                .format(PolymorphicType.Format.WRAPPING_ARRAY)
-                                                                .alias(Rat.class, "rat")
-                                                                .build())
-                                          .build());
+//        yassonConfig = new YassonConfig()
+//                .withPolymorphism(PolymorphismSupport.builder()
+//                                          .polymorphism(Polymorphism.builder(Animal.class)
+//                                                                .keyName("@type")
+//                                                                .format(PolymorphicType.Format.WRAPPING_ARRAY)
+//                                                                .alias(Rat.class, "rat")
+//                                                                .build())
+//                                          .build());
         jsonbArrayWrapping = JsonbBuilder.create(yassonConfig);
         yassonConfig = new YassonConfig()
                 .withPolymorphism(PolymorphismSupport.builder()
@@ -126,8 +126,7 @@ public class MixedPolymorphismTest {
         assertThat(deserialized[2], instanceOf(Dog.class));
     }
 
-    @PolymorphicType(keyName = "@type",
-                     format = PolymorphicType.Format.PROPERTY)
+    @PolymorphicType(key = "@type", format = PolymorphicType.Format.PROPERTY)
     @SubType(alias = "dog", type = Dog.class)
     @SubType(alias = "cat", type = Cat.class)
     public interface Animal {

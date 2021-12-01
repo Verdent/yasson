@@ -20,6 +20,7 @@ import org.eclipse.yasson.internal.AnnotationIntrospector;
 import org.eclipse.yasson.internal.JsonbContext;
 import org.eclipse.yasson.internal.JsonbDateFormatter;
 import org.eclipse.yasson.internal.JsonbNumberFormatter;
+import org.eclipse.yasson.internal.components.AdapterBinding;
 import org.eclipse.yasson.internal.components.DeserializerBinding;
 import org.eclipse.yasson.internal.model.customization.CreatorCustomization;
 
@@ -48,22 +49,26 @@ public class CreatorModel {
         AnnotationIntrospector annotationIntrospector = context.getAnnotationIntrospector();
 
         JsonbAnnotatedElement<Parameter> annotated = new JsonbAnnotatedElement<>(parameter);
-        boolean optional = context.getAnnotationIntrospector().optionalParameters(executable, annotated);
+        boolean required = context.getAnnotationIntrospector().requiredParameters(executable, annotated);
         JsonbNumberFormatter constructorNumberFormatter = context.getAnnotationIntrospector()
                 .getConstructorNumberFormatter(annotated);
         JsonbDateFormatter constructorDateFormatter = context.getAnnotationIntrospector().getConstructorDateFormatter(annotated);
         DeserializerBinding<?> deserializerBinding = annotationIntrospector.getDeserializerBinding(parameter);
+        AdapterBinding adapterBinding = annotationIntrospector.getAdapterBinding(parameter);
         final JsonbAnnotatedElement<Class<?>> clsElement = annotationIntrospector.collectAnnotations(parameter.getType());
         deserializerBinding = deserializerBinding == null
                 ? annotationIntrospector.getDeserializerBinding(clsElement)
                 : deserializerBinding;
+        adapterBinding = adapterBinding == null
+                ? annotationIntrospector.getAdapterBinding(clsElement)
+                : adapterBinding;
         this.creatorCustomization = CreatorCustomization.builder()
-                .adapterBinding(annotationIntrospector.getAdapterBinding(clsElement))
+                .adapterBinding(adapterBinding)
                 .deserializerBinding(deserializerBinding)
                 .serializerBinding(annotationIntrospector.getSerializerBinding(clsElement))
                 .numberFormatter(constructorNumberFormatter)
                 .dateFormatter(constructorDateFormatter)
-                .optional(optional)
+                .required(required)
                 .build();
     }
 

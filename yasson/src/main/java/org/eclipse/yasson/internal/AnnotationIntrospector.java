@@ -85,6 +85,11 @@ import org.eclipse.yasson.internal.properties.Messages;
  */
 public class AnnotationIntrospector {
 
+    private static final Set<Class<?>> OPTIONALS = Set.of(Optional.class,
+                                                          OptionalInt.class,
+                                                          OptionalLong.class,
+                                                          OptionalDouble.class);
+
     private final JsonbContext jsonbContext;
     private final ConstructorPropertiesAnnotationIntrospector constructorPropertiesIntrospector;
 
@@ -283,9 +288,10 @@ public class AnnotationIntrospector {
      * @param parameter parameter not null
      * @return components info
      */
-    public DeserializerBinding getDeserializerBinding(Parameter parameter) {
+    public DeserializerBinding<?> getDeserializerBinding(Parameter parameter) {
         Objects.requireNonNull(parameter);
-        JsonbTypeDeserializer deserializerAnnotation = Optional.ofNullable(parameter.getDeclaredAnnotation(JsonbTypeDeserializer.class))
+        JsonbTypeDeserializer deserializerAnnotation =
+                Optional.ofNullable(parameter.getDeclaredAnnotation(JsonbTypeDeserializer.class))
                 .orElseGet(() -> getAnnotationFromParameterType(parameter, JsonbTypeDeserializer.class));
         if (deserializerAnnotation == null) {
             return null;
@@ -293,6 +299,24 @@ public class AnnotationIntrospector {
 
         final Class<? extends JsonbDeserializer> deserializerClass = deserializerAnnotation.value();
         return jsonbContext.getComponentMatcher().introspectDeserializerBinding(deserializerClass, null);
+    }
+
+    /**
+     * Checks for {@link JsonbAdapter} on a {@link Parameter}.
+     *
+     * @param parameter parameter not null
+     * @return components info
+     */
+    public AdapterBinding getAdapterBinding(Parameter parameter) {
+        Objects.requireNonNull(parameter);
+        JsonbTypeAdapter adapter =
+                Optional.ofNullable(parameter.getDeclaredAnnotation(JsonbTypeAdapter.class))
+                .orElseGet(() -> getAnnotationFromParameterType(parameter, JsonbTypeAdapter.class));
+        if (adapter == null) {
+            return null;
+        }
+
+        return getAdapterBindingFromAnnotation(adapter, ReflectionUtils.getOptionalRawType(parameter.getParameterizedType()));
     }
 
     private <T extends Annotation> T getAnnotationFromParameterType(Parameter parameter, Class<T> annotationClass) {
@@ -763,7 +787,8 @@ public class AnnotationIntrospector {
      * @param clsElement Element to process.
      * @return Populated {@link ClassCustomization} instance.
      */
-    public ClassCustomization introspectCustomization(JsonbAnnotatedElement<Class<?>> clsElement) {
+    public ClassCustomization introspectCustomization(JsonbAnnotatedElement<Class<?>> clsElement,
+                                                      ClassCustomization parentCustomization) {
         return ClassCustomization.builder()
                 .nillable(isClassNillable(clsElement))
                 .dateTimeFormatter(getJsonbDateFormat(clsElement))
@@ -774,25 +799,37 @@ public class AnnotationIntrospector {
                 .serializerBinding(getSerializerBinding(clsElement))
                 .deserializerBinding(getDeserializerBinding(clsElement))
                 .propertyVisibilityStrategy(getPropertyVisibilityStrategy(clsElement.getElement()))
-                .polymorphismConfig(getPolymorphismConfig(clsElement))
+                .polymorphismConfig(getPolymorphismConfig(clsElement, parentCustomization))
                 .build();
     }
 
-    private PolymorphismConfig getPolymorphismConfig(JsonbAnnotatedElement<Class<?>> clsElement) {
-        final AnnotationWrapper<PolymorphicType> polymorphicType =
-                clsElement.getAnnotationWrapper(PolymorphicType.class);
-        if (polymorphicType == null) {
+    private PolymorphismConfig getPolymorphismConfig(JsonbAnnotatedElement<Class<?>> clsElement,
+                                                     ClassCustomization parentCustomization) {
+        PolymorphismConfig parentPolyConfig = parentCustomization.getPolymorphismConfig();
+        AnnotationWrapper<PolymorphicType> polymorphicType = clsElement.getAnnotationWrapper(PolymorphicType.class);
+        PolymorphismConfig.Builder builder;
+        if (polymorphicType != null) {
+            builder = PolymorphismConfig.builder();
+            PolymorphicType annotation = polymorphicType.getAnnotation();
+            builder.fieldName(annotation.key())
+                    .inherited(polymorphicType.isInherited())
+                    .useClassNames(annotation.classNames())
+                    .format(annotation.format())
+                    .whitelistedPackages(Arrays.stream(annotation.allowedPackages())
+                                                 .filter(p -> !p.isBlank())
+                                                 .collect(Collectors.toSet()));
+        } else if (parentPolyConfig != null) {
+            builder = PolymorphismConfig.builder().of(parentPolyConfig).clearAliases();
+        } else {
             return null;
         }
-        PolymorphicType annotation = polymorphicType.getAnnotation();
-        PolymorphismConfig.Builder builder = PolymorphismConfig.builder();
-        builder.fieldName(annotation.keyName())
-                .inherited(polymorphicType.isInherited())
-                .useClassNames(annotation.classNames())
-                .format(annotation.format())
-                .whitelistedPackages(Arrays.stream(annotation.whitelist())
-                                             .filter(p -> !p.isBlank())
-                                             .collect(Collectors.toSet()));
+        if (parentPolyConfig != null) {
+            parentPolyConfig.getAliases().forEach((clazz, alias) -> {
+                if (clsElement.getElement().isAssignableFrom(clazz)) {
+                    builder.alias(clazz, alias);
+                }
+            });
+        }
         Consumer<SubType> consumer = subType -> builder.alias(subType.type(), subType.alias());
         clsElement.getAnnotation(SubTypes.class)
                 .ifPresentOrElse(subtypes -> Arrays.stream(subtypes.value()).forEach(consumer),
@@ -846,10 +883,14 @@ public class AnnotationIntrospector {
         }
     }
 
-    public boolean optionalParameters(Executable executable, JsonbAnnotatedElement<Parameter> annotated) {
-        return annotated.getAnnotation(JsonbNillable.class)
-                .or(() -> Optional.ofNullable(executable.getAnnotation(JsonbNillable.class)))
-                .map(JsonbNillable::value)
-                .orElseGet(() -> jsonbContext.getConfigProperties().hasOptionalCreatorParameters());
+    public boolean requiredParameters(Executable executable, JsonbAnnotatedElement<Parameter> annotated) {
+        return jsonbContext.getConfigProperties().hasRequiredCreatorParameters();
+//        if (OPTIONALS.contains(annotated.getElement().getType())) {
+//            return false;
+//        }
+//        return annotated.getAnnotation(JsonbRequired.class)
+//                .or(() -> Optional.ofNullable(executable.getAnnotation(JsonbRequired.class)))
+//                .map(JsonbRequired::value)
+//                .orElseGet(() -> jsonbContext.getConfigProperties().hasRequiredCreatorParameters());
     }
 }

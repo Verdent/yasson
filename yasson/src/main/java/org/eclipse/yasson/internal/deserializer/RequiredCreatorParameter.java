@@ -18,9 +18,6 @@ import org.eclipse.yasson.internal.DeserializationContextImpl;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
 
-/**
- * TODO javadoc
- */
 class RequiredCreatorParameter implements ModelDeserializer<Object> {
 
     private final String parameterName;

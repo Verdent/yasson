@@ -54,9 +54,9 @@ public class YassonConfig extends JsonbConfig {
     public static final String FORCE_MAP_ARRAY_SERIALIZER_FOR_NULL_KEYS = "yasson.force-map-array-serializer-for-null-keys";
 
     /**
-     * @see #withJsonbParametersOptional(boolean)
+     * @see #withJsonbParametersRequired(boolean)
      */
-    public static final String JSONB_CREATOR_PARAMETERS_OPTIONAL = "yasson.jsonb_creator_parameters_optional";
+    public static final String JSONB_CREATOR_PARAMETERS_REQUIRED = "yasson.jsonb-creator-parameters-required";
 
     public static final String POLYMORPHISM_SUPPORT = "yasson.polymorphism-support";
 
@@ -138,11 +138,11 @@ public class YassonConfig extends JsonbConfig {
      * to be required.
      *
      * @param value whether to treat {@link jakarta.json.bind.annotation.JsonbCreator} parameters
-     *              as optional. Default value is {@code true}.
+     *              as required. Default value is {@code false}.
      * @return This YassonConfig instance
      */
-    public YassonConfig withJsonbParametersOptional(boolean value) {
-        setProperty(JSONB_CREATOR_PARAMETERS_OPTIONAL, value);
+    public YassonConfig withJsonbParametersRequired(boolean value) {
+        setProperty(JSONB_CREATOR_PARAMETERS_REQUIRED, value);
         return this;
     }
 

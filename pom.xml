@@ -34,8 +34,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jakarta.json.version>2.0.0</jakarta.json.version>
-        <jakarta.json.bind.version>2.1.0-SNAPSHOT</jakarta.json.bind.version>
+        <jakarta.json.version>2.0.1</jakarta.json.version>
+        <jakarta.json.bind.version>3.0.0-SNAPSHOT</jakarta.json.bind.version>
         <jakarta.enterprise.cdi-api.version>3.0.0</jakarta.enterprise.cdi-api.version>
         <netbeans.hint.jdkPlatform>JDK_9</netbeans.hint.jdkPlatform>
     </properties>
@@ -58,10 +58,9 @@
             <version>${jakarta.json.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>jakarta.json</artifactId>
-            <version>${jakarta.json.version}</version>
-            <classifier>module</classifier>
+            <groupId>org.eclipse.parsson</groupId>
+            <artifactId>parsson</artifactId>
+            <version>1.0.0</version>
         </dependency>
         <!-- Test/Provided dependencies -->
         <dependency>

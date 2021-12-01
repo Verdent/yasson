@@ -24,4 +24,9 @@ public class NullCheckDeserializer implements ModelDeserializer<JsonParser> {
         }
         return nullDeserializer.deserialize(null, context);
     }
+
+    @Override
+    public String toString() {
+        return "Null value check";
+    }
 }

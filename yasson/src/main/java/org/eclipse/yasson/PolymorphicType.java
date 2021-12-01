@@ -14,7 +14,7 @@ public @interface PolymorphicType {
      *
      * @return key name
      */
-    String keyName() default "";
+    String key() default "";
 
     /**
      * Whether exact class names should be processed if no alias is specified.
@@ -34,12 +34,11 @@ public @interface PolymorphicType {
      */
     Format format() default Format.PROPERTY;
 
-    String[] whitelist() default "";
+    String[] allowedPackages() default {};
 
     enum Format {
 
         WRAPPING_OBJECT,
-        WRAPPING_ARRAY,
         PROPERTY
 
     }

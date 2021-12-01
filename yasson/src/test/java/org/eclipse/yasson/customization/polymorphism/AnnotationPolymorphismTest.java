@@ -89,10 +89,9 @@ public class AnnotationPolymorphismTest {
         assertThat(deserialized[2], instanceOf(Dog.class));
     }
 
-    @PolymorphicType(keyName = "@type")
+    @PolymorphicType(key = "@type")
     @SubType(alias = "dog", type = Dog.class)
     @SubType(alias = "cat", type = Cat.class)
-    //"{\"@type\":\"dog\",\"isDog\":true}"
     public interface Animal {
 
     }
@@ -109,13 +108,14 @@ public class AnnotationPolymorphismTest {
 
     }
 
+    @SubType(alias = "rat", type = Rat.class)
     public static class Rat implements Animal {
 
         public boolean isRat = true;
 
     }
 
-    @PolymorphicType(keyName = "@dateType")
+    @PolymorphicType(key = "@dateType")
     @SubType(alias = "constructor", type = DateConstructor.class)
     public interface SomeDateType {
 

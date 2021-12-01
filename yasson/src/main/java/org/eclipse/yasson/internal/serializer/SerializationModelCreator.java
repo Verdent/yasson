@@ -218,14 +218,6 @@ public class SerializationModelCreator {
                 throw new JsonbException("Could not find proper alias for class: " + rawType.getName());
             }
             return new ObjectSerializer(propertySerializers);
-        } else if (polymorphismConfig.getAddAs() == PolymorphicType.Format.WRAPPING_ARRAY) {
-            if (alias != null) {
-                return new PolymorphicArrayWrapperSerializer(alias, objectSerializer);
-            } else if (polymorphismConfig.useClassNames()) {
-                return new PolymorphicArrayWrapperSerializer(rawType.getName(), objectSerializer);
-            } else {
-                throw new JsonbException("Could not find proper alias for class: " + rawType.getName());
-            }
         }
         return objectSerializer;
     }
