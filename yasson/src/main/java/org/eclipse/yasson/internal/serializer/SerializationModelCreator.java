@@ -4,16 +4,19 @@ import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import jakarta.json.bind.JsonbException;
-import org.eclipse.yasson.PolymorphicType;
+import jakarta.json.bind.annotation.JsonbPolymorphicType;
+
 import org.eclipse.yasson.internal.ComponentMatcher;
 import org.eclipse.yasson.internal.JsonbContext;
 import org.eclipse.yasson.internal.ReflectionUtils;
@@ -25,10 +28,10 @@ import org.eclipse.yasson.internal.model.customization.ClassCustomization;
 import org.eclipse.yasson.internal.model.customization.ComponentBoundCustomization;
 import org.eclipse.yasson.internal.model.customization.Customization;
 import org.eclipse.yasson.internal.model.customization.PolymorphismConfig;
-import org.eclipse.yasson.internal.serializer.types.ObjectTypeSerializer;
-import org.eclipse.yasson.internal.serializer.types.TypeSerializers;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
+import org.eclipse.yasson.internal.serializer.types.ObjectTypeSerializer;
+import org.eclipse.yasson.internal.serializer.types.TypeSerializers;
 
 /**
  * TODO javadoc
@@ -159,7 +162,7 @@ public class SerializationModelCreator {
                                                    ClassModel classModel) {
         LinkedHashMap<String, ModelSerializer> propertySerializers = new LinkedHashMap<>();
         PolymorphismConfig polymorphismConfig = classModel.getClassCustomization().getPolymorphismConfig();
-        if (polymorphismConfig != null && polymorphismConfig.getAddAs() == PolymorphicType.Format.PROPERTY) {
+        if (polymorphismConfig != null && polymorphismConfig.getAddAs() == JsonbPolymorphicType.Format.PROPERTY) {
             addPolymorphismProperty(polymorphismConfig, propertySerializers, classModel);
         }
         for (PropertyModel model : classModel.getSortedProperties()) {
@@ -173,7 +176,7 @@ public class SerializationModelCreator {
             }
         }
         ModelSerializer objectSerializer = new ObjectSerializer(propertySerializers);
-        if (polymorphismConfig != null && polymorphismConfig.getAddAs() != PolymorphicType.Format.PROPERTY) {
+        if (polymorphismConfig != null && polymorphismConfig.getAddAs() != JsonbPolymorphicType.Format.PROPERTY) {
             objectSerializer = addPolymorphismWrapper(polymorphismConfig, objectSerializer, classModel);
         }
         RecursionChecker recursionChecker = new RecursionChecker(objectSerializer);
@@ -190,6 +193,44 @@ public class SerializationModelCreator {
                                          ClassModel classModel) {
         Class<?> rawType = classModel.getType();
         String alias = polymorphismConfig.getAliases().get(rawType);
+        ModelSerializer serializer = createPolymorphismPropertySerializer(polymorphismConfig, rawType, alias);
+        if (polymorphismConfig.getParentConfig() != null) {
+            addParentPolymorphismProperty(polymorphismConfig.getParentConfig(), propertySerializers, classModel);
+        }
+        propertySerializers.put(polymorphismConfig.getFieldName(), serializer);
+        for (PropertyModel propertyModel : classModel.getSortedProperties()) {
+            if (propertySerializers.containsKey(propertyModel.getWriteName())) {
+                throw new JsonbException("CHANGE naming conflict!");
+            }
+        }
+    }
+
+    private void addParentPolymorphismProperty(PolymorphismConfig polymorphismConfig,
+                                               LinkedHashMap<String, ModelSerializer> propertySerializers,
+                                               ClassModel classModel) {
+        Class<?> rawType = classModel.getType();
+        PolymorphismConfig current = polymorphismConfig;
+        LinkedHashMap<String, ModelSerializer> toBeAdded = new LinkedHashMap<>();
+        while (current != null) {
+            PolymorphismConfig local = current;
+            String alias = local.getAliases().entrySet().stream()
+                    .filter(entry -> entry.getKey().isAssignableFrom(rawType))
+                    .map(Map.Entry::getValue)
+                    .findFirst()
+                    .orElse(null);
+            ModelSerializer serializer = createPolymorphismPropertySerializer(local, rawType, alias);
+            toBeAdded.put(current.getFieldName(), serializer);
+            current = current.getParentConfig();
+        }
+        ListIterator<Map.Entry<String, ModelSerializer>> iterator = new ArrayList<>(toBeAdded.entrySet())
+                .listIterator(toBeAdded.size());
+        while (iterator.hasPrevious()) {
+            Map.Entry<String, ModelSerializer> entry = iterator.previous();
+            propertySerializers.put(entry.getKey(), entry.getValue());
+        }
+    }
+
+    private ModelSerializer createPolymorphismPropertySerializer(PolymorphismConfig polymorphismConfig, Class<?> rawType, String alias) {
         ModelSerializer serializer;
         if (alias != null) {
             serializer = (value, generator, context) -> generator.write(polymorphismConfig.getFieldName(), alias);
@@ -199,7 +240,7 @@ public class SerializationModelCreator {
         } else {
             throw new JsonbException("Could not find proper alias for class: " + rawType.getName());
         }
-        propertySerializers.put(polymorphismConfig.getFieldName(), serializer);
+        return serializer;
     }
 
     private ModelSerializer addPolymorphismWrapper(PolymorphismConfig polymorphismConfig,
@@ -207,19 +248,45 @@ public class SerializationModelCreator {
                                                    ClassModel classModel) {
         Class<?> rawType = classModel.getType();
         String alias = polymorphismConfig.getAliases().get(rawType);
-        if (polymorphismConfig.getAddAs() == PolymorphicType.Format.WRAPPING_OBJECT) {
-            LinkedHashMap<String, ModelSerializer> propertySerializers = new LinkedHashMap<>();
-            KeyWriter keyWriter = new KeyWriter(objectSerializer);
-            if (alias != null) {
-                propertySerializers.put(alias, keyWriter);
-            } else if (polymorphismConfig.useClassNames()) {
-                propertySerializers.put(rawType.getName(), keyWriter);
-            } else {
-                throw new JsonbException("Could not find proper alias for class: " + rawType.getName());
-            }
-            return new ObjectSerializer(propertySerializers);
+        ModelSerializer toReturn = createWrappingObjectSerializer(objectSerializer, rawType, polymorphismConfig, alias);
+        if (polymorphismConfig.getParentConfig() != null) {
+            toReturn = addParentPolymorphismWrapper(polymorphismConfig.getParentConfig(), toReturn, classModel);
         }
-        return objectSerializer;
+        return toReturn;
+    }
+
+    private ModelSerializer addParentPolymorphismWrapper(PolymorphismConfig parentConfig,
+                                                         ModelSerializer objectSerializer,
+                                                         ClassModel classModel) {
+        Class<?> rawType = classModel.getType();
+        ModelSerializer toReturn = objectSerializer;
+        PolymorphismConfig current = parentConfig;
+        while (current != null) {
+            String alias = current.getAliases().entrySet().stream()
+                    .filter(entry -> entry.getKey().isAssignableFrom(rawType)) //Add exact matching!
+                    .map(Map.Entry::getValue)
+                    .findFirst()
+                    .orElse(null);
+            toReturn = createWrappingObjectSerializer(toReturn, rawType, current, alias);
+            current = current.getParentConfig();
+        }
+        return toReturn;
+    }
+
+    private ModelSerializer createWrappingObjectSerializer(ModelSerializer objectSerializer,
+                                                           Class<?> rawType,
+                                                           PolymorphismConfig current,
+                                                           String alias) {
+        LinkedHashMap<String, ModelSerializer> propertySerializers = new LinkedHashMap<>();
+        KeyWriter keyWriter = new KeyWriter(objectSerializer);
+        if (alias != null) {
+            propertySerializers.put(alias, keyWriter);
+        } else if (current.useClassNames()) {
+            propertySerializers.put(rawType.getName(), keyWriter);
+        } else {
+            throw new JsonbException("Could not find proper alias for class: " + rawType.getName());
+        }
+        return new ObjectSerializer(propertySerializers);
     }
 
     private ModelSerializer createCollectionSerializer(LinkedList<Type> chain,

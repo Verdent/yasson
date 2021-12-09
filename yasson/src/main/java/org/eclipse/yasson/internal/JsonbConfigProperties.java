@@ -42,7 +42,6 @@ import jakarta.json.bind.config.PropertyVisibilityStrategy;
 import jakarta.json.bind.serializer.JsonbSerializer;
 
 import org.eclipse.yasson.YassonConfig;
-import org.eclipse.yasson.config.PolymorphismSupport;
 import org.eclipse.yasson.internal.model.PropertyModel;
 import org.eclipse.yasson.internal.model.ReverseTreeMap;
 import org.eclipse.yasson.internal.model.customization.PropertyOrdering;
@@ -226,18 +225,6 @@ public class JsonbConfigProperties {
 
     private boolean initForceMapArraySerializerForNullKeys() {
         return getConfigProperty(YassonConfig.FORCE_MAP_ARRAY_SERIALIZER_FOR_NULL_KEYS, Boolean.class, false);
-    }
-
-    private PolymorphismSupport initPolymorphismSupport() {
-        Optional<Object> property = jsonbConfig.getProperty(YassonConfig.POLYMORPHISM_SUPPORT);
-        if (property.isEmpty()) {
-            return null;
-        }
-        Object polymorphismSupport = property.get();
-        if (!(polymorphismSupport instanceof PolymorphismSupport)) {
-            throw new JsonbException("YassonConfig.POLYMORPHISM_SUPPORT must be instance of PolymorphismSupport");
-        }
-        return (PolymorphismSupport) polymorphismSupport;
     }
 
     /**

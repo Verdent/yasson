@@ -28,7 +28,6 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
     private final Set<Class<?>> userProcessorChain = new HashSet<>();
     private JsonParser.Event lastValueEvent;
     private Customization customization = ClassCustomization.empty();
-    private boolean lastPolymorphismProcessed = false;
 
     /**
      * Parent instance for marshaller and unmarshaller.
@@ -42,7 +41,6 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
     public DeserializationContextImpl(DeserializationContextImpl context) {
         super(context.getJsonbContext());
         this.lastValueEvent = context.lastValueEvent;
-        this.lastPolymorphismProcessed = context.lastPolymorphismProcessed;
     }
 
     public List<Runnable> getDelayedSetters() {
@@ -63,14 +61,6 @@ public class DeserializationContextImpl extends ProcessingContext implements Des
 
     public void setCustomization(Customization customization) {
         this.customization = customization;
-    }
-
-    public boolean isLastPolymorphismProcessed() {
-        return lastPolymorphismProcessed;
-    }
-
-    public void setLastPolymorphismProcessed(boolean lastPolymorphismProcessed) {
-        this.lastPolymorphismProcessed = lastPolymorphismProcessed;
     }
 
     public Set<Class<?>> getUserProcessorChain() {

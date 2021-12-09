@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -43,7 +44,6 @@ import java.util.OptionalInt;
 import java.util.OptionalLong;
 import java.util.Queue;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import jakarta.json.bind.JsonbException;
@@ -51,8 +51,10 @@ import jakarta.json.bind.adapter.JsonbAdapter;
 import jakarta.json.bind.annotation.JsonbDateFormat;
 import jakarta.json.bind.annotation.JsonbNillable;
 import jakarta.json.bind.annotation.JsonbNumberFormat;
+import jakarta.json.bind.annotation.JsonbPolymorphicType;
 import jakarta.json.bind.annotation.JsonbProperty;
 import jakarta.json.bind.annotation.JsonbPropertyOrder;
+import jakarta.json.bind.annotation.JsonbSubtype;
 import jakarta.json.bind.annotation.JsonbTransient;
 import jakarta.json.bind.annotation.JsonbTypeAdapter;
 import jakarta.json.bind.annotation.JsonbTypeDeserializer;
@@ -63,9 +65,6 @@ import jakarta.json.bind.serializer.JsonbDeserializer;
 import jakarta.json.bind.serializer.JsonbSerializer;
 
 import org.eclipse.yasson.ImplementationClass;
-import org.eclipse.yasson.PolymorphicType;
-import org.eclipse.yasson.SubType;
-import org.eclipse.yasson.SubTypes;
 import org.eclipse.yasson.internal.components.AdapterBinding;
 import org.eclipse.yasson.internal.components.DeserializerBinding;
 import org.eclipse.yasson.internal.components.SerializerBinding;
@@ -85,19 +84,15 @@ import org.eclipse.yasson.internal.properties.Messages;
  */
 public class AnnotationIntrospector {
 
-    private static final Set<Class<?>> OPTIONALS = Set.of(Optional.class,
-                                                          OptionalInt.class,
-                                                          OptionalLong.class,
-                                                          OptionalDouble.class);
+    //    private static final Set<Class<?>> OPTIONALS = Set.of(Optional.class,
+    //                                                          OptionalInt.class,
+    //                                                          OptionalLong.class,
+    //                                                          OptionalDouble.class);
 
     private final JsonbContext jsonbContext;
     private final ConstructorPropertiesAnnotationIntrospector constructorPropertiesIntrospector;
 
-    private static final Set<Class<? extends Annotation>> NON_REPEATABLE;
-
-    static {
-        NON_REPEATABLE = Set.of(SubTypes.class, SubType.class, PolymorphicType.class);
-    }
+    private static final Set<Class<? extends Annotation>> REPEATABLE = Set.of(JsonbPolymorphicType.class);
 
     /**
      * Annotations to report exception when used in combination with {@link JsonbTransient}.
@@ -292,7 +287,7 @@ public class AnnotationIntrospector {
         Objects.requireNonNull(parameter);
         JsonbTypeDeserializer deserializerAnnotation =
                 Optional.ofNullable(parameter.getDeclaredAnnotation(JsonbTypeDeserializer.class))
-                .orElseGet(() -> getAnnotationFromParameterType(parameter, JsonbTypeDeserializer.class));
+                        .orElseGet(() -> getAnnotationFromParameterType(parameter, JsonbTypeDeserializer.class));
         if (deserializerAnnotation == null) {
             return null;
         }
@@ -311,7 +306,7 @@ public class AnnotationIntrospector {
         Objects.requireNonNull(parameter);
         JsonbTypeAdapter adapter =
                 Optional.ofNullable(parameter.getDeclaredAnnotation(JsonbTypeAdapter.class))
-                .orElseGet(() -> getAnnotationFromParameterType(parameter, JsonbTypeAdapter.class));
+                        .orElseGet(() -> getAnnotationFromParameterType(parameter, JsonbTypeAdapter.class));
         if (adapter == null) {
             return null;
         }
@@ -806,35 +801,66 @@ public class AnnotationIntrospector {
     private PolymorphismConfig getPolymorphismConfig(JsonbAnnotatedElement<Class<?>> clsElement,
                                                      ClassCustomization parentCustomization) {
         PolymorphismConfig parentPolyConfig = parentCustomization.getPolymorphismConfig();
-        AnnotationWrapper<PolymorphicType> polymorphicType = clsElement.getAnnotationWrapper(PolymorphicType.class);
-        PolymorphismConfig.Builder builder;
-        if (polymorphicType != null) {
-            builder = PolymorphismConfig.builder();
-            PolymorphicType annotation = polymorphicType.getAnnotation();
+
+        LinkedList<AnnotationWrapper<?>> annotations = clsElement.getAnnotations(JsonbPolymorphicType.class);
+
+        if (parentPolyConfig != null) {
+            if (annotations.size() == 1 && annotations.getFirst().isInherited()) {
+                throw new JsonbException("CHANGE");
+            } else if (annotations.size() > 1) {
+                throw new JsonbException("CHANGE");
+            } else if (annotations.isEmpty()) {
+                return PolymorphismConfig.builder().of(parentPolyConfig)
+                        .inherited(true)
+                        .build();
+            }
+        }
+        JsonbPolymorphicType.Format overallFormat = parentPolyConfig == null ? null : parentPolyConfig.getAddAs();
+        ListIterator<AnnotationWrapper<?>> listIterator = annotations.listIterator(annotations.size());
+        while (listIterator.hasPrevious()) {
+            AnnotationWrapper<?> annotationWrapper = listIterator.previous();
+            JsonbPolymorphicType annotation = (JsonbPolymorphicType) annotationWrapper.getAnnotation();
+            if (overallFormat == null) {
+                overallFormat = annotation.format();
+            } else if (overallFormat != annotation.format()) {
+                throw new JsonbException("CHANGE THIS");
+            }
+            PolymorphismConfig.Builder builder = PolymorphismConfig.builder();
             builder.fieldName(annotation.key())
-                    .inherited(polymorphicType.isInherited())
+                    .inherited(annotationWrapper.isInherited())
                     .useClassNames(annotation.classNames())
                     .format(annotation.format())
+                    .parentConfig(parentPolyConfig)
                     .whitelistedPackages(Arrays.stream(annotation.allowedPackages())
                                                  .filter(p -> !p.isBlank())
                                                  .collect(Collectors.toSet()));
-        } else if (parentPolyConfig != null) {
-            builder = PolymorphismConfig.builder().of(parentPolyConfig).clearAliases();
-        } else {
-            return null;
-        }
-        if (parentPolyConfig != null) {
-            parentPolyConfig.getAliases().forEach((clazz, alias) -> {
-                if (clsElement.getElement().isAssignableFrom(clazz)) {
-                    builder.alias(clazz, alias);
+            for (JsonbSubtype subType : annotation.value()) {
+                if (!annotationWrapper.getDefinedType().isAssignableFrom(subType.type())) {
+                    throw new JsonbException("CHANGE THIS ALSO");
                 }
-            });
+                builder.alias(subType.type(), subType.alias());
+            }
+            parentPolyConfig = builder.build();
         }
-        Consumer<SubType> consumer = subType -> builder.alias(subType.type(), subType.alias());
-        clsElement.getAnnotation(SubTypes.class)
-                .ifPresentOrElse(subtypes -> Arrays.stream(subtypes.value()).forEach(consumer),
-                                 () -> clsElement.getAnnotation(SubType.class).ifPresent(consumer));
-        return builder.build();
+
+        checkDuplicityPolymorphicPropertyNames(parentPolyConfig);
+
+        return parentPolyConfig;
+    }
+
+    private void checkDuplicityPolymorphicPropertyNames(PolymorphismConfig polymorphismConfig) {
+        if (polymorphismConfig == null || polymorphismConfig.getAddAs() != JsonbPolymorphicType.Format.PROPERTY) {
+            return;
+        }
+        Set<String> keyNames = new HashSet<>();
+        PolymorphismConfig current = polymorphismConfig;
+        while (current != null) {
+            if (keyNames.contains(current.getFieldName())) {
+                throw new JsonbException("CHANGE");
+            }
+            keyNames.add(current.getFieldName());
+            current = current.getParentConfig();
+        }
     }
 
     /**
@@ -861,36 +887,94 @@ public class AnnotationIntrospector {
             return classElement;
         }
 
-        for (Class<?> ifc : collectInterfaces(clazz)) {
-            addIfNotPresent(classElement, ifc.getDeclaredAnnotations());
+        Map<Class<? extends Annotation>, LinkedList<AnnotationWrapper<?>>> interfaceAnnotations
+                = collectInterfaceAnnotations(clazz, clazz);
+        for (LinkedList<AnnotationWrapper<?>> wrappers : interfaceAnnotations.values()) {
+            for (AnnotationWrapper<?> wrapper : wrappers) {
+                if (classElement.getAnnotation(wrapper.getAnnotation().annotationType()).isEmpty()
+                        || REPEATABLE.contains(wrapper.getAnnotation().annotationType())) {
+                    classElement.putAnnotationWrapper(wrapper);
+                }
+            }
         }
 
         if (!clazz.isPrimitive() && !clazz.isArray() && (clazz.getPackage() != null)) {
-            addIfNotPresent(classElement, clazz.getPackage().getAnnotations());
+            addIfNotPresent(classElement, null, clazz.getPackage().getAnnotations());
         }
         return classElement;
     }
 
-    private void addIfNotPresent(JsonbAnnotatedElement<?> element, Annotation... annotations) {
+    private Map<Class<? extends Annotation>, LinkedList<AnnotationWrapper<?>>> collectInterfaceAnnotations(Class<?> currentInterf,
+                                                                                                           Class<?> processed) {
+        Map<Class<? extends Annotation>, LinkedList<AnnotationWrapper<?>>> map = new HashMap<>();
+        if (!currentInterf.equals(processed)) {
+            for (Annotation annotation : currentInterf.getDeclaredAnnotations()) {
+                map.computeIfAbsent(annotation.annotationType(), aClass -> new LinkedList<>())
+                        .add(new AnnotationWrapper<>(annotation, true, currentInterf));
+            }
+        }
+
+        Map<Class<? extends Annotation>, LinkedList<AnnotationWrapper<?>>> parents = new HashMap<>();
+        for (Class<?> parentInterf : currentInterf.getInterfaces()) {
+            Map<Class<? extends Annotation>, LinkedList<AnnotationWrapper<?>>> current = collectInterfaceAnnotations(parentInterf,
+                                                                                                                     processed);
+            current.entrySet().stream()
+                    .filter(entry -> parents.containsKey(entry.getKey()) || REPEATABLE.contains(entry.getKey()))
+                    .peek(entry -> {
+                        if (parents.containsKey(entry.getKey())) {
+                            throw new JsonbException("CHANGE THIS EXCEPTION");
+                        }
+                    })
+                    .forEach(entry -> {
+                        parents.computeIfAbsent(entry.getKey(), aClass -> new LinkedList<>()).addAll(entry.getValue());
+                        map.computeIfAbsent(entry.getKey(), aClass -> new LinkedList<>()).addAll(entry.getValue());
+                    });
+        }
+        return map;
+    }
+
+//    private void collectParentInterfaceAnnotations(Class<?> currentInterf,
+//                                                   Map<Class<? extends Annotation>, LinkedList<Annotation>> overall) {
+//        Map<Class<? extends Annotation>, LinkedList<Annotation>> parents = new HashMap<>();
+//        for (Class<?> parentInterf : currentInterf.getInterfaces()) {
+//            collectParentInterfaceAnnotations(parentInterf, );
+//            current.entrySet().stream()
+//                    .filter(entry -> parents.containsKey(entry.getKey()) || REPEATABLE.contains(entry.getKey()))
+//                    .peek(entry -> {
+//                        if (parents.containsKey(entry.getKey())) {
+//                            throw new JsonbException("CHANGE THIS EXCEPTION");
+//                        }
+//                    })
+//                    .forEach(entry -> {
+//                        parents.computeIfAbsent(entry.getKey(), aClass -> new LinkedList<>()).addAll(entry.getValue());
+//                        map.computeIfAbsent(entry.getKey(), aClass -> new LinkedList<>()).addAll(entry.getValue());
+//                    });
+//        }
+//        if (currentInterf.isInterface()) {
+//            for (Annotation annotation : currentInterf.getDeclaredAnnotations()) {
+//                map.computeIfAbsent(annotation.annotationType(), aClass -> new LinkedList<>()).add(annotation);
+//            }
+//        }
+//        return map;
+//    }
+
+    private void addIfNotPresent(JsonbAnnotatedElement<?> element, Class<?> definedType, Annotation... annotations) {
         for (Annotation annotation : annotations) {
-            if (element.getAnnotation(annotation.annotationType()).isEmpty()) {
-                element.putAnnotation(annotation, true);
-            } else if (NON_REPEATABLE.contains(annotation.annotationType())) {
-                //TODO change to something readable
-                throw new JsonbException("Annotation " + annotation.annotationType().getSimpleName()
-                                                 + " cannot be used multiple times in the class tree.");
+            if (element.getAnnotation(annotation.annotationType()).isEmpty()
+                    || REPEATABLE.contains(annotation.annotationType())) {
+                element.putAnnotation(annotation, true, definedType);
             }
         }
     }
 
     public boolean requiredParameters(Executable executable, JsonbAnnotatedElement<Parameter> annotated) {
         return jsonbContext.getConfigProperties().hasRequiredCreatorParameters();
-//        if (OPTIONALS.contains(annotated.getElement().getType())) {
-//            return false;
-//        }
-//        return annotated.getAnnotation(JsonbRequired.class)
-//                .or(() -> Optional.ofNullable(executable.getAnnotation(JsonbRequired.class)))
-//                .map(JsonbRequired::value)
-//                .orElseGet(() -> jsonbContext.getConfigProperties().hasRequiredCreatorParameters());
+        //        if (OPTIONALS.contains(annotated.getElement().getType())) {
+        //            return false;
+        //        }
+        //        return annotated.getAnnotation(JsonbRequired.class)
+        //                .or(() -> Optional.ofNullable(executable.getAnnotation(JsonbRequired.class)))
+        //                .map(JsonbRequired::value)
+        //                .orElseGet(() -> jsonbContext.getConfigProperties().hasRequiredCreatorParameters());
     }
 }

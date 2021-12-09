@@ -1,13 +1,12 @@
 package org.eclipse.yasson.internal.model.customization;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import org.eclipse.yasson.PolymorphicType.Format;
+import jakarta.json.bind.annotation.JsonbPolymorphicType;
 
 /**
  * TODO javadoc
@@ -17,9 +16,10 @@ public class PolymorphismConfig {
     private final String fieldName;
     private final boolean useClassNames;
     private final boolean inherited;
-    private final Format format;
+    private final JsonbPolymorphicType.Format format;
     private final Map<Class<?>, String> aliases;
     private final Set<String> whitelistedPackages;
+    private final PolymorphismConfig parentConfig;
 
     private PolymorphismConfig(Builder builder) {
         this.fieldName = builder.fieldName;
@@ -28,6 +28,7 @@ public class PolymorphismConfig {
         this.format = builder.format;
         this.aliases = Map.copyOf(builder.aliases);
         this.whitelistedPackages = Set.copyOf(builder.whitelistedPackages);
+        this.parentConfig = builder.parentConfig;
     }
 
     public static Builder builder() {
@@ -46,7 +47,7 @@ public class PolymorphismConfig {
         return useClassNames;
     }
 
-    public Format getAddAs() {
+    public JsonbPolymorphicType.Format getAddAs() {
         return format;
     }
 
@@ -58,6 +59,10 @@ public class PolymorphismConfig {
         return whitelistedPackages;
     }
 
+    public PolymorphismConfig getParentConfig() {
+        return parentConfig;
+    }
+
     public static final class Builder {
 
         public static final String DEFAULT_KEY_NAME = "@type";
@@ -67,7 +72,8 @@ public class PolymorphismConfig {
         private String fieldName = DEFAULT_KEY_NAME;
         private boolean useClassNames = false;
         private boolean inherited = false;
-        private Format format = Format.PROPERTY;
+        private PolymorphismConfig parentConfig;
+        private JsonbPolymorphicType.Format format = JsonbPolymorphicType.Format.PROPERTY;
 
         private Builder() {
         }
@@ -87,7 +93,7 @@ public class PolymorphismConfig {
             return this;
         }
 
-        public Builder format(Format format) {
+        public Builder format(JsonbPolymorphicType.Format format) {
             this.format = format;
             return this;
         }
@@ -97,13 +103,13 @@ public class PolymorphismConfig {
             return this;
         }
 
-        public Builder clearAliases() {
-            this.aliases.clear();
+        public Builder whitelistedPackages(Set<String> whitelistedPackages) {
+            this.whitelistedPackages.addAll(whitelistedPackages);
             return this;
         }
 
-        public Builder whitelistedPackages(Set<String> whitelistedPackages) {
-            this.whitelistedPackages.addAll(whitelistedPackages);
+        public Builder parentConfig(PolymorphismConfig parentConfig) {
+            this.parentConfig = parentConfig;
             return this;
         }
 
@@ -114,6 +120,7 @@ public class PolymorphismConfig {
             this.format = polymorphismConfig.format;
             this.useClassNames = polymorphismConfig.useClassNames;
             this.inherited = polymorphismConfig.inherited;
+            this.parentConfig = polymorphismConfig.parentConfig;
             return this;
         }
 

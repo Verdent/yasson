@@ -5,10 +5,11 @@ import java.time.LocalDate;
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.annotation.JsonbCreator;
 import jakarta.json.bind.annotation.JsonbDateFormat;
+import jakarta.json.bind.annotation.JsonbPolymorphicType;
 import jakarta.json.bind.annotation.JsonbProperty;
+import jakarta.json.bind.annotation.JsonbSubtype;
+
 import org.eclipse.yasson.Jsonbs;
-import org.eclipse.yasson.PolymorphicType;
-import org.eclipse.yasson.SubType;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -89,9 +90,41 @@ public class AnnotationPolymorphismTest {
         assertThat(deserialized[2], instanceOf(Dog.class));
     }
 
-    @PolymorphicType(key = "@type")
-    @SubType(alias = "dog", type = Dog.class)
-    @SubType(alias = "cat", type = Cat.class)
+    @Test
+    public void testSerializationClassNamesWithCorrectAllowedPackages() {
+        String expected = "{\"@type\":\"org.eclipse.yasson.customization.polymorphism"
+                + ".AnnotationPolymorphismTest$ChildClassNamesWithCorrectAllowed\",\"parent\":1,\"child\":2}";
+        assertThat(Jsonbs.defaultJsonb.toJson(new ChildClassNamesWithCorrectAllowed()), is(expected));
+    }
+
+    @Test
+    public void testDeserializationClassNamesWithCorrectAllowedPackages() {
+        String json = "{\"@type\":\"org.eclipse.yasson.customization.polymorphism"
+                + ".AnnotationPolymorphismTest$ChildClassNamesWithCorrectAllowed\",\"parent\":3,\"child\":4}";
+        ParentClassNamesWithCorrectAllowed deserialized = Jsonbs.defaultJsonb.fromJson(json, ParentClassNamesWithCorrectAllowed.class);
+        assertThat(deserialized, instanceOf(ChildClassNamesWithCorrectAllowed.class));
+        assertThat(deserialized.parent, is(3));
+        assertThat(((ChildClassNamesWithCorrectAllowed)deserialized).child, is(4));
+    }
+
+    @Test
+    public void testSerializationClassNamesWithIncorrectAllowedPackages() {
+        String expected = "{\"@type\":\"org.eclipse.yasson.customization.polymorphism."
+                + "AnnotationPolymorphismTest$ChildClassNamesWithIncorrectAllowed\",\"parent\":1,\"child\":2}";
+        assertThat(Jsonbs.defaultJsonb.toJson(new ChildClassNamesWithIncorrectAllowed()), is(expected));
+    }
+
+    @Test
+    public void testDeserializationClassNamesWithIncorrectAllowedPackages() {
+        String json = "{\"@type\":\"org.eclipse.yasson.customization.polymorphism."
+                + "AnnotationPolymorphismTest$ChildClassNamesWithIncorrectAllowed\",\"parent\":1,\"child\":2}";
+        assertThrows(JsonbException.class, () -> Jsonbs.defaultJsonb.fromJson(json, ParentClassNamesWithIncorrectAllowed.class));
+    }
+
+    @JsonbPolymorphicType({
+            @JsonbSubtype(alias = "dog", type = Dog.class),
+            @JsonbSubtype(alias = "cat", type = Cat.class)
+    })
     public interface Animal {
 
     }
@@ -108,15 +141,15 @@ public class AnnotationPolymorphismTest {
 
     }
 
-    @SubType(alias = "rat", type = Rat.class)
     public static class Rat implements Animal {
 
         public boolean isRat = true;
 
     }
 
-    @PolymorphicType(key = "@dateType")
-    @SubType(alias = "constructor", type = DateConstructor.class)
+    @JsonbPolymorphicType(key = "@dateType", value = {
+            @JsonbSubtype(alias = "constructor", type = DateConstructor.class)
+    })
     public interface SomeDateType {
 
     }
@@ -130,6 +163,24 @@ public class AnnotationPolymorphismTest {
             this.localDate = localDate;
         }
 
+    }
+
+    @JsonbPolymorphicType(classNames = true, allowedPackages = {"org.eclipse.yasson.customization.polymorphism"})
+    public static class ParentClassNamesWithCorrectAllowed {
+        public int parent = 1;
+    }
+
+    public static class ChildClassNamesWithCorrectAllowed extends ParentClassNamesWithCorrectAllowed {
+        public int child = 2;
+    }
+
+    @JsonbPolymorphicType(classNames = true, allowedPackages = {"org.eclipse.incorrect"})
+    public static class ParentClassNamesWithIncorrectAllowed {
+        public int parent = 1;
+    }
+
+    public static class ChildClassNamesWithIncorrectAllowed extends ParentClassNamesWithIncorrectAllowed {
+        public int child = 2;
     }
 
 }

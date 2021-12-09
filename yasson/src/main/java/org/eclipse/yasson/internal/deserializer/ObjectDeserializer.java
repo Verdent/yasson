@@ -1,10 +1,12 @@
 package org.eclipse.yasson.internal.deserializer;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import jakarta.json.bind.JsonbException;
 import jakarta.json.stream.JsonParser;
+
 import org.eclipse.yasson.internal.DeserializationContextImpl;
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
@@ -17,12 +19,19 @@ class ObjectDeserializer implements ModelDeserializer<JsonParser> {
     private final Map<String, ModelDeserializer<JsonParser>> propertyDeserializerChains;
     private final Function<String, String> renamer;
     private final Class<?> rawClass;
+    private final boolean failOnUnknownProperty;
+    private final Set<String> ignoredProperties;
 
     public ObjectDeserializer(Map<String, ModelDeserializer<JsonParser>> propertyDeserializerChains,
-                              Function<String, String> renamer, Class<?> rawClass) {
-        this.propertyDeserializerChains = propertyDeserializerChains;
+                              Function<String, String> renamer,
+                              Class<?> rawClass,
+                              boolean failOnUnknownProperty,
+                              Set<String> ignoredProperties) {
+        this.propertyDeserializerChains = Map.copyOf(propertyDeserializerChains);
         this.renamer = renamer;
         this.rawClass = rawClass;
+        this.failOnUnknownProperty = failOnUnknownProperty;
+        this.ignoredProperties = Set.copyOf(ignoredProperties);
     }
 
     @Override
@@ -46,17 +55,14 @@ class ObjectDeserializer implements ModelDeserializer<JsonParser> {
                     try {
                         propertyDeserializerChains.get(key).deserialize(parser, context);
                     } catch (JsonbException e) {
-                        throw new JsonbException("Unable to deserialize property '" + key
-                                                         + "' because of: " + e.getMessage(), e);
+                        throw new JsonbException("Unable to deserialize property '" + key + "' because of: " + e.getMessage(), e);
                     }
-                } else if (context.getJsonbContext().getConfigProperties().getConfigFailOnUnknownProperties()) {
-                    throw new JsonbException(Messages.getMessage(MessageKeys.UNKNOWN_JSON_PROPERTY,
-                                                                 key,
-                                                                 rawClass));
+                } else if (failOnUnknownProperty && !ignoredProperties.contains(key)) {
+                    throw new JsonbException(Messages.getMessage(MessageKeys.UNKNOWN_JSON_PROPERTY, key, rawClass));
                 }
                 break;
             case END_ARRAY:
-                continue;
+                break;
             case END_OBJECT:
                 return context.getInstance();
             default:

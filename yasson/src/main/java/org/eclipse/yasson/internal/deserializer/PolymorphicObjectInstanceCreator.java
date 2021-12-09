@@ -1,23 +1,20 @@
 package org.eclipse.yasson.internal.deserializer;
 
 import java.math.BigDecimal;
-import java.util.AbstractMap;
 import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import jakarta.json.JsonArray;
-import jakarta.json.JsonNumber;
 import jakarta.json.JsonObject;
-import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
 import jakarta.json.bind.JsonbException;
+import jakarta.json.bind.annotation.JsonbPolymorphicType;
 import jakarta.json.stream.JsonLocation;
 import jakarta.json.stream.JsonParser;
 
-import org.eclipse.yasson.PolymorphicType;
 import org.eclipse.yasson.internal.DeserializationContextImpl;
+import org.eclipse.yasson.internal.jsonstructure.JsonStructureToParserAdapter;
 import org.eclipse.yasson.internal.model.customization.PolymorphismConfig;
 
 import static jakarta.json.stream.JsonParser.Event;
@@ -27,15 +24,18 @@ import static jakarta.json.stream.JsonParser.Event;
  */
 class PolymorphicObjectInstanceCreator implements ModelDeserializer<JsonParser> {
 
+    private final Class<?> processedType;
     private final Map<String, Class<?>> resolvedClasses = new ConcurrentHashMap<>();
     private final ChainModelCreator chainModelCreator;
     private final PolymorphismConfig polymorphismConfig;
     private final ModelDeserializer<JsonParser> actualInstanceCreator;
     private final ModelDeserializer<JsonParser> defaultProcessor;
 
-    public PolymorphicObjectInstanceCreator(ChainModelCreator chainModelCreator,
+    public PolymorphicObjectInstanceCreator(Class<?> processedType,
+                                            ChainModelCreator chainModelCreator,
                                             PolymorphismConfig polymorphismConfig,
                                             ModelDeserializer<JsonParser> defaultProcessor) {
+        this.processedType = processedType;
         this.chainModelCreator = chainModelCreator;
         this.polymorphismConfig = polymorphismConfig;
         this.defaultProcessor = defaultProcessor;
@@ -43,7 +43,7 @@ class PolymorphicObjectInstanceCreator implements ModelDeserializer<JsonParser> 
     }
 
     private ModelDeserializer<JsonParser> actualCreator() {
-        if (polymorphismConfig.getAddAs() == PolymorphicType.Format.WRAPPING_OBJECT) {
+        if (polymorphismConfig.getAddAs() == JsonbPolymorphicType.Format.WRAPPING_OBJECT) {
             return new PolymorphicTypeAsKey();
         }
         return new PolymorphicTypeAsPropertyValue();
@@ -51,10 +51,6 @@ class PolymorphicObjectInstanceCreator implements ModelDeserializer<JsonParser> 
 
     @Override
     public Object deserialize(JsonParser parser, DeserializationContextImpl context) {
-        if (context.isLastPolymorphismProcessed()) {
-            context.setLastPolymorphismProcessed(false);
-            return defaultProcessor.deserialize(parser, context);
-        }
         return actualInstanceCreator.deserialize(parser, context);
     }
 
@@ -90,17 +86,19 @@ class PolymorphicObjectInstanceCreator implements ModelDeserializer<JsonParser> 
     private void checkWhitelistedClass(String className) {
         //if whitelist is empty, we accept everything
         String packageName = className.substring(0, className.lastIndexOf("."));
-        if (!polymorphismConfig.getWhitelistedPackages().isEmpty()) {
-            for (String pack : polymorphismConfig.getWhitelistedPackages()) {
-                if (packageName.equals(pack)) {
-                    return;
-                } else if (pack.endsWith(".*") && packageName.startsWith(pack.substring(0, pack.lastIndexOf(".")))) {
-                    return;
-                }
-            }
-            throw new JsonbException("Class \"" + className + "\" does not belong to any whitelisted package: "
-                                             + polymorphismConfig.getWhitelistedPackages());
+        if (polymorphismConfig.getWhitelistedPackages().isEmpty()) {
+            throw new JsonbException("Class \"" + processedType.getName() + "\" does support class name processing, "
+                                             + "but does not contain allowed packages");
         }
+        for (String pack : polymorphismConfig.getWhitelistedPackages()) {
+            if (packageName.equals(pack)) {
+                return;
+            } else if (pack.endsWith(".*") && packageName.startsWith(pack.substring(0, pack.lastIndexOf(".")))) {
+                return;
+            }
+        }
+        throw new JsonbException("Class \"" + className + "\" does not belong to any allowed package: "
+                                         + polymorphismConfig.getWhitelistedPackages());
     }
 
     private final class PolymorphicTypeAsKey implements ModelDeserializer<JsonParser> {
@@ -121,11 +119,12 @@ class PolymorphicObjectInstanceCreator implements ModelDeserializer<JsonParser> 
                     break;
                 case START_OBJECT:
                     Class<?> type = getPolymorphicTypeClass(alias);
-                    //The ModelDeserializer which will be used for the polymorphic type will have polymorphic handling set up also.
-                    //We want to avoid processing it again.
-                    context.setLastPolymorphismProcessed(true);
-                    ModelDeserializer<JsonParser> deserializer = chainModelCreator.deserializerChain(type);
-                    deserializer.deserialize(parser, context);
+                    if (type.equals(processedType)) {
+                        defaultProcessor.deserialize(parser, context);
+                    } else {
+                        ModelDeserializer<JsonParser> deserializer = chainModelCreator.deserializerChain(type);
+                        deserializer.deserialize(parser, context);
+                    }
                     done = true;
                     break;
                 case END_OBJECT:
@@ -150,26 +149,23 @@ class PolymorphicObjectInstanceCreator implements ModelDeserializer<JsonParser> 
             String alias;
             JsonParser jsonParser;
             String polymorphismKeyName = polymorphismConfig.getFieldName();
-            if (parser instanceof ObjectParser) {
-                alias = ((ObjectParser) parser).getAlias(polymorphismKeyName);
-                jsonParser = parser;
-            } else {
-                JsonObject object = parser.getObject();
-                alias = object.getString(polymorphismKeyName, null);
-                JsonObject newJsonObject = context.getJsonbContext().getJsonProvider().createObjectBuilder(object)
-                        .remove(polymorphismKeyName)
-                        .build();
-                jsonParser = context.getJsonbContext().getJsonParserFactory().createParser(newJsonObject);
-            }
+            JsonObject object = parser.getObject();
+            alias = object.getString(polymorphismKeyName, null);
+            JsonObject newJsonObject = context.getJsonbContext().getJsonProvider().createObjectBuilder(object)
+                    .remove(polymorphismKeyName)
+                    .build();
+            jsonParser = new JsonStructureToParserAdapter(newJsonObject);
+            Event event = jsonParser.next();//To get to the first event
+            context.setLastValueEvent(event);
             Class<?> polymorphicTypeClass;
             if (alias == null) {
                 return defaultProcessor.deserialize(jsonParser, context);
             }
             polymorphicTypeClass = getPolymorphicTypeClass(alias);
+            if (polymorphicTypeClass.equals(processedType)) {
+                return defaultProcessor.deserialize(jsonParser, context);
+            }
             ModelDeserializer<JsonParser> deserializer = chainModelCreator.deserializerChain(polymorphicTypeClass);
-            //The ModelDeserializer which will be used for the polymorphic type will have polymorphic handling set up also.
-            //We want to avoid processing it again.
-            context.setLastPolymorphismProcessed(true);
             return deserializer.deserialize(jsonParser, context);
         }
 
@@ -179,227 +175,140 @@ class PolymorphicObjectInstanceCreator implements ModelDeserializer<JsonParser> 
         }
     }
 
-    private static final class ObjectParser implements JsonParser {
+    private static final class DelayedParser implements JsonParser {
 
-        private final JsonObject jsonObject;
         private final JsonParser parser;
+        private final Event startEvent;
+        private boolean called = false;
 
-        private ObjectParser(JsonObject jsonObject, JsonParser parser) {
-            this.jsonObject = jsonObject;
+        private DelayedParser(JsonParser parser, Event startEvent) {
             this.parser = parser;
-        }
-
-        String getAlias(String propertyKey) {
-            return jsonObject.getString(propertyKey, null);
+            this.startEvent = startEvent;
         }
 
         @Override
         public boolean hasNext() {
-            return parser.hasNext();
+            return called || parser.hasNext();
         }
 
         @Override
         public Event next() {
+            if (!called) {
+                called = true;
+                return startEvent;
+            }
             return parser.next();
         }
 
         @Override
         public String getString() {
+            if (!called) {
+                throw new IllegalStateException("Method getString() allowed only on events KEY_NAME, VALUE_STRING and VALUE_NUMBER");
+            }
             return parser.getString();
         }
 
         @Override
         public boolean isIntegralNumber() {
+            if (!called) {
+                throw new IllegalStateException("Method isIntegralNumber() allowed only on events VALUE_NUMBER");
+            }
             return parser.isIntegralNumber();
         }
 
         @Override
         public int getInt() {
+            if (!called) {
+                throw new IllegalStateException("Method getInt() allowed only on events VALUE_NUMBER");
+            }
             return parser.getInt();
         }
 
         @Override
         public long getLong() {
+            if (!called) {
+                throw new IllegalStateException("Method getLong() allowed only on events VALUE_NUMBER");
+            }
             return parser.getLong();
         }
 
         @Override
         public BigDecimal getBigDecimal() {
+            if (!called) {
+                throw new IllegalStateException("Method getBigDecimal() allowed only on events VALUE_NUMBER");
+            }
             return parser.getBigDecimal();
         }
 
         @Override
         public JsonLocation getLocation() {
+            if (!called) {
+                throw new IllegalStateException("Method getInt() allowed only on events VALUE_NUMBER");
+            }
             return parser.getLocation();
         }
 
         @Override
         public JsonObject getObject() {
+            if (!called) {
+                throw new IllegalStateException("Method getInt() allowed only on events VALUE_NUMBER");
+            }
             return parser.getObject();
         }
 
         @Override
         public JsonValue getValue() {
+            if (!called) {
+                throw new IllegalStateException("Method getInt() allowed only on events VALUE_NUMBER");
+            }
             return parser.getValue();
         }
 
         @Override
         public JsonArray getArray() {
+            if (!called) {
+                throw new IllegalStateException("Method getInt() allowed only on events VALUE_NUMBER");
+            }
             return parser.getArray();
         }
 
         @Override
         public Stream<JsonValue> getArrayStream() {
+            if (!called) {
+                throw new IllegalStateException("Method getInt() allowed only on events VALUE_NUMBER");
+            }
             return parser.getArrayStream();
         }
 
         @Override
         public Stream<Map.Entry<String, JsonValue>> getObjectStream() {
+            if (!called) {
+                throw new IllegalStateException("Method getInt() allowed only on events VALUE_NUMBER");
+            }
             return parser.getObjectStream();
         }
 
         @Override
         public Stream<JsonValue> getValueStream() {
+            if (!called) {
+                throw new IllegalStateException("Method getInt() allowed only on events VALUE_NUMBER");
+            }
             return parser.getValueStream();
         }
 
         @Override
         public void skipArray() {
+            if (!called) {
+                throw new IllegalStateException("Method getInt() allowed only on events VALUE_NUMBER");
+            }
             parser.skipArray();
         }
 
         @Override
         public void skipObject() {
-            parser.skipObject();
-        }
-
-        @Override
-        public void close() {
-            parser.close();
-        }
-
-        @Override
-        public String toString() {
-            return "JsonParser based on the buffered JsonObject";
-        }
-    }
-
-    private static final class DelayedParser implements JsonParser {
-
-        private final JsonParser parser;
-        private final DeserializationContextImpl context;
-        private final Queue<Map.Entry<Event, JsonValue>> postponedValues;
-        private Map.Entry<Event, JsonValue> current = new AbstractMap.SimpleEntry<>(Event.START_OBJECT, null);
-
-        private DelayedParser(JsonParser parser,
-                              DeserializationContextImpl context,
-                              Queue<Map.Entry<Event, JsonValue>> postponedValues) {
-            this.parser = parser;
-            this.context = context;
-            this.postponedValues = postponedValues;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return !postponedValues.isEmpty() || parser.hasNext();
-        }
-
-        @Override
-        public Event next() {
-            if (!postponedValues.isEmpty()) {
-                current = postponedValues.poll();
-                context.setLastValueEvent(current.getKey());
-                return current.getKey();
+            if (!called) {
+                throw new IllegalStateException("Method getInt() allowed only on events VALUE_NUMBER");
             }
-            current = null;
-            Event next = parser.next();
-            context.setLastValueEvent(next);
-            return next;
-        }
-
-        @Override
-        public String getString() {
-            if (current == null) {
-                return parser.getString();
-            }
-            Event currentEvent = current.getKey();
-            if (currentEvent == Event.KEY_NAME
-                    || currentEvent == Event.VALUE_STRING
-                    || currentEvent == Event.VALUE_NUMBER) {
-                return ((JsonString) current.getValue()).getString();
-            }
-            throw new IllegalStateException("Method getString() allowed only on events KEY_NAME, VALUE_STRING and VALUE_NUMBER");
-        }
-
-        @Override
-        public boolean isIntegralNumber() {
-            if (current == null) {
-                return parser.isIntegralNumber();
-            }
-            Event currentEvent = current.getKey();
-            if (currentEvent != Event.VALUE_NUMBER) {
-                throw new IllegalStateException("Method isIntegralNumber() allowed only on events VALUE_NUMBER");
-            }
-            return ((JsonNumber) current.getValue()).isIntegral();
-        }
-
-        @Override
-        public int getInt() {
-            return parser.getInt();
-        }
-
-        @Override
-        public long getLong() {
-            return parser.getLong();
-        }
-
-        @Override
-        public BigDecimal getBigDecimal() {
-            return parser.getBigDecimal();
-        }
-
-        @Override
-        public JsonLocation getLocation() {
-            return parser.getLocation();
-        }
-
-        @Override
-        public JsonObject getObject() {
-            return parser.getObject();
-        }
-
-        @Override
-        public JsonValue getValue() {
-            return parser.getValue();
-        }
-
-        @Override
-        public JsonArray getArray() {
-            return parser.getArray();
-        }
-
-        @Override
-        public Stream<JsonValue> getArrayStream() {
-            return parser.getArrayStream();
-        }
-
-        @Override
-        public Stream<Map.Entry<String, JsonValue>> getObjectStream() {
-            return parser.getObjectStream();
-        }
-
-        @Override
-        public Stream<JsonValue> getValueStream() {
-            return parser.getValueStream();
-        }
-
-        @Override
-        public void skipArray() {
-            parser.skipArray();
-        }
-
-        @Override
-        public void skipObject() {
             parser.skipObject();
         }
 

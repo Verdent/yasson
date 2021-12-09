@@ -111,6 +111,9 @@ public class JsonObjectIterator extends JsonStructureIterator {
      * @return Current JsonValue.
      */
     public JsonValue getValue() {
+        if (state == State.START && currentKey == null) {
+            return jsonObject;
+        }
         return jsonObject.get(currentKey);
     }
 

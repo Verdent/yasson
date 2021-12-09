@@ -100,6 +100,12 @@ public class JsonStructureToParserAdapter implements JsonParser {
         return getJsonNumberValue().bigDecimalValue();
     }
 
+    @Override
+    public JsonObject getObject() {
+//        ((JsonObjectIterator) iterators.peek()).jsonObject
+        return iterators.peek().getValue().asJsonObject();
+    }
+
     private JsonNumber getJsonNumberValue() {
         JsonStructureIterator iterator = iterators.peek();
         JsonValue value = iterator.getValue();

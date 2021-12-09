@@ -23,6 +23,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jakarta.json.bind.JsonbException;
+import jakarta.json.bind.annotation.JsonbPolymorphicType;
 import jakarta.json.bind.config.BinaryDataStrategy;
 import jakarta.json.bind.config.PropertyNamingStrategy;
 import jakarta.json.stream.JsonParser;
@@ -56,6 +57,7 @@ import static jakarta.json.stream.JsonParser.Event;
  */
 public class ChainModelCreator {
 
+    private static final ModelDeserializer<Object> NULL_PROVIDER = (value, context) -> null;
     private static final Map<Class<?>, ModelDeserializer<Object>> DEFAULT_CREATOR_VALUES;
     private static final Set<JsonParser.Event> MAP_KEY_EVENTS = new HashSet<>();
 
@@ -292,33 +294,47 @@ public class ChainModelCreator {
                                                                                 JustReturn.create());
                 String parameterName = renamer.apply(creatorModel.getName());
                 processors.put(parameterName, modelDeserializer);
-                if (!creatorModel.getCustomization().isRequired()) { //if parameter is optional
-                    Class<?> rawParamType = ReflectionUtils.getRawType(creatorModel.getType());
-                    defaultCreatorValues.put(parameterName,
-                                             DEFAULT_CREATOR_VALUES.getOrDefault(rawParamType, (value, context) -> null));
-                } else { //if parameter is not optional
+                if (creatorModel.getCustomization().isRequired()) {
                     defaultCreatorValues.put(parameterName,new RequiredCreatorParameter(parameterName));
+                } else {
+                    Class<?> rawParamType = ReflectionUtils.getRawType(creatorModel.getType());
+                    defaultCreatorValues.put(parameterName, DEFAULT_CREATOR_VALUES.getOrDefault(rawParamType, NULL_PROVIDER));
                 }
             }
             ModelDeserializer<JsonParser> instanceCreator;
             PolymorphismConfig polymorphismConfig = classCustomization.getPolymorphismConfig();
+            Set<String> ignoredProperties = collectIgnoredProperties(polymorphismConfig);
             PositionChecker positionChecker;
             if (hasCreator) {
                 instanceCreator = new ObjectInstanceCreator(processors, defaultCreatorValues, creator, rawType, renamer);
             } else {
-                ModelDeserializer<JsonParser> typeWrapper = new ObjectDeserializer(processors, renamer, rawType);
+                boolean failOnUnknownProperties = jsonbContext.getConfigProperties().getConfigFailOnUnknownProperties();
+                ModelDeserializer<JsonParser> typeWrapper = new ObjectDeserializer(processors, renamer, rawType,
+                                                                                   failOnUnknownProperties, ignoredProperties);
                 instanceCreator = new ObjectDefaultInstanceCreator(typeWrapper, rawType,
                                                                    classModel.getDefaultConstructor());
             }
             positionChecker = new PositionChecker(instanceCreator, rawType, Event.START_OBJECT);
-            if (polymorphismConfig != null) {
-                instanceCreator = new PolymorphicObjectInstanceCreator(this, polymorphismConfig, positionChecker);
+            if (polymorphismConfig != null && !polymorphismConfig.isInherited()) {
+                instanceCreator = new PolymorphicObjectInstanceCreator(rawType, this, polymorphismConfig, positionChecker);
                 positionChecker = new PositionChecker(instanceCreator, rawType, Event.START_OBJECT);
             }
             ModelDeserializer<JsonParser> nullChecker = new NullCheckDeserializer(positionChecker, JustReturn.create());
             deserializerChain.put(cachedItem, nullChecker);
             return nullChecker;
         }
+    }
+
+    private Set<String> collectIgnoredProperties(PolymorphismConfig polymorphismConfig) {
+        Set<String> ignoredProperties = new HashSet<>();
+        if (polymorphismConfig != null && polymorphismConfig.getAddAs() == JsonbPolymorphicType.Format.PROPERTY) {
+            PolymorphismConfig current = polymorphismConfig;
+            while (current != null) {
+                ignoredProperties.add(current.getFieldName());
+                current = current.getParentConfig();
+            }
+        }
+        return ignoredProperties;
     }
 
     private Function<String, String> propertyRenamer() {

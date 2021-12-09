@@ -12,11 +12,9 @@
 package org.eclipse.yasson;
 
 import java.util.Map;
-import java.util.Objects;
 
 import jakarta.json.bind.JsonbConfig;
 import jakarta.json.bind.serializer.JsonbSerializer;
-import org.eclipse.yasson.config.PolymorphismSupport;
 
 /**
  * Custom properties for configuring Yasson outside of the specification {@link jakarta.json.bind.JsonbConfig} scope.
@@ -143,11 +141,6 @@ public class YassonConfig extends JsonbConfig {
      */
     public YassonConfig withJsonbParametersRequired(boolean value) {
         setProperty(JSONB_CREATOR_PARAMETERS_REQUIRED, value);
-        return this;
-    }
-
-    public YassonConfig withPolymorphism(PolymorphismSupport polymorphism) {
-        setProperty(POLYMORPHISM_SUPPORT, Objects.requireNonNull(polymorphism));
         return this;
     }
 
