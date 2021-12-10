@@ -58,9 +58,10 @@
             <version>${jakarta.json.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.parsson</groupId>
-            <artifactId>parsson</artifactId>
-            <version>1.0.0</version>
+            <groupId>org.glassfish</groupId>
+            <artifactId>jakarta.json</artifactId>
+            <version>${jakarta.json.version}</version>
+            <classifier>module</classifier>
         </dependency>
         <!-- Test/Provided dependencies -->
         <dependency>

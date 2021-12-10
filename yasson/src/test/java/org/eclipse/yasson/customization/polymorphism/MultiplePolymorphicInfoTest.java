@@ -12,20 +12,16 @@
 
 package org.eclipse.yasson.customization.polymorphism;
 
-import java.util.Objects;
-
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
 import jakarta.json.bind.annotation.JsonbPolymorphicType;
 import jakarta.json.bind.annotation.JsonbSubtype;
 
-import org.eclipse.yasson.YassonConfig;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * TODO javadoc

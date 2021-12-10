@@ -327,7 +327,7 @@ public class ChainModelCreator {
 
     private Set<String> collectIgnoredProperties(PolymorphismConfig polymorphismConfig) {
         Set<String> ignoredProperties = new HashSet<>();
-        if (polymorphismConfig != null && polymorphismConfig.getAddAs() == JsonbPolymorphicType.Format.PROPERTY) {
+        if (polymorphismConfig != null) {
             PolymorphismConfig current = polymorphismConfig;
             while (current != null) {
                 ignoredProperties.add(current.getFieldName());

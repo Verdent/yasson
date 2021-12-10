@@ -44,7 +44,6 @@ import java.util.OptionalInt;
 import java.util.OptionalLong;
 import java.util.Queue;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.adapter.JsonbAdapter;
@@ -815,28 +814,21 @@ public class AnnotationIntrospector {
                         .build();
             }
         }
-        JsonbPolymorphicType.Format overallFormat = parentPolyConfig == null ? null : parentPolyConfig.getAddAs();
         ListIterator<AnnotationWrapper<?>> listIterator = annotations.listIterator(annotations.size());
         while (listIterator.hasPrevious()) {
             AnnotationWrapper<?> annotationWrapper = listIterator.previous();
             JsonbPolymorphicType annotation = (JsonbPolymorphicType) annotationWrapper.getAnnotation();
-            if (overallFormat == null) {
-                overallFormat = annotation.format();
-            } else if (overallFormat != annotation.format()) {
-                throw new JsonbException("CHANGE THIS");
-            }
             PolymorphismConfig.Builder builder = PolymorphismConfig.builder();
             builder.fieldName(annotation.key())
                     .inherited(annotationWrapper.isInherited())
-                    .useClassNames(annotation.classNames())
-                    .format(annotation.format())
                     .parentConfig(parentPolyConfig)
-                    .whitelistedPackages(Arrays.stream(annotation.allowedPackages())
-                                                 .filter(p -> !p.isBlank())
-                                                 .collect(Collectors.toSet()));
+                    .definedType(annotationWrapper.getDefinedType());
             for (JsonbSubtype subType : annotation.value()) {
                 if (!annotationWrapper.getDefinedType().isAssignableFrom(subType.type())) {
-                    throw new JsonbException("CHANGE THIS ALSO");
+                    throw new JsonbException("Defined alias type has to be child of the current type. JsonbSubType on the "
+                                                     + annotationWrapper.getDefinedType().getName()
+                                                     + " defines incorrect alias "
+                                                     + subType);
                 }
                 builder.alias(subType.type(), subType.alias());
             }
@@ -849,16 +841,21 @@ public class AnnotationIntrospector {
     }
 
     private void checkDuplicityPolymorphicPropertyNames(PolymorphismConfig polymorphismConfig) {
-        if (polymorphismConfig == null || polymorphismConfig.getAddAs() != JsonbPolymorphicType.Format.PROPERTY) {
+        if (polymorphismConfig == null) {
             return;
         }
-        Set<String> keyNames = new HashSet<>();
+        Map<String, PolymorphismConfig> keyNames = new HashMap<>();
         PolymorphismConfig current = polymorphismConfig;
         while (current != null) {
-            if (keyNames.contains(current.getFieldName())) {
-                throw new JsonbException("CHANGE");
+            String fieldName = current.getFieldName();
+            if (keyNames.containsKey(fieldName)) {
+                PolymorphismConfig conflicting = keyNames.get(fieldName);
+                throw new JsonbException("One polymorphic chain cannot have two conflicting property names. "
+                                                 + "Polymorphic type defined on the type "
+                                                 + conflicting.getDefinedType().getName() + " and "
+                                                 + current.getDefinedType().getName() + " have conflicting property name");
             }
-            keyNames.add(current.getFieldName());
+            keyNames.put(fieldName, current);
             current = current.getParentConfig();
         }
     }
@@ -919,7 +916,7 @@ public class AnnotationIntrospector {
             Map<Class<? extends Annotation>, LinkedList<AnnotationWrapper<?>>> current = collectInterfaceAnnotations(parentInterf,
                                                                                                                      processed);
             current.entrySet().stream()
-                    .filter(entry -> parents.containsKey(entry.getKey()) || REPEATABLE.contains(entry.getKey()))
+                    .filter(entry -> !parents.containsKey(entry.getKey()) || REPEATABLE.contains(entry.getKey()))
                     .peek(entry -> {
                         if (parents.containsKey(entry.getKey())) {
                             throw new JsonbException("CHANGE THIS EXCEPTION");
