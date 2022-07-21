@@ -77,6 +77,12 @@ public class JsonbDateFormatter {
         this.dateTimeFormatter = null;
     }
 
+    public JsonbDateFormatter(DateTimeFormatter dateTimeFormatter) {
+        this.dateTimeFormatter = dateTimeFormatter;
+        this.format = null;
+        this.locale = null;
+    }
+
     /**
      * Creates an instance with cached instance of {@link DateTimeFormatter}.
      *

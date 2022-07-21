@@ -82,7 +82,7 @@ class ResolvedParameterizedType implements ParameterizedType {
         if (this == o) {
             return true;
         }
-        if (o == null || !(o instanceof ParameterizedType)) {
+        if (!(o instanceof ParameterizedType)) {
             return false;
         }
         final ParameterizedType that = (ParameterizedType) o;

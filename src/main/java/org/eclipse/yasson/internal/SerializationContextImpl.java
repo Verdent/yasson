@@ -35,12 +35,6 @@ public class SerializationContextImpl extends ProcessingContext implements Seria
 
     private static final Logger LOGGER = Logger.getLogger(SerializationContextImpl.class.getName());
 
-    /**
-     * Used to avoid StackOverflowError, when adapted / serialized object
-     * contains instance of its type inside it or when object has recursive reference.
-     */
-    private final Set<Object> currentlyProcessedObjects = new HashSet<>();
-
     private final Type runtimeType;
     private String key = null;
     private boolean containerWithNulls = true;
@@ -207,26 +201,5 @@ public class SerializationContextImpl extends ProcessingContext implements Seria
     public ModelSerializer getRootSerializer(Type type) {
         return getJsonbContext().getSerializationModelCreator().serializerChain(type, true, true);
     }
-
-    /**
-     * Adds currently processed object to the {@link Set}.
-     *
-     * @param object processed object
-     * @return if object was added
-     */
-    public boolean addProcessedObject(Object object) {
-        return this.currentlyProcessedObjects.add(object);
-    }
-
-    /**
-     * Removes processed object from the {@link Set}.
-     *
-     * @param object processed object
-     * @return if object was removed
-     */
-    public boolean removeProcessedObject(Object object) {
-        return currentlyProcessedObjects.remove(object);
-    }
-
 
 }

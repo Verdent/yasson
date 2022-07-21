@@ -67,7 +67,7 @@ public class ReflectionUtils {
                 for (Type bound : typeVariable.getBounds()) {
                     Optional<Class<?>> boundRawType = getOptionalRawType(bound);
                     if (boundRawType.isPresent() && !Object.class.equals(boundRawType.get())) {
-                        if (!specializedClass.isPresent() || specializedClass.get().isAssignableFrom(boundRawType.get())) {
+                        if (specializedClass.isEmpty() || specializedClass.get().isAssignableFrom(boundRawType.get())) {
                             specializedClass = Optional.of(boundRawType.get());
                         }
                     }
