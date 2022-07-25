@@ -23,11 +23,9 @@ import java.util.Locale;
 
 import jakarta.json.bind.adapter.JsonbAdapter;
 import jakarta.json.bind.annotation.JsonbDateFormat;
-import jakarta.json.bind.annotation.JsonbNumberFormat;
 import jakarta.json.bind.serializer.JsonbDeserializer;
 
 import org.eclipse.yasson.internal.JsonbDateFormatter;
-import org.eclipse.yasson.internal.JsonbNumberFormatter;
 
 /**
  * Common interface for all customization builders.
@@ -35,6 +33,7 @@ import org.eclipse.yasson.internal.JsonbNumberFormatter;
 @SuppressWarnings("unchecked")
 abstract class YassonCustomizationBuilder<T extends YassonCustomizationBuilder<T, B>, B extends YassonCustomization> {
 
+    private Locale numberLocale;
     private boolean ignoreNillable = false;
     private boolean ignoreDeserializer = false;
     private boolean ignoreAdapter = false;
@@ -44,8 +43,8 @@ abstract class YassonCustomizationBuilder<T extends YassonCustomizationBuilder<T
     private Boolean nillable;
     private JsonbDeserializer<?> deserializer;
     private JsonbAdapter<?, ?> adapter;
-    private JsonbNumberFormatter numberFormat;
-    private JsonbDateFormatter dateFormat;
+    private NumberFormat numberFormat;
+    private DateTimeFormatter dateFormat;
 
     /**
      * Whether this component can be nillable.
@@ -131,7 +130,7 @@ abstract class YassonCustomizationBuilder<T extends YassonCustomizationBuilder<T
      * @return updated builder instance
      */
     public T numberFormat(String numberFormat) {
-        return numberFormat(new JsonbNumberFormatter(numberFormat, JsonbNumberFormat.DEFAULT_LOCALE));
+        return numberFormat(numberFormat, Locale.getDefault());
     }
 
     /**
@@ -151,11 +150,7 @@ abstract class YassonCustomizationBuilder<T extends YassonCustomizationBuilder<T
      * @return updated builder instance
      */
     public T numberFormat(NumberFormat numberFormat) {
-        return numberFormat(new JsonbNumberFormatter(numberFormat));
-    }
-
-    private T numberFormat(JsonbNumberFormatter numberFormatter) {
-        this.numberFormat = numberFormatter;
+        this.numberFormat = numberFormat;
         return (T) this;
     }
 
@@ -187,7 +182,7 @@ abstract class YassonCustomizationBuilder<T extends YassonCustomizationBuilder<T
      * @return updated builder instance
      */
     public T dateFormat(String dateFormat) {
-        return dateFormat(new JsonbDateFormatter(dateFormat, JsonbDateFormat.DEFAULT_LOCALE));
+        return dateFormat(DateTimeFormatter.ofPattern(dateFormat));
     }
 
     /**
@@ -207,10 +202,6 @@ abstract class YassonCustomizationBuilder<T extends YassonCustomizationBuilder<T
      * @return updated builder instance
      */
     public T dateFormat(DateTimeFormatter dateFormat) {
-        return dateFormat(new JsonbDateFormatter(dateFormat));
-    }
-
-    private T dateFormat(JsonbDateFormatter dateFormat) {
         this.dateFormat = dateFormat;
         return (T) this;
     }
@@ -278,11 +269,11 @@ abstract class YassonCustomizationBuilder<T extends YassonCustomizationBuilder<T
         return adapter;
     }
 
-    JsonbNumberFormatter getNumberFormat() {
+    NumberFormat getNumberFormat() {
         return numberFormat;
     }
 
-    JsonbDateFormatter getDateFormat() {
+    DateTimeFormatter getDateFormat() {
         return dateFormat;
     }
 }

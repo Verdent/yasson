@@ -11,6 +11,11 @@ import jakarta.json.bind.serializer.JsonbSerializer;
  */
 class PropertyCustomizationImpl extends YassonCustomizationImpl implements PropertyCustomization {
 
+    private final String serializationName;
+    private final String deserializationName;
+    private final boolean ignoreSerializationName;
+    private final boolean ignoreDeserializationName;
+
     PropertyCustomizationImpl(PropertyCustomizationBuilder builder) {
         super(builder);
     }
@@ -67,16 +72,24 @@ class PropertyCustomizationImpl extends YassonCustomizationImpl implements Prope
 
     @Override
     public Optional<String> getName(Scope scope) {
-        return Optional.empty();
+        return Optional.ofNullable(getValue(scope, serializationName, deserializationName));
     }
 
     @Override
     public boolean ignoreName(Scope scope) {
-        return false;
+        return getValue(scope, ignoreSerializationName, ignoreDeserializationName);
     }
 
     @Override
     public boolean ignoreTransientProperty(Scope scope) {
         return false;
     }
+
+    private <T> T getValue(Scope scope, T serializationValue, T deserializationValue) {
+        if (scope == Scope.SERIALIZATION) {
+            return serializationValue;
+        }
+        return deserializationValue;
+    }
+
 }

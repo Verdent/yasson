@@ -18,6 +18,7 @@ package org.eclipse.yasson.internal.customization;
 
 import java.text.DateFormat;
 import java.text.NumberFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 /**
@@ -37,7 +38,7 @@ public interface ScopelessCustomization extends YassonCustomization {
      *
      * @return specified {@link DateFormat} instance, otherwise empty
      */
-    Optional<DateFormat> getDateFormat();
+    Optional<DateTimeFormatter> getDateFormat();
 
     /**
      * Return whether this component can be nillable.

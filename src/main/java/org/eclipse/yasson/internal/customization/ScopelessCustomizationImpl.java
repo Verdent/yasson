@@ -1,23 +1,20 @@
 package org.eclipse.yasson.internal.customization;
 
-import java.text.DateFormat;
 import java.text.NumberFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
-
-import org.eclipse.yasson.internal.JsonbDateFormatter;
-import org.eclipse.yasson.internal.JsonbNumberFormatter;
 
 /**
  * TODO javadoc
  */
-class ScopelessCustomizationImpl extends YassonCustomizationImpl implements ScopelessCustomization{
+class ScopelessCustomizationImpl extends YassonCustomizationImpl implements ScopelessCustomization {
 
     private final Boolean nillable;
     private final boolean ignoreNumberFormat;
     private final boolean ignoreDateFormat;
     private final boolean ignoreNillable;
-    private final JsonbNumberFormatter numberFormat;
-    private final JsonbDateFormatter dateFormat;
+    private final NumberFormat numberFormat;
+    private final DateTimeFormatter dateFormat;
 
     ScopelessCustomizationImpl(YassonCustomizationBuilder<?, ?> builder) {
         super(builder);
@@ -31,14 +28,12 @@ class ScopelessCustomizationImpl extends YassonCustomizationImpl implements Scop
 
     @Override
     public Optional<NumberFormat> getNumberFormat() {
-        return Optional.empty();
-//        return Optional.ofNullable(numberFormat);
+        return Optional.ofNullable(numberFormat);
     }
 
     @Override
-    public Optional<DateFormat> getDateFormat() {
-        return Optional.empty();
-//        return Optional.ofNullable(dateFormat);
+    public Optional<DateTimeFormatter> getDateFormat() {
+        return Optional.ofNullable(dateFormat);
     }
 
     @Override
