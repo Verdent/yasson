@@ -12,10 +12,15 @@
 
 package org.eclipse.yasson;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Type;
 import java.util.Map;
+import java.util.Optional;
 
 import jakarta.json.bind.JsonbConfig;
 import jakarta.json.bind.serializer.JsonbSerializer;
+
+import org.eclipse.yasson.customization.TypeCustomization;
 
 /**
  * Custom properties for configuring Yasson outside of the specification {@link jakarta.json.bind.JsonbConfig} scope.
@@ -56,6 +61,11 @@ public class YassonConfig extends JsonbConfig {
      * @see #withTimeInMillisAsAString(boolean)
      */
     public static final String DATE_TIME_IN_MILLIS_AS_A_STRING = "yasson.time-in-millis-as-a-string";
+
+    /**
+     *
+     */
+    public static final String TYPE_CUSTOMIZATION = "yasson.type-customization";
 
     /**
      * Property used to specify behaviour on deserialization when JSON document contains properties
@@ -140,6 +150,25 @@ public class YassonConfig extends JsonbConfig {
     public YassonConfig withTimeInMillisAsAString(boolean value) {
         setProperty(DATE_TIME_IN_MILLIS_AS_A_STRING, value);
         return this;
+    }
+
+    public YassonConfig withTypeCustomization(TypeCustomization typeCustomization) {
+//        mergeProperties(TYPE_CUSTOMIZATION, typeCustomization, TypeCustomization.class);
+        return this;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> void mergeProperties(final String propertyKey, final T[] values, final Class<T> tClass) {
+        final Optional<Object> property = getProperty(propertyKey);
+        if (!property.isPresent()) {
+            setProperty(propertyKey, values);
+            return;
+        }
+        T[] storedValues = (T[]) property.get();
+        T[] newValues = (T[]) Array.newInstance(tClass, storedValues.length + values.length);
+        System.arraycopy(storedValues, 0, newValues, 0, storedValues.length);
+        System.arraycopy(values, 0, newValues, storedValues.length, values.length);
+        setProperty(propertyKey, newValues);
     }
 
 }

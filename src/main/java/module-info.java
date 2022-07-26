@@ -24,6 +24,7 @@ module org.eclipse.yasson {
     requires static jakarta.cdi;
 
     exports org.eclipse.yasson;
+    exports org.eclipse.yasson.customization;
     exports org.eclipse.yasson.spi;
     provides jakarta.json.bind.spi.JsonbProvider with org.eclipse.yasson.JsonBindingProvider;
     uses org.eclipse.yasson.spi.JsonbComponentInstanceCreator;

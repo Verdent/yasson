@@ -1,4 +1,4 @@
-package org.eclipse.yasson.internal.customization;
+package org.eclipse.yasson.customization;
 
 class ParamCustomizationImpl extends ScopelessCustomizationImpl implements ParamCustomization {
 

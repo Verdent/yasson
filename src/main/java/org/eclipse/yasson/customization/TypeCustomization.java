@@ -14,13 +14,12 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  */
 
-package org.eclipse.yasson.internal.customization;
+package org.eclipse.yasson.customization;
 
 import java.util.Map;
 import java.util.Optional;
 
 import jakarta.json.bind.config.PropertyVisibilityStrategy;
-import jakarta.json.bind.spi.JsonbProvider;
 
 /**
  * Type customization.

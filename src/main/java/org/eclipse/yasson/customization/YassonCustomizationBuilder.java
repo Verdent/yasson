@@ -14,7 +14,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  */
 
-package org.eclipse.yasson.internal.customization;
+package org.eclipse.yasson.customization;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -24,8 +24,6 @@ import java.util.Locale;
 import jakarta.json.bind.adapter.JsonbAdapter;
 import jakarta.json.bind.annotation.JsonbDateFormat;
 import jakarta.json.bind.serializer.JsonbDeserializer;
-
-import org.eclipse.yasson.internal.JsonbDateFormatter;
 
 /**
  * Common interface for all customization builders.
@@ -45,6 +43,13 @@ abstract class YassonCustomizationBuilder<T extends YassonCustomizationBuilder<T
     private JsonbAdapter<?, ?> adapter;
     private NumberFormat numberFormat;
     private DateTimeFormatter dateFormat;
+
+    protected static NumberFormat createNumberFormat(String format, Locale locale) {
+        //TODO NumberFormat.getCompactNumberInstance(locale, NumberFormat.Style.valueOf(numberFormat)) test
+        final NumberFormat numberFormat = NumberFormat.getInstance(locale);
+        ((DecimalFormat) numberFormat).applyPattern(format);
+        return numberFormat;
+    }
 
     /**
      * Whether this component can be nillable.
@@ -117,10 +122,7 @@ abstract class YassonCustomizationBuilder<T extends YassonCustomizationBuilder<T
      * @return updated builder instance
      */
     public T numberFormat(String numberFormat, Locale locale) {
-        //TODO NumberFormat.getCompactNumberInstance(locale, NumberFormat.Style.valueOf(numberFormat)) test
-        final NumberFormat format = NumberFormat.getInstance(locale);
-        ((DecimalFormat) format).applyPattern(numberFormat);
-        return numberFormat(format);
+        return numberFormat(createNumberFormat(numberFormat, locale));
     }
 
     /**

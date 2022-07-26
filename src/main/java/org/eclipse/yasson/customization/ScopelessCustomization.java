@@ -14,64 +14,59 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  */
 
-package org.eclipse.yasson.internal.customization;
+package org.eclipse.yasson.customization;
 
 import java.text.DateFormat;
 import java.text.NumberFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 /**
- * Customization methods with the scope.
+ * Customization methods without the scope. Such as customization of a type.
  */
-public interface ScopedCustomization extends SerializationCustomization {
+public interface ScopelessCustomization extends YassonCustomization {
 
     /**
-     * Return {@link NumberFormat} specified to the required {@link Scope}.
+     * Return specified {@link NumberFormat}.
      *
-     * @param scope required scope
      * @return specified {@link NumberFormat} instance, otherwise empty
      */
-    Optional<NumberFormat> getNumberFormat(Scope scope);
+    Optional<NumberFormat> getNumberFormat();
 
     /**
-     * Return {@link DateFormat} specified to the required {@link Scope}.
+     * Return {@link DateFormat}.
      *
-     * @param scope required scope
      * @return specified {@link DateFormat} instance, otherwise empty
      */
-    Optional<DateFormat> getDateFormat(Scope scope);
+    Optional<DateTimeFormatter> getDateFormat();
 
     /**
-     * Return whether the component can be nillable in the given {@link Scope}.
+     * Return whether this component can be nillable.
      * If no explicit value has been set, empty optional is returned.
      *
-     * @param scope required scope
      * @return property nillable state, if not explicitly set empty is returned
      */
-    Optional<Boolean> getNillable(Scope scope);
+    Optional<Boolean> getNillable();
 
     /**
-     * Whether number format specified on the customized component in the given {@link Scope} should be ignored.
+     * Whether number format specified on the customized component should be ignored.
      *
-     * @param scope required scope
      * @return number format should be ignored
      */
-    boolean ignoreNumberFormat(Scope scope);
+    boolean ignoreNumberFormat();
 
     /**
-     * Whether date format specified on the customized component in the given {@link Scope} should be ignored.
+     * Whether date format specified on the customized component should be ignored.
      *
-     * @param scope required scope
      * @return date format should be ignored
      */
-    boolean ignoreDateFormat(Scope scope);
+    boolean ignoreDateFormat();
 
     /**
-     * Whether nillable specified on the customized component in the given {@link Scope} should be ignored.
+     * Whether nillable specified on the customized component should be ignored.
      *
-     * @param scope required scope
      * @return nillable should be ignored
      */
-    boolean ignoreNillable(Scope scope);
+    boolean ignoreNillable();
 
 }

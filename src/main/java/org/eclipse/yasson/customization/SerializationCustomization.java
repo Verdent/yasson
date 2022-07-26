@@ -14,32 +14,29 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  */
 
-package org.eclipse.yasson.internal.customization;
+package org.eclipse.yasson.customization;
+
+import java.util.Optional;
+
+import jakarta.json.bind.serializer.JsonbSerializer;
 
 /**
- * Builder of the {@link ParamCustomization} instance.
+ * Extension of the {@link YassonCustomization} over the serialization specific methods.
  */
-public final class ParamCustomizationBuilder extends YassonCustomizationBuilder<ParamCustomizationBuilder, ParamCustomization> {
+public interface SerializationCustomization extends YassonCustomization {
 
-    private final Class<?> paramClass;
-    private final String jsonName;
+    /**
+     * Return {@link JsonbSerializer} of the component.
+     *
+     * @return component serializer instance, otherwise empty
+     */
+    Optional<JsonbSerializer<?>> getSerializer();
 
-    ParamCustomizationBuilder(Class<?> paramClass, String jsonName) {
-        this.paramClass = paramClass;
-        this.jsonName = jsonName;
-    }
-
-    public Class<?> getParamClass() {
-        return paramClass;
-    }
-
-    public String getJsonName() {
-        return jsonName;
-    }
-
-    @Override
-    public ParamCustomization build() {
-        return new ParamCustomizationImpl(this);
-    }
+    /**
+     * Whether a serializer specified on the customized component should be ignored.
+     *
+     * @return serializer should be ignored
+     */
+    boolean ignoreSerializer();
 
 }
