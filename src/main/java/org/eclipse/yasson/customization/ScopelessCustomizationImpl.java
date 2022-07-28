@@ -1,7 +1,5 @@
 package org.eclipse.yasson.customization;
 
-import java.text.NumberFormat;
-import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 /**
@@ -9,36 +7,27 @@ import java.util.Optional;
  */
 class ScopelessCustomizationImpl extends YassonCustomizationImpl implements ScopelessCustomization {
 
-    private final Boolean nillable;
     private final boolean ignoreNumberFormat;
     private final boolean ignoreDateFormat;
-    private final boolean ignoreNillable;
-    private final NumberFormat numberFormat;
-    private final DateTimeFormatter dateFormat;
+    private final NumberFormatCustomization numberFormat;
+    private final DateFormatCustomization dateFormat;
 
     ScopelessCustomizationImpl(YassonCustomizationBuilder<?, ?> builder) {
         super(builder);
         this.numberFormat = builder.getNumberFormat();
         this.dateFormat = builder.getDateFormat();
-        this.nillable = builder.isNillable();
         this.ignoreDateFormat = builder.isIgnoreDateFormat();
         this.ignoreNumberFormat = builder.isIgnoreNumberFormat();
-        this.ignoreNillable = builder.isIgnoreNillable();
     }
 
     @Override
-    public Optional<NumberFormat> getNumberFormat() {
+    public Optional<NumberFormatCustomization> getNumberFormat() {
         return Optional.ofNullable(numberFormat);
     }
 
     @Override
-    public Optional<DateTimeFormatter> getDateFormat() {
+    public Optional<DateFormatCustomization> getDateFormat() {
         return Optional.ofNullable(dateFormat);
-    }
-
-    @Override
-    public Optional<Boolean> getNillable() {
-        return Optional.ofNullable(nillable);
     }
 
     @Override
@@ -51,8 +40,4 @@ class ScopelessCustomizationImpl extends YassonCustomizationImpl implements Scop
         return ignoreDateFormat;
     }
 
-    @Override
-    public boolean ignoreNillable() {
-        return ignoreNillable;
-    }
 }

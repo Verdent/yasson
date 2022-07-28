@@ -14,13 +14,11 @@ class PropertyCustomizationImpl extends YassonCustomizationImpl implements Prope
     private final String propertyName;
     private final String deserializationName;
     private final String serializationName;
-    private final NumberFormat serializationNumberFormat;
-    private final NumberFormat deserializationNumberFormat;
-    private final DateTimeFormatter serializationDateFormat;
-    private final DateTimeFormatter deserializationDateFormat;
+    private final NumberFormatCustomization serializationNumberFormat;
+    private final NumberFormatCustomization deserializationNumberFormat;
+    private final DateFormatCustomization serializationDateFormat;
+    private final DateFormatCustomization deserializationDateFormat;
     private final JsonbSerializer<?> serializer;
-    private final Boolean deserializationNillable;
-    private final Boolean serializationNillable;
     private final Boolean deserializationTransient;
     private final Boolean serializationTransient;
     private final boolean ignoreSerializer;
@@ -46,8 +44,6 @@ class PropertyCustomizationImpl extends YassonCustomizationImpl implements Prope
         this.deserializationDateFormat = builder.getDeserializationDateFormat();
         this.serializer = builder.getSerializer();
         this.ignoreSerializer = builder.isIgnoreSerializer();
-        this.serializationNillable = builder.isSerializationNillable();
-        this.deserializationNillable = builder.isDeserializationNillable();
         this.serializationTransient = builder.isSerializationTransient();
         this.deserializationTransient = builder.isDeserializationTransient();
         this.ignoreSerializationName = builder.isIgnoreSerializationName();
@@ -63,18 +59,13 @@ class PropertyCustomizationImpl extends YassonCustomizationImpl implements Prope
     }
 
     @Override
-    public Optional<NumberFormat> getNumberFormat(Scope scope) {
+    public Optional<NumberFormatCustomization> getNumberFormat(Scope scope) {
         return Optional.ofNullable(getValue(scope, serializationNumberFormat, deserializationNumberFormat));
     }
 
     @Override
-    public Optional<DateTimeFormatter> getDateFormat(Scope scope) {
+    public Optional<DateFormatCustomization> getDateFormat(Scope scope) {
         return Optional.ofNullable(getValue(scope, serializationDateFormat, deserializationDateFormat));
-    }
-
-    @Override
-    public Optional<Boolean> getNillable(Scope scope) {
-        return Optional.ofNullable(getValue(scope, serializationNillable, deserializationNillable));
     }
 
     @Override

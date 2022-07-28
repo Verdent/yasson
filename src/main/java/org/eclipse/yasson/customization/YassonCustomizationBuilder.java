@@ -41,8 +41,8 @@ abstract class YassonCustomizationBuilder<T extends YassonCustomizationBuilder<T
     private Boolean nillable;
     private JsonbDeserializer<?> deserializer;
     private JsonbAdapter<?, ?> adapter;
-    private NumberFormat numberFormat;
-    private DateTimeFormatter dateFormat;
+    private NumberFormatCustomization numberFormat;
+    private DateFormatCustomization dateFormat;
 
     protected static NumberFormat createNumberFormat(String format, Locale locale) {
         //TODO NumberFormat.getCompactNumberInstance(locale, NumberFormat.Style.valueOf(numberFormat)) test
@@ -122,7 +122,7 @@ abstract class YassonCustomizationBuilder<T extends YassonCustomizationBuilder<T
      * @return updated builder instance
      */
     public T numberFormat(String numberFormat, Locale locale) {
-        return numberFormat(createNumberFormat(numberFormat, locale));
+        return numberFormat(numberFormat, locale, null);
     }
 
     /**
@@ -132,7 +132,7 @@ abstract class YassonCustomizationBuilder<T extends YassonCustomizationBuilder<T
      * @return updated builder instance
      */
     public T numberFormat(String numberFormat) {
-        return numberFormat(numberFormat, Locale.getDefault());
+        return numberFormat(numberFormat, null);
     }
 
     /**
@@ -142,7 +142,7 @@ abstract class YassonCustomizationBuilder<T extends YassonCustomizationBuilder<T
      * @return updated builder instance
      */
     public T numberFormat(Locale locale) {
-        return numberFormat(NumberFormat.getInstance(locale));
+        return numberFormat(null, locale);
     }
 
     /**
@@ -152,7 +152,11 @@ abstract class YassonCustomizationBuilder<T extends YassonCustomizationBuilder<T
      * @return updated builder instance
      */
     public T numberFormat(NumberFormat numberFormat) {
-        this.numberFormat = numberFormat;
+        return numberFormat(null, null, numberFormat);
+    }
+
+    private T numberFormat(String format, Locale locale, NumberFormat numberFormat) {
+        this.numberFormat = new NumberFormatCustomization(format, locale, numberFormat);
         return (T) this;
     }
 
@@ -174,7 +178,7 @@ abstract class YassonCustomizationBuilder<T extends YassonCustomizationBuilder<T
      * @return updated builder instance
      */
     public T dateFormat(String dateFormat, Locale locale) {
-        return dateFormat(DateTimeFormatter.ofPattern(dateFormat, locale));
+        return dateFormat(dateFormat, locale, null);
     }
 
     /**
@@ -184,7 +188,7 @@ abstract class YassonCustomizationBuilder<T extends YassonCustomizationBuilder<T
      * @return updated builder instance
      */
     public T dateFormat(String dateFormat) {
-        return dateFormat(DateTimeFormatter.ofPattern(dateFormat));
+        return dateFormat(dateFormat, null);
     }
 
     /**
@@ -194,7 +198,7 @@ abstract class YassonCustomizationBuilder<T extends YassonCustomizationBuilder<T
      * @return updated builder instance
      */
     public T dateFormat(Locale locale) {
-        return dateFormat(DateTimeFormatter.ofPattern(JsonbDateFormat.DEFAULT_FORMAT, locale));
+        return dateFormat(null, locale);
     }
 
     /**
@@ -204,7 +208,11 @@ abstract class YassonCustomizationBuilder<T extends YassonCustomizationBuilder<T
      * @return updated builder instance
      */
     public T dateFormat(DateTimeFormatter dateFormat) {
-        this.dateFormat = dateFormat;
+        return dateFormat(null, null, dateFormat);
+    }
+
+    private T dateFormat(String format, Locale locale, DateTimeFormatter dateTimeFormatter) {
+        this.dateFormat = new DateFormatCustomization(format, locale, dateTimeFormatter);
         return (T) this;
     }
 
@@ -271,11 +279,11 @@ abstract class YassonCustomizationBuilder<T extends YassonCustomizationBuilder<T
         return adapter;
     }
 
-    NumberFormat getNumberFormat() {
+    NumberFormatCustomization getNumberFormat() {
         return numberFormat;
     }
 
-    DateTimeFormatter getDateFormat() {
+    DateFormatCustomization getDateFormat() {
         return dateFormat;
     }
 }

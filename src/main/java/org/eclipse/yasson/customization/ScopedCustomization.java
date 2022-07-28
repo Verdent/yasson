@@ -32,7 +32,7 @@ public interface ScopedCustomization extends SerializationCustomization {
      * @param scope required scope
      * @return specified {@link NumberFormat} instance, otherwise empty
      */
-    Optional<NumberFormat> getNumberFormat(Scope scope);
+    Optional<NumberFormatCustomization> getNumberFormat(Scope scope);
 
     /**
      * Return {@link DateFormat} specified to the required {@link Scope}.
@@ -40,16 +40,7 @@ public interface ScopedCustomization extends SerializationCustomization {
      * @param scope required scope
      * @return specified {@link DateFormat} instance, otherwise empty
      */
-    Optional<DateTimeFormatter> getDateFormat(Scope scope);
-
-    /**
-     * Return whether the component can be nillable in the given {@link Scope}.
-     * If no explicit value has been set, empty optional is returned.
-     *
-     * @param scope required scope
-     * @return property nillable state, if not explicitly set empty is returned
-     */
-    Optional<Boolean> getNillable(Scope scope);
+    Optional<DateFormatCustomization> getDateFormat(Scope scope);
 
     /**
      * Whether number format specified on the customized component in the given {@link Scope} should be ignored.

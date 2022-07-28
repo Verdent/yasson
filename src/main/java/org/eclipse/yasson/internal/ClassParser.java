@@ -28,6 +28,8 @@ import java.util.stream.Collectors;
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.config.PropertyVisibilityStrategy;
 
+import org.eclipse.yasson.customization.PropertyCustomization;
+import org.eclipse.yasson.customization.TypeCustomization;
 import org.eclipse.yasson.internal.model.ClassModel;
 import org.eclipse.yasson.internal.model.CreatorModel;
 import org.eclipse.yasson.internal.model.JsonbAnnotatedElement;
@@ -57,17 +59,25 @@ class ClassParser {
     /**
      * Parse class fields and getters setters. Merge to java bean like properties.
      */
-    void parseProperties(ClassModel classModel, JsonbAnnotatedElement<Class<?>> classElement) {
+    void parseProperties(ClassModel classModel,
+                         JsonbAnnotatedElement<Class<?>> classElement,
+                         TypeCustomization userTypeCustomization) {
+        Map<String, PropertyCustomization> userDefinedProperties = userTypeCustomization.getProperties();
         final Map<String, Property> classProperties = new HashMap<>();
         parseFields(classElement, classProperties);
         parseClassAndInterfaceMethods(classElement, classProperties);
 
         //add sorted properties from parent, if they are not overridden in current class
         //parent properties are by default first by alphabet, than properties from a subclass
-        final List<PropertyModel> sortedParentProperties = getSortedParentProperties(classModel, classElement, classProperties);
+        final List<PropertyModel> sortedParentProperties = getSortedParentProperties(classModel,
+                                                                                     classElement,
+                                                                                     classProperties,
+                                                                                     userTypeCustomization);
 
         List<PropertyModel> classPropertyModels = classProperties.values().stream()
-                .map(property -> new PropertyModel(classModel, property, jsonbContext))
+                .map(property -> new PropertyModel(classModel, property, jsonbContext,
+                                                   userDefinedProperties.getOrDefault(property.getName(),
+                                                                                      AnnotationIntrospector.EMPTY_PROPERTY)))
                 .collect(Collectors.toList());
 
         //check for collision on same property read name
@@ -310,7 +320,9 @@ class ClassParser {
      */
     private List<PropertyModel> getSortedParentProperties(ClassModel classModel,
                                                           JsonbAnnotatedElement<Class<?>> classElement,
-                                                          Map<String, Property> classProperties) {
+                                                          Map<String, Property> classProperties,
+                                                          TypeCustomization userTypeCustomization) {
+        Map<String, PropertyCustomization> userDefinedProperties = userTypeCustomization.getProperties();
         List<PropertyModel> sortedProperties = new ArrayList<>();
         //Pull properties from parent
         if (classModel.getParentClassModel() != null) {
@@ -328,7 +340,11 @@ class ClassParser {
                     if (PropertyModel.isPropertyReadable(current.getField(), current.getGetter(), propertyVisibilityStrategy)) {
                         classProperties.replace(current.getName(), merged);
                     } else {
-                        sortedProperties.add(new PropertyModel(classModel, merged, jsonbContext));
+                        PropertyCustomization userDefinedProperty =
+                                userDefinedProperties.getOrDefault(merged.getName(),
+                                                                   AnnotationIntrospector.EMPTY_PROPERTY);
+                        sortedProperties.add(new PropertyModel(classModel, merged, jsonbContext,
+                                                               userDefinedProperty));
                         classProperties.remove(current.getName());
                     }
 

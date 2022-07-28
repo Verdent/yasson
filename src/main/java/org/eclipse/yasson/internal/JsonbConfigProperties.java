@@ -40,6 +40,7 @@ import jakarta.json.bind.config.PropertyVisibilityStrategy;
 import jakarta.json.bind.serializer.JsonbSerializer;
 
 import org.eclipse.yasson.YassonConfig;
+import org.eclipse.yasson.customization.TypeCustomization;
 import org.eclipse.yasson.internal.model.PropertyModel;
 import org.eclipse.yasson.internal.model.ReverseTreeMap;
 import org.eclipse.yasson.internal.model.customization.PropertyOrdering;
@@ -73,6 +74,7 @@ public class JsonbConfigProperties {
     private final boolean requiredCreatorParameters;
     private final boolean dateInMillisecondsAsString;
     private final Map<Class<?>, Class<?>> userTypeMapping;
+    private final Map<Class<?>, TypeCustomization> userTypeCustomizations;
     private final Class<?> defaultMapImplType;
     private final JsonbSerializer<Object> nullSerializer;
     private final Set<Class<?>> eagerInitClasses;
@@ -95,6 +97,7 @@ public class JsonbConfigProperties {
         this.failOnUnknownProperties = initConfigFailOnUnknownProperties();
         this.strictIJson = initStrictJson();
         this.userTypeMapping = initUserTypeMapping();
+        this.userTypeCustomizations = initUserTypeCustomizations();
         this.zeroTimeDefaulting = initZeroTimeDefaultingForJavaTime();
         this.defaultMapImplType = initDefaultMapImplType();
         this.nullSerializer = initNullSerializer();
@@ -118,6 +121,16 @@ public class JsonbConfigProperties {
     @SuppressWarnings("unchecked")
     private Map<Class<?>, Class<?>> initUserTypeMapping() {
         return getConfigProperty(YassonConfig.USER_TYPE_MAPPING, Map.class, Collections.emptyMap());
+    }
+
+    private Map<Class<?>, TypeCustomization> initUserTypeCustomizations() {
+        Map<Class<?>, TypeCustomization> typeCustomizations = new HashMap<>();
+        for (TypeCustomization typeCustomization : getConfigProperty(YassonConfig.TYPE_CUSTOMIZATION,
+                                                                     TypeCustomization[].class,
+                                                                     new TypeCustomization[0])) {
+            typeCustomizations.put(typeCustomization.getType(), typeCustomization);
+        }
+        return Map.copyOf(typeCustomizations);
     }
 
     private JsonbDateFormatter initDateFormatter(Locale locale) {
@@ -292,6 +305,10 @@ public class JsonbConfigProperties {
         return Locale.forLanguageTag(locale);
     }
 
+    public Locale getLocale() {
+        return this.locale;
+    }
+
     /**
      * Gets locale from {@link JsonbConfig}.
      *
@@ -407,5 +424,9 @@ public class JsonbConfigProperties {
 
     public boolean isDateInMillisecondsAsString() {
         return dateInMillisecondsAsString;
+    }
+
+    public Map<Class<?>, TypeCustomization> getUserTypeCustomizations() {
+        return userTypeCustomizations;
     }
 }

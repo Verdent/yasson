@@ -40,8 +40,9 @@ public class ClassParserTest {
     public void testDefaultMappingFieldModifiers() {
         final JsonbAnnotatedElement<Class<?>> clsElement = introspector.collectAnnotations(FieldModifiersClass.class);
         ClassModel model = new ClassModel(FieldModifiersClass.class, introspector.introspectCustomization(clsElement,
-                                                                                                          ClassCustomization.empty()), null, null);
-        classParser.parseProperties(model, clsElement);
+                                                                                                          ClassCustomization.empty(),
+                                                                                                          null), null, null);
+        classParser.parseProperties(model, clsElement, AnnotationIntrospector.EMPTY_DEFAULT);
         assertTrue(model.getPropertyModel("finalString").isReadable());
         assertFalse(model.getPropertyModel("finalString").isWritable());
         assertFalse(model.getPropertyModel("staticString").isReadable());
@@ -54,8 +55,9 @@ public class ClassParserTest {
     public void testDefaultMappingMethodModifiers() {
         final JsonbAnnotatedElement<Class<?>> clsElement = introspector.collectAnnotations(MethodModifiersClass.class);
         ClassModel model = new ClassModel(FieldModifiersClass.class, introspector.introspectCustomization(clsElement,
-                                                                                                          ClassCustomization.empty()), null, null);
-        classParser.parseProperties(model, clsElement);
+                                                                                                          ClassCustomization.empty(),
+                                                                                                          null), null, null);
+        classParser.parseProperties(model, clsElement, AnnotationIntrospector.EMPTY_DEFAULT);
         assertFalse(model.getPropertyModel("publicFieldWithPrivateMethods").isReadable());
         assertFalse(model.getPropertyModel("publicFieldWithPrivateMethods").isWritable());
         assertTrue(model.getPropertyModel("publicFieldWithoutMethods").isReadable());

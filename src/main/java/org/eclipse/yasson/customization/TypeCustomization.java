@@ -74,6 +74,15 @@ public interface TypeCustomization extends SerializationCustomization, Scopeless
     Optional<CreatorCustomization> getCreator();
 
     /**
+     * Return {@link TypeInfoCustomization} of the customized type.
+     *
+     * @return type info customization instance, otherwise empty
+     */
+    Optional<TypeInfoCustomization> getTypeInfo();
+
+     boolean ignoreTypeInfo();
+
+    /**
      * Whether property order specified on the customized type should be ignored.
      *
      * @return property order should be ignored

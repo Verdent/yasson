@@ -76,19 +76,4 @@ public interface PropertyCustomization extends ScopedCustomization {
      */
     boolean ignoreTransientProperty(Scope scope);
 
-    default PropertyCustomizationBuilder toBuilder() {
-        PropertyCustomizationBuilder builder = builder(getPropertyName());
-        getAdapter().ifPresent(builder::adapter);
-        getDeserializer().ifPresent(builder::deserializer);
-        getSerializer().ifPresent(builder::serializer);
-        for (Scope scope : Scope.values()) {
-            getTransientProperty(scope).ifPresent(value -> builder.transientProperty(value, scope));
-            getDateFormat(scope).ifPresent(value -> builder.dateFormat(value, scope));
-            getName(scope).ifPresent(value -> builder.name(value, scope));
-            getNillable(scope).ifPresent(value -> builder.nillable(value, scope));
-            getNumberFormat(scope).ifPresent(value -> builder.numberFormat(value, scope));
-        }
-        return builder;
-    }
-
 }

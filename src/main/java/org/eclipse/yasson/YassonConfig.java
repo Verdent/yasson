@@ -152,8 +152,8 @@ public class YassonConfig extends JsonbConfig {
         return this;
     }
 
-    public YassonConfig withTypeCustomization(TypeCustomization typeCustomization) {
-//        mergeProperties(TYPE_CUSTOMIZATION, typeCustomization, TypeCustomization.class);
+    public YassonConfig withTypeCustomization(TypeCustomization... typeCustomization) {
+        mergeProperties(TYPE_CUSTOMIZATION, typeCustomization, TypeCustomization.class);
         return this;
     }
 

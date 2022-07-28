@@ -36,6 +36,8 @@ public class TypeCustomizationBuilder extends SerializationCustomizationBuilder<
     private boolean ignorePropertyOrder;
     private boolean ignoreVisibilityStrategy;
     private CreatorCustomization creatorCustomization;
+    private TypeInfoCustomization typeInfoCustomization;
+    private boolean ignoreTypeInfo;
 
     public TypeCustomizationBuilder(Class<?> typeClass) {
         this.typeClass = typeClass;
@@ -169,6 +171,22 @@ public class TypeCustomizationBuilder extends SerializationCustomizationBuilder<
         return creator(builder.build());
     }
 
+    public TypeCustomizationBuilder typeInfo(TypeInfoCustomization customization) {
+        typeInfoCustomization = customization;
+        return this;
+    }
+
+    public TypeCustomizationBuilder typeInfo(String fieldName, Consumer<TypeInfoCustomizationBuilder> builderConsumer) {
+        TypeInfoCustomizationBuilder builder = TypeInfoCustomization.builder(fieldName);
+        builderConsumer.accept(builder);
+        return typeInfo(builder.build());
+    }
+
+    public TypeCustomizationBuilder ignoreTypeInfo() {
+        this.ignoreTypeInfo = true;
+        return this;
+    }
+
     @Override
     public TypeCustomization build() {
         return new TypeCustomizationImpl(this);
@@ -200,6 +218,14 @@ public class TypeCustomizationBuilder extends SerializationCustomizationBuilder<
 
     Map<String, PropertyCustomization> getPropertyCustomizations() {
         return propertyCustomizations;
+    }
+
+    TypeInfoCustomization getTypeInfoCustomization() {
+        return typeInfoCustomization;
+    }
+
+    boolean isIgnoreTypeInfo() {
+        return ignoreTypeInfo;
     }
 
 }

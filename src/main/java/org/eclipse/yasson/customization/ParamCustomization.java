@@ -48,10 +48,6 @@ public interface ParamCustomization extends ScopelessCustomization {
      * @return new parameter customization instance
      */
     static ParamCustomization create(Class<?> paramClass, String jsonName) {
-        Objects.requireNonNull(paramClass, "Parameter class cannot be null");
-        if (jsonName == null || jsonName.isBlank()) {
-            throw new IllegalStateException("Json name cannot be null or empty");
-        }
         return builder(paramClass, jsonName).build();
     }
 

@@ -12,14 +12,18 @@ class YassonCustomizationImpl implements YassonCustomization {
 
     private final JsonbDeserializer<?> deserializer;
     private final JsonbAdapter<?, ?> adapter;
+    private final Boolean nillable;
     private final boolean ignoreDeserializer;
     private final boolean ignoreAdapter;
+    private final boolean ignoreNillable;
 
     YassonCustomizationImpl(YassonCustomizationBuilder<?,?> builder) {
         this.deserializer = builder.getDeserializer();
         this.adapter = builder.getAdapter();
         this.ignoreDeserializer = builder.isIgnoreDeserializer();
         this.ignoreAdapter = builder.isIgnoreAdapter();
+        this.nillable = builder.isNillable();
+        this.ignoreNillable = builder.isIgnoreNillable();
     }
 
     @Override
@@ -33,6 +37,11 @@ class YassonCustomizationImpl implements YassonCustomization {
     }
 
     @Override
+    public Optional<Boolean> isNillable() {
+        return Optional.ofNullable(nillable);
+    }
+
+    @Override
     public boolean ignoreDeserializer() {
         return ignoreDeserializer;
     }
@@ -40,6 +49,11 @@ class YassonCustomizationImpl implements YassonCustomization {
     @Override
     public boolean ignoreAdapter() {
         return ignoreAdapter;
+    }
+
+    @Override
+    public boolean ignoreNillable() {
+        return ignoreNillable;
     }
 
 }

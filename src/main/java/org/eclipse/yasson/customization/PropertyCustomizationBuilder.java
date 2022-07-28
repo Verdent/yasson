@@ -48,12 +48,10 @@ public final class PropertyCustomizationBuilder
 
     private String deserializationName;
     private String serializationName;
-    private NumberFormat serializationNumberFormat;
-    private NumberFormat deserializationNumberFormat;
-    private DateTimeFormatter serializationDateFormat;
-    private DateTimeFormatter deserializationDateFormat;
-    private Boolean deserializationNillable;
-    private Boolean serializationNillable;
+    private NumberFormatCustomization serializationNumberFormat;
+    private NumberFormatCustomization deserializationNumberFormat;
+    private DateFormatCustomization serializationDateFormat;
+    private DateFormatCustomization deserializationDateFormat;
     private Boolean deserializationTransient;
     private Boolean serializationTransient;
     private boolean ignoreDeserializationName;
@@ -111,30 +109,6 @@ public final class PropertyCustomizationBuilder
      */
     public PropertyCustomizationBuilder ignoreName(Scope scope) {
         return setValue(scope, () -> ignoreSerializationName = true, () -> ignoreDeserializationName = true);
-    }
-
-    /**
-     * Whether this component can be nillable.
-     *
-     * This number format is used for serialization and deserialization of the property.
-     *
-     * @param nillable nillable component
-     * @return updated builder instance
-     */
-    @Override
-    public PropertyCustomizationBuilder nillable(boolean nillable) {
-        return nillable(nillable, Scope.SERIALIZATION).nillable(nillable, Scope.DESERIALIZATION);
-    }
-
-    /**
-     * Whether this component should be nillable in the given {@link Scope}.
-     *
-     * @param nillable nillable component
-     * @param scope    scope of the nillable
-     * @return updated builder instance
-     */
-    public PropertyCustomizationBuilder nillable(boolean nillable, Scope scope) {
-        return setValue(scope, () -> serializationNillable = nillable, () -> deserializationNillable = nillable);
     }
 
     /**
@@ -222,7 +196,8 @@ public final class PropertyCustomizationBuilder
      * @return updated builder instance
      */
     public PropertyCustomizationBuilder numberFormat(String numberFormat, Locale locale, Scope scope) {
-        return numberFormat(createNumberFormat(numberFormat, locale), scope);
+        NumberFormatCustomization customization = new NumberFormatCustomization(numberFormat, locale, null);
+        return setValue(scope, () -> serializationNumberFormat = customization, () -> deserializationNumberFormat = customization);
     }
 
     /**
@@ -233,7 +208,8 @@ public final class PropertyCustomizationBuilder
      * @return updated builder instance
      */
     public PropertyCustomizationBuilder numberFormat(NumberFormat numberFormat, Scope scope) {
-        return setValue(scope, () -> serializationNumberFormat = numberFormat, () -> deserializationNumberFormat = numberFormat);
+        NumberFormatCustomization customization = new NumberFormatCustomization(null, null, numberFormat);
+        return setValue(scope, () -> serializationNumberFormat = customization, () -> deserializationNumberFormat = customization);
     }
 
     /**
@@ -244,7 +220,7 @@ public final class PropertyCustomizationBuilder
      * @return updated builder instance
      */
     public PropertyCustomizationBuilder numberFormat(String numberFormat, Scope scope) {
-        return numberFormat(numberFormat, Locale.getDefault(), scope);
+        return numberFormat(numberFormat, null, scope);
     }
 
     /**
@@ -255,7 +231,7 @@ public final class PropertyCustomizationBuilder
      * @return updated builder instance
      */
     public PropertyCustomizationBuilder numberFormat(Locale locale, Scope scope) {
-        return numberFormat("", locale, scope);
+        return numberFormat(null, locale, scope);
     }
 
     /**
@@ -304,8 +280,7 @@ public final class PropertyCustomizationBuilder
      */
     @Override
     public PropertyCustomizationBuilder dateFormat(String dateFormat) {
-        return dateFormat(dateFormat, Locale.getDefault(), Scope.SERIALIZATION)
-                .dateFormat(dateFormat, Locale.getDefault(), Scope.DESERIALIZATION);
+        return dateFormat(dateFormat, Scope.SERIALIZATION).dateFormat(dateFormat, Scope.DESERIALIZATION);
     }
 
     /**
@@ -318,8 +293,7 @@ public final class PropertyCustomizationBuilder
      */
     @Override
     public PropertyCustomizationBuilder dateFormat(Locale locale) {
-        return dateFormat(JsonbDateFormat.DEFAULT_FORMAT, locale, Scope.SERIALIZATION)
-                .dateFormat(JsonbDateFormat.DEFAULT_FORMAT, locale, Scope.DESERIALIZATION);
+        return dateFormat(locale, Scope.SERIALIZATION).dateFormat(locale, Scope.DESERIALIZATION);
     }
 
     /**
@@ -344,7 +318,8 @@ public final class PropertyCustomizationBuilder
      * @return updated builder instance
      */
     public PropertyCustomizationBuilder dateFormat(String dateFormat, Locale locale, Scope scope) {
-        return dateFormat(DateTimeFormatter.ofPattern(dateFormat, locale), scope);
+        DateFormatCustomization customization = new DateFormatCustomization(dateFormat, locale, null);
+        return setValue(scope, () -> serializationDateFormat = customization, () -> deserializationDateFormat = customization);
     }
 
     /**
@@ -354,7 +329,8 @@ public final class PropertyCustomizationBuilder
      * @return updated builder instance
      */
     public PropertyCustomizationBuilder dateFormat(DateTimeFormatter dateFormat, Scope scope) {
-        return setValue(scope, () -> serializationDateFormat = dateFormat, () -> deserializationDateFormat = dateFormat);
+        DateFormatCustomization customization = new DateFormatCustomization(null, null, dateFormat);
+        return setValue(scope, () -> serializationDateFormat = customization, () -> deserializationDateFormat = customization);
     }
 
     /**
@@ -365,7 +341,7 @@ public final class PropertyCustomizationBuilder
      * @return updated builder instance
      */
     public PropertyCustomizationBuilder dateFormat(String dateFormat, Scope scope) {
-        return dateFormat(dateFormat, Locale.getDefault(), scope);
+        return dateFormat(dateFormat, null, scope);
     }
 
     /**
@@ -376,7 +352,7 @@ public final class PropertyCustomizationBuilder
      * @return updated builder instance
      */
     public PropertyCustomizationBuilder dateFormat(Locale locale, Scope scope) {
-        return dateFormat(JsonbDateFormat.DEFAULT_FORMAT, locale, scope);
+        return dateFormat(null, locale, scope);
     }
 
     /**
@@ -470,28 +446,20 @@ public final class PropertyCustomizationBuilder
         return serializationName;
     }
 
-    NumberFormat getSerializationNumberFormat() {
+    NumberFormatCustomization getSerializationNumberFormat() {
         return serializationNumberFormat;
     }
 
-    NumberFormat getDeserializationNumberFormat() {
+    NumberFormatCustomization getDeserializationNumberFormat() {
         return deserializationNumberFormat;
     }
 
-    DateTimeFormatter getSerializationDateFormat() {
+    DateFormatCustomization getSerializationDateFormat() {
         return serializationDateFormat;
     }
 
-    DateTimeFormatter getDeserializationDateFormat() {
+    DateFormatCustomization getDeserializationDateFormat() {
         return deserializationDateFormat;
-    }
-
-    Boolean isDeserializationNillable() {
-        return deserializationNillable;
-    }
-
-    Boolean isSerializationNillable() {
-        return serializationNillable;
     }
 
     Boolean isDeserializationTransient() {

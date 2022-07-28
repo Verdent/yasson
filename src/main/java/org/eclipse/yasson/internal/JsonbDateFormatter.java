@@ -12,10 +12,13 @@
 
 package org.eclipse.yasson.internal;
 
+import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
+import java.util.Date;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 
 import jakarta.json.bind.annotation.JsonbDateFormat;
 
@@ -50,6 +53,7 @@ public class JsonbDateFormatter {
     private final DateTimeFormatter dateTimeFormatter;
     private final String format;
     private final String locale;
+    private final Locale localeResolved;
 
     /**
      * Creates an instance with cached {@link DateTimeFormatter}, format and locale.
@@ -62,6 +66,7 @@ public class JsonbDateFormatter {
         this.dateTimeFormatter = dateTimeFormatter;
         this.format = format;
         this.locale = locale;
+        this.localeResolved = null;
     }
 
     /**
@@ -75,12 +80,21 @@ public class JsonbDateFormatter {
         this.format = format;
         this.locale = locale;
         this.dateTimeFormatter = null;
+        this.localeResolved = null;
     }
 
-    public JsonbDateFormatter(DateTimeFormatter dateTimeFormatter) {
+    /**
+     * Creates an instance with cached {@link DateTimeFormatter}, format and locale.
+     *
+     * @param dateTimeFormatter Reused time formatter.
+     * @param format            Format in string.
+     * @param locale            Locale in string.
+     */
+    public JsonbDateFormatter(DateTimeFormatter dateTimeFormatter, String format, Locale locale) {
         this.dateTimeFormatter = dateTimeFormatter;
-        this.format = null;
-        this.locale = null;
+        this.format = format;
+        this.locale = locale.toLanguageTag();
+        this.localeResolved = locale;
     }
 
     /**
@@ -94,7 +108,7 @@ public class JsonbDateFormatter {
 
     /**
      * Format string to be used either by formatter.
-     * Needed for formatting {@link java.util.Date} with {@link java.text.SimpleDateFormat},
+     * Needed for formatting {@link Date} with {@link SimpleDateFormat},
      * which is not threadsafe.
      *
      * @return Format.
@@ -110,6 +124,10 @@ public class JsonbDateFormatter {
      */
     public String getLocale() {
         return locale;
+    }
+
+    public Optional<Locale> getLocaleResolved() {
+        return Optional.ofNullable(localeResolved);
     }
 
     public static JsonbDateFormatter getDefault() {

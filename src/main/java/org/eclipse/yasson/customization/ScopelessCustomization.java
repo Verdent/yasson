@@ -31,22 +31,14 @@ public interface ScopelessCustomization extends YassonCustomization {
      *
      * @return specified {@link NumberFormat} instance, otherwise empty
      */
-    Optional<NumberFormat> getNumberFormat();
+    Optional<NumberFormatCustomization> getNumberFormat();
 
     /**
      * Return {@link DateFormat}.
      *
      * @return specified {@link DateFormat} instance, otherwise empty
      */
-    Optional<DateTimeFormatter> getDateFormat();
-
-    /**
-     * Return whether this component can be nillable.
-     * If no explicit value has been set, empty optional is returned.
-     *
-     * @return property nillable state, if not explicitly set empty is returned
-     */
-    Optional<Boolean> getNillable();
+    Optional<DateFormatCustomization> getDateFormat();
 
     /**
      * Whether number format specified on the customized component should be ignored.
@@ -61,12 +53,5 @@ public interface ScopelessCustomization extends YassonCustomization {
      * @return date format should be ignored
      */
     boolean ignoreDateFormat();
-
-    /**
-     * Whether nillable specified on the customized component should be ignored.
-     *
-     * @return nillable should be ignored
-     */
-    boolean ignoreNillable();
 
 }

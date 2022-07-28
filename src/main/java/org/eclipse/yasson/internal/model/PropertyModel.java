@@ -30,6 +30,7 @@ import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.config.PropertyNamingStrategy;
 import jakarta.json.bind.config.PropertyVisibilityStrategy;
 
+import org.eclipse.yasson.customization.Scope;
 import org.eclipse.yasson.internal.AnnotationIntrospector;
 import org.eclipse.yasson.internal.JsonbContext;
 import org.eclipse.yasson.internal.JsonbDateFormatter;
@@ -137,11 +138,13 @@ public final class PropertyModel implements Comparable<PropertyModel> {
     /**
      * Creates an instance.
      *
-     * @param classModel   Class model of declaring class.
-     * @param property     Property.
-     * @param jsonbContext Context.
+     * @param classModel          Class model of declaring class.
+     * @param property            Property.
+     * @param jsonbContext        Context.
+     * @param userDefined         User defined property customization.
      */
-    public PropertyModel(ClassModel classModel, Property property, JsonbContext jsonbContext) {
+    public PropertyModel(ClassModel classModel, Property property, JsonbContext jsonbContext,
+                         org.eclipse.yasson.customization.PropertyCustomization userDefined) {
         this.classModel = classModel;
         this.property = property;
         this.propertyName = property.getName();
@@ -158,7 +161,7 @@ public final class PropertyModel implements Comparable<PropertyModel> {
         this.setValueHandle = createWriteHandle(field, setter, setterVisible, strategy);
         this.getterMethodType = getterVisible ? property.getGetterType() : null;
         this.setterMethodType = setterVisible ? property.getSetterType() : null;
-        this.customization = introspectCustomization(property, jsonbContext);
+        this.customization = introspectCustomization(property, jsonbContext, userDefined);
         this.readName = calculateReadWriteName(customization.getJsonReadName(), propertyName,
                                                jsonbContext.getConfigProperties().getPropertyNamingStrategy());
         this.writeName = calculateReadWriteName(customization.getJsonWriteName(), propertyName,
@@ -183,31 +186,45 @@ public final class PropertyModel implements Comparable<PropertyModel> {
         return getterMethodType == null ? propertyType : getterMethodType;
     }
 
-    private SerializerBinding<?> getUserSerializerBinding(Property property, JsonbContext jsonbContext) {
-        final SerializerBinding<?> serializerBinding = jsonbContext.getAnnotationIntrospector().getSerializerBinding(property);
+    private SerializerBinding<?> getUserSerializerBinding(Property property, JsonbContext jsonbContext,
+                                                          org.eclipse.yasson.customization.PropertyCustomization userDefined) {
+        final SerializerBinding<?> serializerBinding = jsonbContext.getAnnotationIntrospector()
+                .getSerializerBinding(property, userDefined);
         if (serializerBinding != null) {
             return serializerBinding;
         }
         return jsonbContext.getComponentMatcher().getSerializerBinding(getPropertySerializationType(), null).orElse(null);
     }
 
-    private PropertyCustomization introspectCustomization(Property property, JsonbContext jsonbContext) {
+    private PropertyCustomization introspectCustomization(Property property, JsonbContext jsonbContext,
+                                                          org.eclipse.yasson.customization.PropertyCustomization userDefined) {
         final AnnotationIntrospector introspector = jsonbContext.getAnnotationIntrospector();
         final PropertyCustomization.Builder builder = PropertyCustomization.builder();
         //drop all other annotations for transient properties
         EnumSet<AnnotationTarget> transientInfo = introspector.getJsonbTransientCategorized(property);
         if (transientInfo.size() != 0) {
+            if (userDefined.ignoreTransientProperty(Scope.DESERIALIZATION)) {
+                transientInfo.remove(AnnotationTarget.SETTER);
+            }
+            if (userDefined.ignoreTransientProperty(Scope.SERIALIZATION)) {
+                transientInfo.remove(AnnotationTarget.GETTER);
+            }
             builder.readTransient(transientInfo.contains(AnnotationTarget.GETTER));
             builder.writeTransient(transientInfo.contains(AnnotationTarget.SETTER));
 
             if (transientInfo.contains(AnnotationTarget.PROPERTY)) {
-                if (!transientInfo.contains(AnnotationTarget.GETTER)) {
+                if (!transientInfo.contains(AnnotationTarget.GETTER)
+                        && !userDefined.ignoreTransientProperty(Scope.SERIALIZATION)) {
                     builder.readTransient(true);
                 }
-                if (!transientInfo.contains(AnnotationTarget.SETTER)) {
+                if (!transientInfo.contains(AnnotationTarget.SETTER)
+                        && !userDefined.ignoreTransientProperty(Scope.DESERIALIZATION)) {
                     builder.writeTransient(true);
                 }
             }
+
+            userDefined.getTransientProperty(Scope.DESERIALIZATION).ifPresent(builder::writeTransient);
+            userDefined.getTransientProperty(Scope.SERIALIZATION).ifPresent(builder::readTransient);
 
             if (builder.readTransient()) {
                 introspector.checkTransientIncompatible(property.getFieldElement());
@@ -220,14 +237,21 @@ public final class PropertyModel implements Comparable<PropertyModel> {
         }
 
         if (!builder.readTransient()) {
-            builder.jsonWriteName(introspector.getJsonbPropertyJsonWriteName(property));
-            builder.nillable(introspector.isPropertyNillable(property).orElse(classModel.getClassCustomization().isNillable()));
-            builder.serializerBinding(getUserSerializerBinding(property, jsonbContext));
+            String writeName = userDefined.getName(Scope.SERIALIZATION)
+                    .orElse(introspector.getJsonbPropertyJsonWriteName(property, userDefined.ignoreName(Scope.SERIALIZATION)));
+            builder.jsonWriteName(writeName);
+            boolean nillable = userDefined.isNillable()
+                    .orElse(introspector.isPropertyNillable(property, userDefined.ignoreNillable(Scope.SERIALIZATION))
+                                    .orElse(classModel.getClassCustomization().isNillable()));
+            builder.nillable(nillable);
+            builder.serializerBinding(getUserSerializerBinding(property, jsonbContext, userDefined));
         }
 
         if (!builder.writeTransient()) {
-            builder.jsonReadName(introspector.getJsonbPropertyJsonReadName(property));
-            builder.deserializerBinding(introspector.getDeserializerBinding(property));
+            String readName = userDefined.getName(Scope.DESERIALIZATION)
+                    .orElse(introspector.getJsonbPropertyJsonReadName(property, userDefined.ignoreName(Scope.DESERIALIZATION)));
+            builder.jsonReadName(readName);
+            builder.deserializerBinding(introspector.getDeserializerBinding(property, userDefined));
         }
 
         final AdapterBinding adapterBinding = jsonbContext.getAnnotationIntrospector().getAdapterBinding(property);
@@ -242,7 +266,7 @@ public final class PropertyModel implements Comparable<PropertyModel> {
                                                .orElse(null));
         }
 
-        introspectDateFormatter(property, introspector, builder, jsonbContext);
+        introspectDateFormatter(property, introspector, builder, jsonbContext, userDefined);
         introspectNumberFormatter(property, introspector, builder);
         builder.implementationClass(introspector.getImplementationClass(property));
 
@@ -252,7 +276,8 @@ public final class PropertyModel implements Comparable<PropertyModel> {
     private static void introspectDateFormatter(Property property,
                                                 AnnotationIntrospector introspector,
                                                 PropertyCustomization.Builder builder,
-                                                JsonbContext jsonbContext) {
+                                                JsonbContext jsonbContext,
+                                                org.eclipse.yasson.customization.PropertyCustomization userDefined) {
         /*
          * If @JsonbDateFormat is placed on getter implementation must use this format on serialization.
          * If @JsonbDateFormat is placed on setter implementation must use this format on deserialization.

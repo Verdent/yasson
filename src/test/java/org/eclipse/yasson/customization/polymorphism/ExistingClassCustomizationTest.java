@@ -1,6 +1,10 @@
 package org.eclipse.yasson.customization.polymorphism;
 
-import org.eclipse.yasson.adapters.model.Crate;
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.JsonbBuilder;
+import jakarta.json.bind.annotation.JsonbNillable;
+
+import org.eclipse.yasson.YassonConfig;
 import org.eclipse.yasson.customization.TypeCustomization;
 import org.junit.jupiter.api.Test;
 
@@ -9,10 +13,31 @@ import org.junit.jupiter.api.Test;
  */
 public class ExistingClassCustomizationTest {
 
+//    @JsonbNillable
+    public static class TestClass {
+
+        public String fieldOne;
+        public String fieldTwo;
+
+        public static TestClass create(String fieldOne, String fieldTwo) {
+            return new TestClass();
+        }
+
+    }
+
     @Test
     public void basicTest() {
-        TypeCustomization.builder(Crate.class)
+        TypeCustomization typeCustomization = TypeCustomization.builder(TestClass.class)
+                .nillable(true)
+                .creator("create", builder -> builder.addParam(String.class, "fieldOne")
+                        .addParam(String.class, "fieldTwo"))
+//                .ignoreNillable()
+                .property("fieldOne", builder -> builder.nillable(false))
                 .build();
+
+        Jsonb jsonb = JsonbBuilder.create(new YassonConfig().withTypeCustomization(typeCustomization));
+
+        System.out.println(jsonb.toJson(new TestClass()));
     }
 
 }
