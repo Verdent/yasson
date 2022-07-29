@@ -13,8 +13,11 @@
 package org.eclipse.yasson.internal;
 
 import java.text.NumberFormat;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+
+import jakarta.json.bind.annotation.JsonbNumberFormat;
 
 /**
  * Formatter for numbers.
@@ -23,6 +26,7 @@ public class JsonbNumberFormatter {
 
     private final String format;
     private final String locale;
+    private final Locale resolvedLocale;
     private final NumberFormat numberFormat;
 
     /**
@@ -35,11 +39,13 @@ public class JsonbNumberFormatter {
         this.format = format;
         this.locale = locale;
         this.numberFormat = null;
+        this.resolvedLocale = null;
     }
 
-    public JsonbNumberFormatter(NumberFormat numberFormat) {
-        this.format = null;
-        this.locale = null;
+    public JsonbNumberFormatter(String format, Locale locale, NumberFormat numberFormat) {
+        this.format = format;
+        this.locale = locale == null ? JsonbNumberFormat.DEFAULT_LOCALE : locale.toLanguageTag();
+        this.resolvedLocale = locale;
         this.numberFormat = numberFormat;
     }
 
@@ -63,6 +69,10 @@ public class JsonbNumberFormatter {
 
     public Optional<NumberFormat> getNumberFormat() {
         return Optional.ofNullable(numberFormat);
+    }
+
+    public Optional<Locale> getResolvedLocale() {
+        return Optional.ofNullable(resolvedLocale);
     }
 
     @Override

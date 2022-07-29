@@ -62,13 +62,14 @@ import jakarta.json.bind.annotation.JsonbVisibility;
 import jakarta.json.bind.config.PropertyVisibilityStrategy;
 import jakarta.json.bind.serializer.JsonbDeserializer;
 import jakarta.json.bind.serializer.JsonbSerializer;
-
 import org.eclipse.yasson.ImplementationClass;
 import org.eclipse.yasson.customization.CreatorCustomization;
 import org.eclipse.yasson.customization.DateFormatCustomization;
+import org.eclipse.yasson.customization.NumberFormatCustomization;
 import org.eclipse.yasson.customization.ParamCustomization;
 import org.eclipse.yasson.customization.PropertyCustomization;
 import org.eclipse.yasson.customization.TypeCustomization;
+import org.eclipse.yasson.customization.TypeInfoCustomization;
 import org.eclipse.yasson.internal.components.AdapterBinding;
 import org.eclipse.yasson.internal.components.DeserializerBinding;
 import org.eclipse.yasson.internal.components.SerializerBinding;
@@ -267,6 +268,19 @@ public class AnnotationIntrospector {
         return adapterBinding;
     }
 
+    public AdapterBinding getAdapterBinding(JsonbAdapter<?, ?> instance, Class<?> expectedClass) {
+        final AdapterBinding adapterBinding = jsonbContext.getComponentMatcher()
+                .introspectAdapterBinding(instance.getClass(), instance);
+
+        if (expectedClass != null
+                && !ReflectionUtils.getRawType(adapterBinding.getBindingType()).isAssignableFrom(expectedClass)) {
+            throw new JsonbException(Messages.getMessage(MessageKeys.ADAPTER_INCOMPATIBLE,
+                                                         adapterBinding.getBindingType(),
+                                                         expectedClass));
+        }
+        return adapterBinding;
+    }
+
     /**
      * Checks for {@link JsonbDeserializer} on a property.
      *
@@ -295,14 +309,15 @@ public class AnnotationIntrospector {
      * Checks for {@link JsonbDeserializer} on a {@link Parameter}.
      *
      * @param parameter parameter not null
+     * @param ignoreAnnotation ignore annotation
      * @return components info
      */
-    public DeserializerBinding<?> getDeserializerBinding(Parameter parameter) {
+    public DeserializerBinding<?> getDeserializerBinding(Parameter parameter, boolean ignoreAnnotation) {
         Objects.requireNonNull(parameter);
         JsonbTypeDeserializer deserializerAnnotation =
                 Optional.ofNullable(parameter.getDeclaredAnnotation(JsonbTypeDeserializer.class))
                         .orElseGet(() -> getAnnotationFromParameterType(parameter, JsonbTypeDeserializer.class));
-        if (deserializerAnnotation == null) {
+        if (deserializerAnnotation == null || ignoreAnnotation) {
             return null;
         }
 
@@ -314,14 +329,15 @@ public class AnnotationIntrospector {
      * Checks for {@link JsonbAdapter} on a {@link Parameter}.
      *
      * @param parameter parameter not null
+     * @param ignoreAnnotation ignore annotation
      * @return components info
      */
-    public AdapterBinding getAdapterBinding(Parameter parameter) {
+    public AdapterBinding getAdapterBinding(Parameter parameter, boolean ignoreAnnotation) {
         Objects.requireNonNull(parameter);
         JsonbTypeAdapter adapter =
                 Optional.ofNullable(parameter.getDeclaredAnnotation(JsonbTypeAdapter.class))
                         .orElseGet(() -> getAnnotationFromParameterType(parameter, JsonbTypeAdapter.class));
-        if (adapter == null) {
+        if (adapter == null || ignoreAnnotation) {
             return null;
         }
 
@@ -598,11 +614,13 @@ public class AnnotationIntrospector {
     /**
      * Returns {@link JsonbNumberFormatter} instance if {@link JsonbNumberFormat} annotation is present.
      *
-     * @param param annotated method parameter
+     * @param param            annotated method parameter
+     * @param ignoreAnnotation ignore number format annotation
      * @return formatter instance if {@link JsonbNumberFormat} is present otherwise null
      */
-    public JsonbNumberFormatter getConstructorNumberFormatter(JsonbAnnotatedElement<Parameter> param) {
+    public JsonbNumberFormatter getConstructorNumberFormatter(JsonbAnnotatedElement<Parameter> param, boolean ignoreAnnotation) {
         return param.getAnnotation(JsonbNumberFormat.class)
+                .filter(annotation -> !ignoreAnnotation)
                 .map(annotation -> new JsonbNumberFormatter(annotation.value(), annotation.locale()))
                 .orElse(null);
     }
@@ -610,11 +628,13 @@ public class AnnotationIntrospector {
     /**
      * Returns {@link JsonbDateFormatter} instance if {@link JsonbDateFormat} annotation is present.
      *
-     * @param param annotated method parameter
+     * @param param            annotated method parameter
+     * @param ignoreAnnotation ignore date format annotation
      * @return formatter instance if {@link JsonbDateFormat} is present otherwise null
      */
-    public JsonbDateFormatter getConstructorDateFormatter(JsonbAnnotatedElement<Parameter> param) {
+    public JsonbDateFormatter getConstructorDateFormatter(JsonbAnnotatedElement<Parameter> param, boolean ignoreAnnotation) {
         return param.getAnnotation(JsonbDateFormat.class)
+                .filter(annotation -> !ignoreAnnotation)
                 .map(annotation -> new JsonbDateFormatter(DateTimeFormatter.ofPattern(annotation.value(),
                                                                                       Locale.forLanguageTag(annotation.locale())),
                                                           annotation.value(), annotation.locale()))
@@ -814,18 +834,35 @@ public class AnnotationIntrospector {
                                                       ClassCustomization parentCustomization,
                                                       TypeCustomization userDefinedCustomization) {
         TypeCustomization userDefined = userDefinedCustomization == null ? EMPTY_DEFAULT : userDefinedCustomization;
+        AnnotationIntrospector introspector = jsonbContext.getAnnotationIntrospector();
         return ClassCustomization.builder()
                 .nillable(userDefined.isNillable().orElseGet(() -> isClassNillable(clsElement, userDefined.ignoreNillable())))
-                .dateTimeFormatter(processDateFormat(clsElement, userDefined))
-                .numberFormatter(getJsonbNumberFormat(clsElement, userDefined.ignoreNumberFormat()))
+                .dateTimeFormatter(userDefined.getDateFormat()
+                                           .map(introspector::toJsonbDateFormatter)
+                                           .orElseGet(() -> processDateFormat(clsElement, userDefined)))
+                .numberFormatter(userDefined.getNumberFormat()
+                                         .map(introspector::toJsonbNumberFormatter)
+                                         .orElseGet(() -> getJsonbNumberFormat(clsElement, userDefined.ignoreNumberFormat())))
                 .creator(processCreator(clsElement.getElement(), userDefined))
-                .propertyOrder(getPropertyOrder(clsElement, userDefined.ignorePropertyOrder()))
-                .adapterBinding(getAdapterBinding(clsElement, userDefined.ignoreAdapter()))
-                .serializerBinding(getSerializerBinding(clsElement, userDefined.ignoreSerializer()))
-                .deserializerBinding(getDeserializerBinding(clsElement, userDefined.ignoreDeserializer()))
-                .propertyVisibilityStrategy(getPropertyVisibilityStrategy(clsElement.getElement(),
-                                                                          userDefined.ignoreVisibilityStrategy()))
-                .polymorphismConfig(getPolymorphismConfig(clsElement, parentCustomization, userDefined.ignoreTypeInfo()))
+                .propertyOrder(userDefined.getPropertyOrder()
+                                       .orElseGet(() -> getPropertyOrder(clsElement, userDefined.ignorePropertyOrder())))
+                .adapterBinding(userDefined.getAdapter()
+                                        .map(adapter -> introspector.getAdapterBinding(adapter, clsElement.getClass()))
+                                        .orElseGet(() -> getAdapterBinding(clsElement, userDefined.ignoreAdapter())))
+                .serializerBinding(userDefined.getSerializer()
+                                           .map(serializer -> jsonbContext.getComponentMatcher()
+                                                   .introspectSerializerBinding(serializer.getClass(), serializer))
+                                           .orElseGet(() -> getSerializerBinding(clsElement, userDefined.ignoreSerializer())))
+                .deserializerBinding(userDefined.getDeserializer()
+                                             .map(deserializer -> jsonbContext.getComponentMatcher()
+                                                     .introspectDeserializerBinding(deserializer.getClass(), deserializer))
+                                             .orElseGet(() -> getDeserializerBinding(clsElement,
+                                                                                     userDefined.ignoreDeserializer())))
+                .propertyVisibilityStrategy(visibilityStrategy(clsElement, userDefined))
+                .polymorphismConfig(userDefined.getTypeInfo()
+                                            .map(typeInfo -> toPolymorphismConfig(typeInfo, parentCustomization))
+                                            .orElseGet(() -> getPolymorphismConfig(clsElement, parentCustomization,
+                                                                                   userDefined.ignoreTypeInfo())))
                 .build();
     }
 
@@ -833,24 +870,29 @@ public class AnnotationIntrospector {
         return userDefined.getCreator()
                 .map(customization -> createJsonbCreatorFromCustomization(element, customization))
                 .orElseGet(() -> {
-                    if (false) {
-//                    if (userDefined.ignoreCreator()) {
+                    if (userDefined.ignoreCreator()) {
                         return null;
                     }
                     return getCreator(element);
                 });
     }
 
+    private PropertyVisibilityStrategy visibilityStrategy(JsonbAnnotatedElement<Class<?>> clsElement,
+                                                          TypeCustomization userDefined) {
+        return userDefined.getVisibilityStrategy()
+                .orElseGet(() -> getPropertyVisibilityStrategy(clsElement.getElement(), userDefined.ignoreVisibilityStrategy()));
+    }
+
     private JsonbCreator createJsonbCreatorFromCustomization(Class<?> type, CreatorCustomization customization) {
-        Class<?>[] parameters = customization.getParams()
-                .stream()
+        List<ParamCustomization> paramCustomizations = customization.getParams();
+        Class<?>[] parameters = paramCustomizations.stream()
                 .map(ParamCustomization::getParameterType)
                 .toArray(Class<?>[]::new);
+        Executable executable;
         try {
             if (customization.getFactoryMethodName().isEmpty()) {
                 //Creator is constructor
-                Constructor<?> constructor = type.getConstructor(parameters);
-                return createJsonbCreator(constructor, null, type);
+                executable = type.getConstructor(parameters);
             } else {
                 Method method = type.getMethod(customization.getFactoryMethodName().get(), parameters);
                 if (Modifier.isStatic(method.getModifiers())) {
@@ -859,23 +901,50 @@ public class AnnotationIntrospector {
                                                                      method,
                                                                      type));
                     }
-                    return createJsonbCreator(method, null, type);
+                    executable = method;
+                } else {
+                    throw new JsonbException("JsonbCreator factory method needs to be static! "
+                                                     + type.getName() + "#" + method.getName());
                 }
             }
+            final Parameter[] executableParameters = executable.getParameters();
+            CreatorModel[] creatorModels = new CreatorModel[executableParameters.length];
+            for (int i = 0; i < executableParameters.length; i++) {
+                final Parameter parameter = executableParameters[i];
+                ParamCustomization paramCustomization = paramCustomizations.get(i);
+                creatorModels[i] = new CreatorModel(paramCustomization.getJsonName(), parameter, executable, jsonbContext,
+                                                    paramCustomization);
+            }
+
+            return new JsonbCreator(executable, creatorModels);
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
-        return null;
     }
 
     private JsonbDateFormatter processDateFormat(JsonbAnnotatedElement<Class<?>> clsElement, TypeCustomization userDefined) {
-        if (userDefined.getDateFormat().isPresent()) {
-            DateFormatCustomization dateCustom = userDefined.getDateFormat().get();
-            return new JsonbDateFormatter(dateCustom.getDateFormatter().orElse(null),
-                                          dateCustom.getFormat().orElse(JsonbDateFormat.DEFAULT_FORMAT),
-                                          dateCustom.getLocale().orElse(jsonbContext.getConfigProperties().getLocale()));
-        }
-        return getJsonbDateFormat(clsElement, userDefined.ignoreDateFormat());
+        return userDefined.getDateFormat()
+                .map(this::toJsonbDateFormatter)
+                .orElseGet(() -> getJsonbDateFormat(clsElement, userDefined.ignoreDateFormat()));
+    }
+
+    public JsonbDateFormatter toJsonbDateFormatter(DateFormatCustomization dateCustom) {
+        return new JsonbDateFormatter(dateCustom.getDateFormatter().orElse(null),
+                                      dateCustom.getFormat().orElse(JsonbDateFormat.DEFAULT_FORMAT),
+                                      dateCustom.getLocale().orElse(jsonbContext.getConfigProperties().getLocale()));
+    }
+
+    public JsonbNumberFormatter toJsonbNumberFormatter(NumberFormatCustomization numberCustomization) {
+        return new JsonbNumberFormatter(numberCustomization.getFormat().orElse(null),
+                                        numberCustomization.getLocale().orElse(jsonbContext.getConfigProperties().getLocale()),
+                                        numberCustomization.getNumberFormat().orElse(null));
+    }
+
+    private TypeInheritanceConfiguration toPolymorphismConfig(TypeInfoCustomization customization,
+                                                              ClassCustomization parentCustomization) {
+        TypeInheritanceConfiguration parentPolyConfig = parentCustomization.getPolymorphismConfig();
+
+
     }
 
     private TypeInheritanceConfiguration getPolymorphismConfig(JsonbAnnotatedElement<Class<?>> clsElement,

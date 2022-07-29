@@ -80,7 +80,7 @@ public interface TypeCustomization extends SerializationCustomization, Scopeless
      */
     Optional<TypeInfoCustomization> getTypeInfo();
 
-     boolean ignoreTypeInfo();
+    boolean ignoreTypeInfo();
 
     /**
      * Whether property order specified on the customized type should be ignored.
@@ -96,4 +96,10 @@ public interface TypeCustomization extends SerializationCustomization, Scopeless
      */
     boolean ignoreVisibilityStrategy();
 
+    /**
+     * Whether {@link jakarta.json.bind.annotation.JsonbCreator} annotated method/constructor should be ignored.
+     *
+     * @return creator should be ignored
+     */
+    boolean ignoreCreator();
 }

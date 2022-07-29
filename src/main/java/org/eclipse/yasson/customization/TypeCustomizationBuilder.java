@@ -38,6 +38,7 @@ public class TypeCustomizationBuilder extends SerializationCustomizationBuilder<
     private CreatorCustomization creatorCustomization;
     private TypeInfoCustomization typeInfoCustomization;
     private boolean ignoreTypeInfo;
+    private boolean ignoreCreator;
 
     public TypeCustomizationBuilder(Class<?> typeClass) {
         this.typeClass = typeClass;
@@ -187,6 +188,11 @@ public class TypeCustomizationBuilder extends SerializationCustomizationBuilder<
         return this;
     }
 
+    public TypeCustomizationBuilder ignoreCreator() {
+        this.ignoreCreator = true;
+        return this;
+    }
+
     @Override
     public TypeCustomization build() {
         return new TypeCustomizationImpl(this);
@@ -228,4 +234,7 @@ public class TypeCustomizationBuilder extends SerializationCustomizationBuilder<
         return ignoreTypeInfo;
     }
 
+    boolean isIgnoreCreator() {
+        return ignoreCreator;
+    }
 }

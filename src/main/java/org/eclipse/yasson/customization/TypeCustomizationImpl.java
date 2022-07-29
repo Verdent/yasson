@@ -16,6 +16,7 @@ class TypeCustomizationImpl extends ScopelessCustomizationImpl implements TypeCu
     private final boolean ignoreOrder;
     private final boolean ignoreVisibleStrategy;
     private final boolean ignoreTypeInfo;
+    private final boolean ignoreCreator;
     private final JsonbSerializer<?> serializer;
     private final String[] propertyOrder;
     private final PropertyVisibilityStrategy visibilityStrategy;
@@ -36,6 +37,8 @@ class TypeCustomizationImpl extends ScopelessCustomizationImpl implements TypeCu
         this.creatorCustomization = builder.getCreatorCustomization();
         this.typeInfoCustomization = builder.getTypeInfoCustomization();
         this.ignoreTypeInfo = builder.isIgnoreTypeInfo();
+        this.ignoreCreator = builder.isIgnoreCreator();
+
     }
 
     @Override
@@ -91,5 +94,10 @@ class TypeCustomizationImpl extends ScopelessCustomizationImpl implements TypeCu
     @Override
     public boolean ignoreVisibilityStrategy() {
         return ignoreVisibleStrategy;
+    }
+
+    @Override
+    public boolean ignoreCreator() {
+        return ignoreCreator;
     }
 }

@@ -1,11 +1,8 @@
-package org.eclipse.yasson.customization.polymorphism;
+package org.eclipse.yasson.customization;
 
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
-import jakarta.json.bind.annotation.JsonbNillable;
-
 import org.eclipse.yasson.YassonConfig;
-import org.eclipse.yasson.customization.TypeCustomization;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -31,7 +28,6 @@ public class ExistingClassCustomizationTest {
                 .nillable(true)
                 .creator("create", builder -> builder.addParam(String.class, "fieldOne")
                         .addParam(String.class, "fieldTwo"))
-//                .ignoreNillable()
                 .property("fieldOne", builder -> builder.nillable(false))
                 .build();
 

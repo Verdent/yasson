@@ -282,7 +282,7 @@ public class ComponentMatcher {
      * @param instance     components instance
      * @return introspected info with resolved typevar types.
      */
-    AdapterBinding introspectAdapterBinding(Class<? extends JsonbAdapter> adapterClass, JsonbAdapter instance) {
+    public AdapterBinding introspectAdapterBinding(Class<? extends JsonbAdapter> adapterClass, JsonbAdapter instance) {
         final ParameterizedType adapterRuntimeType = ReflectionUtils.findParameterizedType(adapterClass, JsonbAdapter.class);
         final Type[] adapterTypeArguments = adapterRuntimeType.getActualTypeArguments();
         Type adaptFromType = resolveTypeArg(adapterTypeArguments[0], adapterClass);
@@ -307,8 +307,8 @@ public class ComponentMatcher {
      * @return wrapper used in property models
      */
     @SuppressWarnings("unchecked")
-    DeserializerBinding introspectDeserializerBinding(Class<? extends JsonbDeserializer> deserializerClass,
-                                                      JsonbDeserializer instance) {
+    public DeserializerBinding introspectDeserializerBinding(Class<? extends JsonbDeserializer> deserializerClass,
+                                                             JsonbDeserializer instance) {
         final ParameterizedType deserializerRuntimeType = ReflectionUtils
                 .findParameterizedType(deserializerClass, JsonbDeserializer.class);
         Type deserializerBindingType = resolveTypeArg(deserializerRuntimeType.getActualTypeArguments()[0], deserializerClass);
@@ -332,7 +332,7 @@ public class ComponentMatcher {
      * @return wrapper used in property models
      */
     @SuppressWarnings("unchecked")
-    SerializerBinding introspectSerializerBinding(Class<? extends JsonbSerializer> serializerClass, JsonbSerializer instance) {
+    public SerializerBinding introspectSerializerBinding(Class<? extends JsonbSerializer> serializerClass, JsonbSerializer instance) {
         final ParameterizedType serializerRuntimeType = ReflectionUtils
                 .findParameterizedType(serializerClass, JsonbSerializer.class);
         Type serBindingType = resolveTypeArg(serializerRuntimeType.getActualTypeArguments()[0], serializerClass);
