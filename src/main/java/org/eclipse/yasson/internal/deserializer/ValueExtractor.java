@@ -36,7 +36,7 @@ public class ValueExtractor implements ModelDeserializer<JsonParser> {
 
     @Override
     public Object deserialize(JsonParser value, DeserializationContextImpl context) {
-        JsonParser.Event last = context.getLastValueEvent();
+        JsonParser.Event last = value.currentEvent();
         switch (last) {
         case VALUE_TRUE:
             return delegate.deserialize(Boolean.TRUE, context);

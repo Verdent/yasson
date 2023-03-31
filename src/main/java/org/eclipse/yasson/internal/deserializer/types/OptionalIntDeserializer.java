@@ -34,7 +34,7 @@ class OptionalIntDeserializer implements ModelDeserializer<JsonParser> {
 
     @Override
     public Object deserialize(JsonParser value, DeserializationContextImpl context) {
-        if (context.getLastValueEvent() == JsonParser.Event.VALUE_NULL) {
+        if (value.currentEvent() == JsonParser.Event.VALUE_NULL) {
             return delegate.deserialize(OptionalInt.empty(), context);
         }
         OptionalInt optional = OptionalInt.of((Integer) extractor.deserialize(value, context));

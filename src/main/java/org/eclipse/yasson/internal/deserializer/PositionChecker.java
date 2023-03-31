@@ -71,11 +71,10 @@ public class PositionChecker implements ModelDeserializer<JsonParser> {
 
     @Override
     public Object deserialize(JsonParser value, DeserializationContextImpl context) {
-        Event original = context.getLastValueEvent();
+        Event original = value.currentEvent();
         Event startEvent = original;
         if (!expectedEvents.contains(startEvent)) {
             startEvent = value.next();
-            context.setLastValueEvent(startEvent);
             if (!expectedEvents.contains(startEvent)) {
                 throw new JsonbException("Incorrect position for processing type: " + rType + ". "
                                                  + "Received event: " + original + " "
@@ -84,10 +83,10 @@ public class PositionChecker implements ModelDeserializer<JsonParser> {
         }
         Object o = delegate.deserialize(value, context);
         if (CLOSING_EVENTS.containsKey(startEvent)
-                && CLOSING_EVENTS.get(startEvent) != context.getLastValueEvent()) {
+                && CLOSING_EVENTS.get(startEvent) != value.currentEvent()) {
             throw new JsonbException("Incorrect parser position after processing of the type: " + rType + ". "
                                              + "Start event: " + startEvent + " "
-                                             + "After processing event: " + context.getLastValueEvent());
+                                             + "After processing event: " + value.currentEvent());
         }
         return o;
     }

@@ -42,7 +42,7 @@ public class NullCheckDeserializer implements ModelDeserializer<JsonParser> {
 
     @Override
     public Object deserialize(JsonParser value, DeserializationContextImpl context) {
-        if (context.getLastValueEvent() != JsonParser.Event.VALUE_NULL) {
+        if (value.currentEvent() != JsonParser.Event.VALUE_NULL) {
             return nonNullDeserializer.deserialize(value, context);
         }
         return nullDeserializer.deserialize(null, context);

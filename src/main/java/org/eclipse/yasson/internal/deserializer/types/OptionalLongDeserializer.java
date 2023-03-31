@@ -34,7 +34,7 @@ class OptionalLongDeserializer implements ModelDeserializer<JsonParser> {
 
     @Override
     public Object deserialize(JsonParser value, DeserializationContextImpl context) {
-        if (context.getLastValueEvent() == JsonParser.Event.VALUE_NULL) {
+        if (value.currentEvent() == JsonParser.Event.VALUE_NULL) {
             return nullValueDelegate.deserialize(OptionalLong.empty(), context);
         }
         OptionalLong optional = OptionalLong.of((Long) extractor.deserialize(value, context));

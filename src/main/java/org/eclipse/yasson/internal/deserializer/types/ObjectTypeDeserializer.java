@@ -40,7 +40,7 @@ class ObjectTypeDeserializer implements ModelDeserializer<JsonParser> {
     @Override
     public Object deserialize(JsonParser value, DeserializationContextImpl context) {
         Object toSet;
-        switch (context.getLastValueEvent()) {
+        switch (value.currentEvent()) {
         case VALUE_TRUE:
             toSet = Boolean.TRUE;
             break;
@@ -63,7 +63,7 @@ class ObjectTypeDeserializer implements ModelDeserializer<JsonParser> {
             toSet = newContext1.deserialize(LIST, value);
             break;
         default:
-            throw new JsonbException("Unexpected event: " + context.getLastValueEvent());
+            throw new JsonbException("Unexpected event: " + value.currentEvent());
         }
         return delegate.deserialize(toSet, context);
     }

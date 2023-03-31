@@ -36,7 +36,7 @@ class JsonValueDeserializer implements ModelDeserializer<JsonParser> {
 
     @Override
     public Object deserialize(JsonParser value, DeserializationContextImpl context) {
-        JsonParser.Event last = context.getLastValueEvent();
+        JsonParser.Event last = value.currentEvent();
         return delegate.deserialize(deserializeValue(last, value), context);
     }
 

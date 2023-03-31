@@ -65,10 +65,9 @@ class UserDefinedDeserializer implements ModelDeserializer<JsonParser> {
         //            return exactType.deserialize(value, newContext);
         //        }
         //        newContext.getUserProcessorChain().add(userDefinedDeserializer.getClass());
-        YassonParser yassonParser = new YassonParser(value, context.getLastValueEvent(), newContext);
+        YassonParser yassonParser = new YassonParser(value, value.currentEvent());
         Object object = userDefinedDeserializer.deserialize(yassonParser, newContext, rType);
         yassonParser.skipRemaining();
-        context.setLastValueEvent(newContext.getLastValueEvent());
         return delegate.deserialize(object, context);
     }
 

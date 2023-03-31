@@ -33,8 +33,6 @@ class ContextSwitcher implements ModelDeserializer<JsonParser> {
     @Override
     public Object deserialize(JsonParser value, DeserializationContextImpl context) {
         DeserializationContextImpl ctx = new DeserializationContextImpl(context);
-        Object returnedValue = delegate.deserialize(modelDeserializer.deserialize(value, ctx), context);
-        context.setLastValueEvent(ctx.getLastValueEvent());
-        return returnedValue;
+        return delegate.deserialize(modelDeserializer.deserialize(value, ctx), context);
     }
 }

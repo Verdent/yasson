@@ -35,9 +35,7 @@ class CollectionDeserializer implements ModelDeserializer<JsonParser> {
     public Object deserialize(JsonParser parser, DeserializationContextImpl context) {
         Collection<Object> collection = (Collection<Object>) context.getInstance();
         while (parser.hasNext()) {
-            final JsonParser.Event next = parser.next();
-            context.setLastValueEvent(next);
-            switch (next) {
+            switch (parser.next()) {
             case VALUE_NULL:
             case START_OBJECT:
             case START_ARRAY:
@@ -51,7 +49,7 @@ class CollectionDeserializer implements ModelDeserializer<JsonParser> {
             case END_ARRAY:
                 return collection;
             default:
-                throw new JsonbException("Unexpected state: " + next);
+                throw new JsonbException("Unexpected state: " + parser.currentEvent());
             }
         }
         return collection;

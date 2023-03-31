@@ -43,9 +43,7 @@ class MapDeserializer implements ModelDeserializer<JsonParser> {
         Mode mode = Mode.NONE;
         State state = State.NEXT;
         while (parser.hasNext()) {
-            final JsonParser.Event next = parser.next();
-            context.setLastValueEvent(next);
-            switch (next) {
+            switch (parser.next()) {
             case KEY_NAME:
                 mode = mode == Mode.NONE ? Mode.NORMAL : mode;
                 if (mode == Mode.NORMAL) {
@@ -89,7 +87,7 @@ class MapDeserializer implements ModelDeserializer<JsonParser> {
             case END_ARRAY:
                 return map;
             default:
-                throw new JsonbException("Unexpected state: " + next);
+                throw new JsonbException("Unexpected state: " + parser.currentEvent());
             }
         }
         return map;

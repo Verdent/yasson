@@ -23,8 +23,6 @@ import org.eclipse.yasson.internal.DeserializationContextImpl;
 import org.eclipse.yasson.internal.jsonstructure.JsonStructureToParserAdapter;
 import org.eclipse.yasson.internal.model.customization.TypeInheritanceConfiguration;
 
-import static jakarta.json.stream.JsonParser.Event;
-
 /**
  * Instance creator following the inheritance structure defined by {@link jakarta.json.bind.annotation.JsonbTypeInfo}.
  */
@@ -58,8 +56,7 @@ class InheritanceInstanceCreator implements ModelDeserializer<JsonParser> {
                 .build();
         jsonParser = new JsonStructureToParserAdapter(newJsonObject);
         //To get to the first event
-        Event event = jsonParser.next();
-        context.setLastValueEvent(event);
+        jsonParser.next();
         Class<?> polymorphicTypeClass;
         if (alias == null) {
             return defaultProcessor.deserialize(jsonParser, context);
